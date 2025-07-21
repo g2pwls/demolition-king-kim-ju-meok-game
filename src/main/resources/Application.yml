@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: demolition_king
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/demolition_db?serverTimezone=Asia/Seoul
+    username: root
+    password: your_password
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+server:
+  port: 8080
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
