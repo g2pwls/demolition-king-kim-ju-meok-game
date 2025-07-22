@@ -1,13 +1,17 @@
+#001  추후  Spring 배포시 변경 (로컬 Spring 기반 세팅)
+
 spring:
   application:
     name: demolition_king
 
   datasource:
+    #001
     url: jdbc:mysql://54.180.226.214:3306/demolition?serverTimezone=Asia/Seoul
     username: root
     password: ssafy
 
   redis:
+    #001
      host: 54.180.226.214
      port: 6379
 
@@ -26,3 +30,11 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
     operations-sorter: method
+    tags-sorter: alpha
+    display-request-duration: true
+
+swagger:
+  uri: http://localhost:8080
+
+#001
+#  uri: http://54.180.226.214:8080
