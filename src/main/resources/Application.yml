@@ -3,7 +3,7 @@ spring:
     name: demolition_king
 
   datasource:
-    url: jdbc:mysql://54.180.226.214:3306/demolition_db?serverTimezone=Asia/Seoul
+    url: jdbc:mysql://54.180.226.214:3306/demolition?serverTimezone=Asia/Seoul
     username: root
     password: ssafy
 
