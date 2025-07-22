@@ -23,8 +23,7 @@ public class SwaggerConfig {
     private Info apiInfo() {
         return new Info()
                 .title("주먹왕 김권투")
-                .description("00 API 테스트를 위한 Swagger UI")
+                .description("API 테스트를 위한 Swagger UI")
                 .version("3.0.0");
     }
 }
-
