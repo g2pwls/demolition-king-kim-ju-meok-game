@@ -1,0 +1,17 @@
+.start-page-background {
+  width: 100vw;
+  height: 100vh;
+  background-image: url('../assets/images/start/nnnstartback.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.character-image {
+  width: 300px; /* 원하는 크기로 조절 */
+  height: auto;
+}

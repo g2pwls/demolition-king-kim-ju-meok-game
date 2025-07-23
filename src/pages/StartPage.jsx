@@ -1,10 +1,12 @@
+// StartPage.jsx
 import React from 'react';
+import '../styles/StartPage.css';
+import characterImage from '../assets/images/start/character.png'; // ✅ 이미지 import
 
 function StartPage() {
   return (
-    <div>
-      <StartScreen />
-      {/* 여기에 시작 버튼이나 UI 추가 */}
+    <div className="start-page-background">
+      <img src={characterImage} alt="Character" className="character-image" />
     </div>
   );
 }

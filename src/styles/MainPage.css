@@ -1,0 +1,97 @@
+.main-page-background {
+  width: 100vw;
+  height: 100vh;
+  background-image: url('../assets/images/main/mainbackp.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 오른쪽 위 고정 버튼 컨테이너 */
+.top-right-buttons {
+  position: absolute;
+  top: 40px;
+  right: 40px;
+  display: flex;
+  gap: 30px;
+}
+
+/* 버튼 스타일 */
+.top-icon-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* 아이콘 이미지 스타일 */
+.top-icon-button img {
+  width: 90px;
+  height: 90px;
+  object-fit: contain;
+}
+
+.top-icon-button:hover img {
+  transform: scale(1.1);
+  transition: transform 0.2s ease-in-out;
+}
+
+.bottom-right-buttons {
+  position: absolute;
+  bottom: 50px;
+  right: 90px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* 버튼 스타일 */
+.bottom-icon-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* 아이콘 이미지 스타일 */
+.bottom-icon-button img {
+  /* width: 90px; */
+  /* height: 90px; */
+  object-fit: contain;
+}
+
+.bottom-icon-button:hover img {
+  transform: scale(1.1);
+  transition: transform 0.2s ease-in-out;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.modal-content {
+  background-color: transparent;
+  padding: 0;
+  border: none;
+  max-width: 90vw;
+  max-height: 90vh;
+}
+
+.modal-content img {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+}

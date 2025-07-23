@@ -1,0 +1,26 @@
+/* src/styles/Story.css */
+@font-face {
+  font-family: 'DungGeunMo';
+  src: url('../assets/fonts/DungGeunMo.ttf') format('truetype');
+}
+
+.story-background {
+  width: 100vw;
+  height: 100vh;
+  background-color: black;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  box-sizing: border-box;
+}
+
+.story-text {
+  font-family: 'DungGeunMo', sans-serif;
+  white-space: pre-line; /* 줄바꿈 유지 */
+  font-size: 1.3rem;
+  line-height: 2.2rem;
+  /* font-family: 'Courier New', Courier, monospace; */
+  max-width: 800px;
+}
