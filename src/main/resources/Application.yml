@@ -14,6 +14,7 @@ spring:
     #001
      host: 54.180.226.214
      port: 6379
+     password: ssafyel06
 
   jpa:
     hibernate:
@@ -22,6 +23,17 @@ spring:
     properties:
       hibernate:
         format_sql: true
+  mail:
+    host: smtp.gmail.com       # 실제 SMTP 호스트로 변경
+    port: 587                  # SMTP 포트 (TLS)
+    username: wlgns9807@gmail.com
+    password: bdzlojbdirwaszca  # Gmail 의 경우 앱 비밀번호
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 server:
   port: 8080

@@ -19,6 +19,12 @@ repositories {
 }
 
 dependencies {
+
+	// 메일 발송
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+	// 메일 발송시 redis 사용하기 위함
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -27,7 +33,7 @@ dependencies {
 	// Spring Security
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	// Swagger (springdoc-openapi)
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
+	implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0"
 	// MySQL Driver
 	runtimeOnly 'com.mysql:mysql-connector-j'
 	// JPA
