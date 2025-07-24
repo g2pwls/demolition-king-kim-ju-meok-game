@@ -30,7 +30,7 @@
 
 /* 아이콘 이미지 스타일 */
 .top-icon-button img {
-  width: 90px;
+  width: 70px;
   height: 90px;
   object-fit: contain;
 }
@@ -59,7 +59,7 @@
 
 /* 아이콘 이미지 스타일 */
 .bottom-icon-button img {
-  /* width: 90px; */
+  width: 270px;
   /* height: 90px; */
   object-fit: contain;
 }
@@ -134,7 +134,7 @@
 
 /* 팝업 본체 */
 .friend-popup {
-  width: 400px;
+  width: 350px;
   height: 100%;
   background-color: #3B3B3B;
   position: relative;
@@ -187,7 +187,7 @@
 }
 
 .multi-mode-buttons img {
-  /* width: 200px; */
+  width: 400px;
   height: auto;
   transition: transform 0.2s ease;
 }

@@ -9,6 +9,7 @@ import LoginPage from './pages/LoginPage';
 import GamePage from './pages/gamePage';
 import StoryPage from './pages/StoryPage';
 import MainPage from './pages/MainPage';
+import SignupPage from './pages/SignupPage';
 
 function AppRoutes() {
   const location = useLocation();
@@ -21,6 +22,7 @@ function AppRoutes() {
         <Route path="/game" element={<GamePage />} />
         <Route path="/story" element={<StoryPage />} />
         <Route path="/main" element={<MainPage />} />
+        <Route path="/signup" element={<SignupPage />} />
       </Routes>
     </AnimatePresence>
   );

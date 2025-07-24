@@ -64,17 +64,17 @@
 
 /* 이미지 크기 조절 */
 .start-logo {
-  width: 500px;
+  width: 350px;
   height: auto;
 }
 
 .start-character {
-  width: 500px;
+  width: 350px;
   height: auto;
 }
 
 .start-button {
-  width: 400px;
+  width: 280px;
   height: auto;
   transition: transform 0.2s ease;
   animation: blink 1.5s infinite;
@@ -85,6 +85,6 @@
 }
 
 .punch-style {
-  width: 500px; /* 예시: 더 작게 */
+  width: 350px; /* 예시: 더 작게 */
   transform: translateY(10px); /* 예시: 아래로 조금 이동 */
 }
