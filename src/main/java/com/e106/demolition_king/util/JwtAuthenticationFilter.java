@@ -29,7 +29,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = jwtUtil.resolveToken(request);
         if (token != null && jwtUtil.validateToken(token)) {
             // 2) 토큰에서 사용자 아이디(subject) 추출
-            String userId = jwtUtil.getUserId(token);
+            String userId = jwtUtil.getUserUuid(token);
             // 3) UserDetailsService로 UserDetails 로드
             var userDetails = userDetailsService.loadUserByUsername(userId);
             // 4) 인증 객체 생성 후 SecurityContext에 저장

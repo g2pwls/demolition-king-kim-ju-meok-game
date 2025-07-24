@@ -1,4 +1,4 @@
-package com.e106.demolition_king.user.repository;
+package com.e106.demolition_king.user.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

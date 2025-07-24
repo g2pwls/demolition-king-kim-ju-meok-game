@@ -3,7 +3,7 @@ package com.e106.demolition_king.user.service;
 import com.e106.demolition_king.common.exception.BaseException;
 import com.e106.demolition_king.common.base.BaseResponseStatus;
 import com.e106.demolition_king.user.repository.EmailRedisRepository;
-import com.e106.demolition_king.user.repository.EmailVerificationDao;
+import com.e106.demolition_king.user.repository.EmailVerificationRepository;
 import com.e106.demolition_king.user.vo.in.EmailVerificationReRequestVo;
 import com.e106.demolition_king.user.vo.in.EmailVerificationRequestVo;
 import com.e106.demolition_king.user.vo.out.EmailVerificationReResponseVo;
@@ -17,14 +17,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
-import static com.e106.demolition_king.common.base.BaseResponseStatus.EMAIL_RECIEVE_SUCCESS;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
 @Transactional
 public class EmailVerificationServiceImpl implements EmailVerificationService {
-    private final EmailVerificationDao      dao;
+    private final EmailVerificationRepository dao;
     private final EmailRedisRepository      redisRepo;
     private final JavaMailSender            mailSender;
 

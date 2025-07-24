@@ -28,7 +28,7 @@ dependencies {
 	// Spring Security Session (Redis 기반으로 사용)
 	implementation 'org.springframework.session:spring-session-data-redis'
 
-	implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.4"
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
 
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter'

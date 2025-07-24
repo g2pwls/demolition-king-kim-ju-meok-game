@@ -38,11 +38,11 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String token = jwtUtil.resolveToken(request);
         if (token != null && jwtUtil.validateToken(token)) {
-            // ✂️ JwtUtil#getUserId 로 Subject(userId) 추출
-            String userId = jwtUtil.getUserId(token);
+            // JwtUtil#getUserId 로 Subject(userId) 추출
+            String userId = jwtUtil.getUserUuid(token);
             UserDetails userDetails = userDetailsService.loadUserByUsername(userId);
 
-            // ✂️ JwtUtil#getAuthentication(token, userDetails) 호출
+            // JwtUtil#getAuthentication(token, userDetails) 호출
             var auth = jwtUtil.getAuthentication(token, userDetails);
             SecurityContextHolder.getContext().setAuthentication(auth);
         }

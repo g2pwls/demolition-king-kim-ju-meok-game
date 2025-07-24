@@ -2,11 +2,12 @@ package com.e106.demolition_king.user.service;
 
 import com.e106.demolition_king.user.dto.SignupRequestDto;
 import com.e106.demolition_king.user.entity.User;
-import com.e106.demolition_king.user.repository.LoginResponseDto;
 import com.e106.demolition_king.user.repository.UserRepository;
 import com.e106.demolition_king.user.vo.in.LoginRequestVo;
+import com.e106.demolition_king.user.vo.out.TokenResponseVo;
 import com.e106.demolition_king.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -17,13 +18,15 @@ import org.springframework.transaction.annotation.Transactional;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService, UserDetailsService {
-    private final UserRepository userRepository;         // ✂️ JPA 레포지토리
-    private final PasswordEncoder passwordEncoder;       // ✂️ SecurityConfig에서 주입된 BCrypt 인코더
-    private final JwtUtil jwtUtil;                       // ✂️ 토큰 생성·검증 유틸
+    private final UserRepository userRepository;         // JPA 레포지토리
+    private final PasswordEncoder passwordEncoder;       // SecurityConfig에서 주입된 BCrypt 인코더
+    private final JwtUtil jwtUtil;                       // 토큰 생성·검증 유틸
+    private final RedisTemplate<String, String> redisTemplate; // 토큰 저장요 레디스 템플릿
 
     /**
      * 회원가입 처리
@@ -49,18 +52,26 @@ public class UserServiceImpl implements UserService, UserDetailsService {
      */
     @Override
     @Transactional(readOnly = true)
-    public LoginResponseDto login(LoginRequestVo dto) {
-        User user = userRepository.findByUserEmail(dto.getEmail())
+    public TokenResponseVo login(LoginRequestVo vo) {
+        User user = userRepository.findByUserEmail(vo.getEmail())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-        if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
+        if (!passwordEncoder.matches(vo.getPassword(), user.getPassword())) {
             throw new IllegalArgumentException("Invalid password");
         }
 
-        // ✂️ 권한은 예시로 USER 하나만 부여
+        // 권한은 USER 하나만 부여
         String accessToken  = jwtUtil.createAccessToken(user.getUserUuid(), List.of("USER"));
         String refreshToken = jwtUtil.createRefreshToken(user.getUserUuid());
 
-        return new LoginResponseDto(accessToken, refreshToken);
+        // Redis에 저장 (7일 유효)
+        redisTemplate.opsForValue().set(
+                "RT:" + user.getUserUuid(), refreshToken, 7, TimeUnit.DAYS
+        );
+
+        return TokenResponseVo.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build();
     }
 
     /**
@@ -78,6 +89,35 @@ public class UserServiceImpl implements UserService, UserDetailsService {
                 .username(user.getUserUuid())
                 .password(user.getPassword())
                 .roles("USER")
+                .build();
+    }
+
+    public TokenResponseVo tokenRefresh(String refreshToken) {
+        // 1. 리프레시 토큰 유효성 검증
+        if (!jwtUtil.validateToken(refreshToken)) {
+            throw new RuntimeException("유효하지 않은 리프레시 토큰입니다.");
+        }
+        // 2. 해당 리프레시 토큰이 DB 또는 Redis에 저장된 것과 일치하는지 검증
+        // 2. 토큰에서 사용자 UUID 추출
+        String userUuid = jwtUtil.getUserUuid(refreshToken);
+
+        // 3. Redis에서 저장된 리프레시 토큰 가져오기
+        String savedToken = redisTemplate.opsForValue().get("RT:" + userUuid);
+        if (savedToken == null || !savedToken.equals(refreshToken)) {
+            throw new RuntimeException("일치하지 않는 리프레시 토큰입니다.");
+        }
+
+        // 4. 새로운 토큰 생성
+        String newAccessToken  = jwtUtil.createAccessToken(userUuid, List.of("USER"));
+        String newRefreshToken = jwtUtil.createRefreshToken(userUuid);
+
+        // 5. Redis에 새로운 리프레시 토큰 갱신 저장
+        redisTemplate.opsForValue().set("RT:" + userUuid, newRefreshToken, 7, TimeUnit.DAYS);
+
+        // 3. Access + Refresh 토큰 재발급
+        return TokenResponseVo.builder()
+                .accessToken(newAccessToken)
+                .refreshToken(newRefreshToken)
                 .build();
     }
 }

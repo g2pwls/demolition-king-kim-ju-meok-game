@@ -4,10 +4,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public class EmailVerificationDao {
+public class EmailVerificationRepository {
     private final JdbcTemplate jdbc;
 
-    public EmailVerificationDao(JdbcTemplate jdbc) {
+    public EmailVerificationRepository(JdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
 

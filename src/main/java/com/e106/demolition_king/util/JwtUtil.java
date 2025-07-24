@@ -82,13 +82,13 @@ public class JwtUtil {
         return (bearer != null && bearer.startsWith("Bearer ")) ? bearer.substring(7) : null;
     }
 
-    // (수정) UserDetails가 지금은 빨리 검색되어 있는 것을 가지고 있다고 가정\uud558고 Authentication 객체 생성
+    // UserDetails가 지금은 빨리 검색되어 있는 것을 가지고 있다고 가정\uud558고 Authentication 객체 생성
     public Authentication getAuthentication(String token, UserDetails userDetails) {
         return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
     }
 
-    // Subject (UserId) 모호
-    public String getUserId(String token) {
+
+    public String getUserUuid(String token) {
         return parseClaims(token).getSubject();
     }
 }

@@ -35,10 +35,10 @@ public class EmailVerificationController {
             tags = {"이메일 인증"}
     )
     @PostMapping("/receive")
-    public ResponseEntity<BaseResponse<EmailVerificationResponseVo>> sendCode(
+    public BaseResponse<EmailVerificationResponseVo> sendCode(
             @ParameterObject EmailVerificationRequestVo requestvo) {
         EmailVerificationResponseVo responsevo = service.sendCode(requestvo);
-        return ResponseEntity.ok(BaseResponse.of(responsevo));
+        return BaseResponse.of(responsevo);
     }
 
     @Operation(
@@ -47,10 +47,10 @@ public class EmailVerificationController {
             tags = {"이메일 인증"}
     )
     @PostMapping("/send")
-    public ResponseEntity<BaseResponse<EmailVerificationReResponseVo>> checkCode(
+    public BaseResponse<EmailVerificationReResponseVo> checkCode(
             @ParameterObject EmailVerificationReRequestVo requestvo) {
         EmailVerificationReResponseVo responsevo = service.checkCode(requestvo);
-        return ResponseEntity.ok(BaseResponse.of(responsevo));
+        return BaseResponse.of(responsevo);
     }
 
 }
