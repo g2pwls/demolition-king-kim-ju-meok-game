@@ -2,8 +2,11 @@
 import React from 'react';
 import '../styles/StoryPage.css';
 import TypewriterText from '../components/TypewriterText';
+import { useNavigate } from 'react-router-dom';
+import AnimatedPage from '../components/AnimatedPage';
 
 function StoryPage() {
+  const navigate = useNavigate();
   const storyText = `
   한때, 그는 대한민국 복싱계를 뒤흔든 레전드였다.
 하지만 세월은 흘렀고, 
@@ -18,9 +21,18 @@ function StoryPage() {
 다시, 주먹 하나로 모든 걸 무너뜨릴 시간이다.`;
 
   return (
+    <AnimatedPage>
     <div className="story-background">
       <TypewriterText text={storyText} speed={40} />
+
+      <button
+        className="skip-button"
+        onClick={() => navigate('/main')}
+      >
+        SKIP →
+      </button>
     </div>
+    </AnimatedPage>
   );
 }
 

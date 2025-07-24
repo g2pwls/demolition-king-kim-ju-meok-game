@@ -24,3 +24,25 @@
   /* font-family: 'Courier New', Courier, monospace; */
   max-width: 800px;
 }
+
+/* story-background는 이미 있다고 가정 */
+.skip-button {
+  font-family: 'DungGeunMo', sans-serif;
+  position: fixed;
+  bottom: 250px;
+  right: 600px;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  font-size: 2rem;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 30px;
+  /* cursor: pointer; */
+  transition: background-color 0.2s ease;
+  z-index: 100;
+}
+
+.skip-button:hover {
+  background-color: rgba(0, 0, 0, 0.8);
+  transform: scale(1.05);
+}
