@@ -22,9 +22,10 @@ function MainPage() {
 
   return (
     <div className="main-page-background">
+      <div class="main-fixed-wrapper">
       <div className="top-right-buttons">
         <button className="top-icon-button" onClick={() => setModalType('lank')}>
-          <img src={lankingIcon} alt="튜토리얼" />
+          <img src={lankingIcon} alt="랭킹" />
         </button>
         <button className="top-icon-button" onClick={() => setModalType('tutorial')}>
           <img src={tutorialIcon} alt="튜토리얼" />
@@ -95,6 +96,7 @@ function MainPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }
