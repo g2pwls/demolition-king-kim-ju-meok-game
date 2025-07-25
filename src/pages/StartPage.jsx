@@ -4,7 +4,7 @@ import '../styles/StartPage.css';
 import { useNavigate } from 'react-router-dom';
 import logoImage from '../assets/images/start/logo.png';
 import character1 from '../assets/images/start/characterpick.png';
-import character2 from '../assets/images/start/charpunch.png';
+import character2 from '../assets/images/start/charp.png';
 import pressStartImage from '../assets/images/start/pressstart.png';
 import AnimatedPage from '../components/AnimatedPage';
 

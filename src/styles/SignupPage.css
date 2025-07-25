@@ -30,7 +30,7 @@
   width: 170px;
   height: 220px;
   border: 2px solid #000;
-  margin-right: 44px;
+  margin-right: 30px;
   background-color: #eee;
 }
 
@@ -72,9 +72,10 @@
 
 .form-row2.with-button button {
   padding: 7px 14px;
-  /* font-size: 14px; */
+  font-size: 14px;
   background-color: #D9D9D9;
   border-radius: 6px;
+  border: none;
 }
 
 .button-row {
@@ -90,3 +91,6 @@
   border-radius: 8px;
 }
 
+.signup-button:hover {
+  background-color: #e6c200;
+}
