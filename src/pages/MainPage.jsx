@@ -36,7 +36,7 @@ function MainPage() {
       </div>
 
       <div className="bottom-right-buttons">
-        <button className="bottom-icon-button">
+        <button className="bottom-icon-button" onClick={() => navigate('/event')}>
           <img src={modeEvent} alt="이벤트 모드" />
         </button>
         <button className="bottom-icon-button">

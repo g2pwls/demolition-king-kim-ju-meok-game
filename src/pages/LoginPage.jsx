@@ -43,7 +43,7 @@ function LoginPage() {
 
           {/* 하단 링크 */}
           <div className="login-links">
-            <Link to="/signup">회원가입</Link> | <a href="#">비밀번호 찾기</a>
+            <Link to="/signup">회원가입</Link> | <Link to="/password">비밀번호 찾기</Link>
           </div>
         </form>
       </div>

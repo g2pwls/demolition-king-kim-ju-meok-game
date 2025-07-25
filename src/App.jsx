@@ -6,10 +6,14 @@ import { AnimatePresence } from 'framer-motion';
 
 import StartPage from './pages/StartPage';
 import LoginPage from './pages/LoginPage';
-import GamePage from './pages/gamePage';
+import GamePage from './pages/GamePage';
 import StoryPage from './pages/StoryPage';
 import MainPage from './pages/MainPage';
 import SignupPage from './pages/SignupPage';
+import EventPage from './pages/EventPage';
+import PasswordPage from './pages/PasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
+
 
 function AppRoutes() {
   const location = useLocation();
@@ -23,6 +27,9 @@ function AppRoutes() {
         <Route path="/story" element={<StoryPage />} />
         <Route path="/main" element={<MainPage />} />
         <Route path="/signup" element={<SignupPage />} />
+        <Route path="/event" element={<EventPage />} />
+        <Route path="/password" element={<PasswordPage />} />
+        <Route path="/resetpassword" element={<ResetPasswordPage />} />
       </Routes>
     </AnimatePresence>
   );

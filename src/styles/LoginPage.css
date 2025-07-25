@@ -67,7 +67,7 @@ body, .login-page-background, .login-box, .login-form, .form-row, .login-button,
 /* 로그인 버튼 */
 /* 로그인 버튼을 아이디+비밀번호 입력 높이에 맞춰 세로로 크게 */
 .login-button {
-  background-color: #d4aa00;
+  background-color: #FFDA17;
   border: none;
   padding: 0 32px;
   color: black;
@@ -82,7 +82,7 @@ body, .login-page-background, .login-box, .login-form, .form-row, .login-button,
   font-size: 24px;
 }
 .login-button:hover {
-  background-color: #e6c200;
+  background-color: #debf0f;
 }
 
 /* 자동로그인 오른쪽 정렬 */
