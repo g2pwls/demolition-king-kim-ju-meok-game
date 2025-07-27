@@ -120,4 +120,32 @@ public class UserServiceImpl implements UserService, UserDetailsService {
                 .refreshToken(newRefreshToken)
                 .build();
     }
+
+    @Override
+    @Transactional
+    public void logout(String refreshToken) {
+        // 1) 토큰 유효성 검사
+        if (!jwtUtil.validateToken(refreshToken)) {
+            throw new RuntimeException("유효하지 않은 리프레시 토큰입니다.");
+        }
+        String userUuid = jwtUtil.getUserUuid(refreshToken);
+        // 2) Redis 에서 해당 키 삭제
+        redisTemplate.delete("RT:" + userUuid);
+    }
+
+    @Override
+    @Transactional
+    public void withdraw(String userUuid, String rawPassword) {
+        // 1) 유저 조회
+        User user = userRepository.findByUserUuid(userUuid)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        // 2) 비밀번호 확인
+        if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
+            throw new IllegalArgumentException("잘못된 비밀번호입니다.");
+        }
+        // 3) 탈퇴 처리: 실제 삭제 or isDeleted 플래그
+        userRepository.delete(user);
+        // 4) 로그아웃 처리: 남아 있는 RefreshToken 삭제
+        redisTemplate.delete("RT:" + userUuid);
+    }
 }
