@@ -1,0 +1,90 @@
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* @keyframes float {
+  0%, 100% {
+    transform: translateX(-50%) translateY(0px);
+  }
+  50% {
+    transform: translateX(-50%) translateY(-10px);
+  }
+} */
+
+.start-page-background {
+  width: 1536px;
+  height: 864px;
+  background-image: url('../assets/images/start/nnnstartback.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.start-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* 각 wrapper에 위치 조절 가능 */
+.logo-wrapper {
+  position: absolute;
+  top: 40px; /* 예시: 상단 고정 위치 */
+  left: 50%;
+  transform: translateX(-50%);
+  animation: float 2s ease-in-out infinite;
+}
+
+.character-wrapper {
+  position: absolute;
+  top: 61%; /* 원하는 세로 위치(px 또는 %로 조절) */
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.button-wrapper {
+  position: absolute;
+  bottom: 70px; /* 예시: 하단 고정 위치 */
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* 이미지 크기 조절 */
+.start-logo {
+  width: 350px;
+  height: auto;
+}
+
+.start-character {
+  width: 350px;
+  height: auto;
+}
+
+.start-button {
+  width: 280px;
+  height: auto;
+  transition: transform 0.2s ease;
+  animation: blink 1.5s infinite;
+}
+
+.start-button:hover {
+  transform: scale(1.05);
+}
+
+.punch-style {
+  width: 350px; /* 예시: 더 작게 */
+  transform: translateY(10px); /* 예시: 아래로 조금 이동 */
+}

@@ -1,0 +1,205 @@
+.main-page-background {
+  width: 1536px;
+  height: 864px;
+  background-image: url('../assets/images/main/mainbackp.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 오른쪽 위 고정 버튼 컨테이너 */
+.top-right-buttons {
+  position: absolute;
+  top: 40px;
+  right: 90px;
+  display: flex;
+  gap: 30px;
+}
+
+/* 버튼 스타일 */
+.top-icon-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* 아이콘 이미지 스타일 */
+.top-icon-button img {
+  width: 70px;
+  height: 90px;
+  object-fit: contain;
+}
+
+.top-icon-button:hover img {
+  transform: scale(1.1);
+  transition: transform 0.2s ease-in-out;
+}
+
+.bottom-right-buttons {
+  position: absolute;
+  bottom: 50px;
+  right: 90px;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+/* 버튼 스타일 */
+.bottom-icon-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* 아이콘 이미지 스타일 */
+.bottom-icon-button img {
+  width: 270px;
+  /* height: 90px; */
+  object-fit: contain;
+}
+
+.bottom-icon-button:hover img {
+  transform: scale(1.1);
+  transition: transform 0.2s ease-in-out;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 1536px;
+  height: 864px;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.modal-content {
+  background-color: transparent;
+  padding: 0;
+  border: none;
+  max-width: 90vw;
+  max-height: 90vh;
+  text-align: center;
+}
+
+.modal-content img {
+  width: 80%;
+  height: auto;
+  border-radius: 8px;
+}
+
+.floating-button {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  z-index: 1000; /* 다른 요소 위에 표시되게 */
+}
+
+.floating-button img {
+  width: 60px;  /* 필요 시 크기 조절 */
+  height: auto;
+}
+
+.floating-button.disabled {
+  opacity: 0.4;
+  pointer-events: none; /* 클릭 방지 */
+  /* filter: grayscale(100%); */
+}
+
+/* 어두운 배경 */
+.friend-popup-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1536px;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* 어두운 반투명 */
+  z-index: 1050;
+  display: flex;
+  justify-content: flex-end; /* 오른쪽에 팝업 붙이기 */
+}
+
+/* 팝업 본체 */
+.friend-popup {
+  width: 350px;
+  height: 100%;
+  background-color: #3B3B3B;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  animation: slideIn 0.3s ease-out;
+  z-index: 1100;
+}
+
+/* 닫기 버튼 */
+.friend-popup-close-btn {
+  position: absolute;
+  left: -60px; /* 팝업 바깥으로 나오게 */
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.friend-popup-close-btn img {
+  width: 60px;
+  height: auto;
+}
+
+/* 슬라이드 애니메이션 */
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0%);
+  }
+}
+
+.multi-mode-buttons {
+  display: flex;
+  gap: 10rem;
+  justify-content: center;
+  align-items: center;
+  background-color: transparent;
+}
+
+.multi-mode-buttons button {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.multi-mode-buttons img {
+  width: 400px;
+  height: auto;
+  transition: transform 0.2s ease;
+}
+
+.multi-mode-buttons img:hover {
+  transform: scale(1.05);
+}
+
+.main-fixed-wrapper {
+  width: 1536px;
+  height: 864px;
+  position: relative;
+  overflow: hidden;
+}
