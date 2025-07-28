@@ -1,7 +1,10 @@
 package com.e106.demolition_king.game.service;
 
 import com.e106.demolition_king.game.dto.ReportDto;
+import com.e106.demolition_king.game.dto.ReportPerDateRequestDto;
 import com.e106.demolition_king.game.entity.Report;
+import com.e106.demolition_king.game.entity.ReportPerDate;
+import com.e106.demolition_king.game.repository.ReportPerDateRepository;
 import com.e106.demolition_king.game.repository.ReportRepository;
 import com.e106.demolition_king.game.vo.out.ReportUpdateResponseVo;
 import com.e106.demolition_king.user.dto.SignupRequestDto;
@@ -23,6 +26,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -34,6 +40,7 @@ public class GameServiceImpl implements GameService {
     private final RedisTemplate<String, String> redisTemplate; // 토큰 저장요 레디스 템플릿
 
     private final ReportRepository reportRepository;
+    private final ReportPerDateRepository reportPerDateRepository;
 
     @Override
     @Transactional
@@ -90,5 +97,26 @@ public class GameServiceImpl implements GameService {
 
 
         reportRepository.save(report);
+    }
+
+    @Override
+    public void upsertReport(ReportPerDateRequestDto dto) {
+        reportPerDateRepository.findByUserUuidAndPlayDate(dto.getUserUuid(), dto.getPlayDate())
+                .ifPresentOrElse(
+                        existing -> {
+                            existing.update(dto.getKcal(), dto.getPlayTimeDate());
+                            reportPerDateRepository.save(existing);
+                        },
+                        () -> {
+                            ReportPerDate newReport = ReportPerDate.builder()
+                                    .userUuid(dto.getUserUuid())
+                                    .playDate(dto.getPlayDate())
+                                    .kcal(dto.getKcal())
+                                    .playTimeDate(dto.getPlayTimeDate())
+                                    .createdAt(LocalDateTime.now())
+                                    .build();
+                            reportPerDateRepository.save(newReport);
+                        }
+                );
     }
 }
