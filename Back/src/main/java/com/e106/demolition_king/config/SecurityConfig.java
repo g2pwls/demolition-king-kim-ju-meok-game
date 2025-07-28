@@ -1,0 +1,87 @@
+package com.e106.demolition_king.config;
+
+import com.e106.demolition_king.util.JwtAuthenticationFilter;
+import com.e106.demolition_king.util.JwtFilter;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+@Configuration
+public class SecurityConfig {
+
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    private final JwtFilter jwtFilter;
+    @Lazy
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, JwtFilter jwtFilter) {
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;       // JwtFilter는 이미 빈으로 등록됨
+        this.jwtFilter = jwtFilter;
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {         // 비밀번호 암호화 빈
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration cfg) throws Exception {
+        return cfg.getAuthenticationManager();
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(csrf -> csrf.disable())                      // CSRF 비활성화
+                .httpBasic(AbstractHttpConfigurer::disable)         // 기본 BasicAuth 비활성화
+                .sessionManagement(sm ->                           // 세션도 사용 안 함
+                        sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .authorizeHttpRequests(auth ->
+                        auth
+                                // 이 한 줄이면 모든 엔드포인트를 인증 없이 허용합니다
+                                .anyRequest().permitAll()
+                );
+        return http.build();
+    }
+    /* 일단 모든 경로 허용해둠
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // 스프링 기본 Basic 인증 비활성화
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(auth ->
+                        auth
+                                // 로그인/회원가입 등
+                                .requestMatchers("/api/v1/user/signup", "/api/v1/user/login", "/api/v1/user/email/**").permitAll()
+
+                                // Swagger UI & API Docs
+                                .requestMatchers(
+                                        "/v3/api-docs/**",
+                                        "/swagger-ui.html",
+                                        "/swagger-ui/**",
+                                        "/swagger-resources/**",
+                                        "/webjars/**"
+                                ).permitAll()
+
+                                // 나머지 요청은 JWT 인증
+                                .anyRequest().authenticated()
+                )
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
+    */
+}

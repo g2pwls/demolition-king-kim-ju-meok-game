@@ -1,0 +1,5 @@
+# application.yml
+spring:
+  profiles:
+    active: prod # local 을 원할 경우
+    # active : prod # prod를 원할 경우
