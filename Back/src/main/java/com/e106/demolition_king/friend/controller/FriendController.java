@@ -1,8 +1,8 @@
 package com.e106.demolition_king.friend.controller;
 
 
-import com.e106.demolition_king.friend.service.FriendService;
 import com.e106.demolition_king.friend.vo.out.FriendResponseVo;
+import com.e106.demolition_king.friend.vo.out.FriendStatusVo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -28,5 +28,10 @@ public class FriendController {
         return friendService.getFriends(userUuid).stream()
                 .map(FriendResponseVo::fromDto)
                 .collect(Collectors.toList());
+    }
+    @Operation(summary = "친구 목록 + 온라인 상태 조회", description = "친구 목록과 온라인 상태를 반환합니다.")
+    @GetMapping("/status")
+    public List<FriendStatusVo> listFriendsWithStatus(@PathVariable String userUuid) {
+        return friendService.getFriendListWithStatus(userUuid);
     }
 }
