@@ -5,13 +5,13 @@ spring:
 
   datasource:
     #001
-    url: jdbc:mysql://mysql_temp/demolition?serverTimezone=Asia/Seoul
+    url: jdbc:mysql://172.26.14.249/demolition?serverTimezone=Asia/Seoul
     username: root
     password: ssafy
 
   redis:
     #001
-    host: redis_temp
+    host: 172.26.14.249
     port: 6379
     password: ssafyel06
 
@@ -49,13 +49,13 @@ springdoc:
     default-model-rendering: example
 
 swagger:
-  uri: http://localhost:8080
+  uri: http://172.26.14.249:8080
 
 logging:
   level:
     root: DEBUG
     com.e106.demolition_king.game.service: DEBUG
-#jwt:
-#  secret: "nF4g7Jd9uKjH6Qz8YxM5Rg1TyP2Ls3VwHtGh4Jd6Kf9Lp0Mn"
+jwt:
+  secret: "nF4g7Jd9uKjH6Qz8YxM5Rg1TyP2Ls3VwHtGh4Jd6Kf9Lp0Mn"
 #001
 #  uri: http://54.180.226.214:8080
