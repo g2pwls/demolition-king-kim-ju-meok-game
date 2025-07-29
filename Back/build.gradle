@@ -58,5 +58,9 @@ tasks.named('test') {
 
 bootJar {
 	archiveFileName = 'app.jar'
-	mainClass = 'com.e106.demolition_king.DemolitionKingApplication' // 정확한 경로로 변경
+}
+
+jar {
+	archiveBaseName = 'app'
+	archiveVersion = ''
 }

@@ -10,7 +10,8 @@ FROM openjdk:17-jdk-slim
 WORKDIR /app
 
 # 빌드된 JAR을 app.jar로 복사
-COPY --from=builder /app/build/libs/demo-0.0.1-SNAPSHOT.jar app.jar
+#COPY --from=builder /app/build/libs/demo-0.0.1-SNAPSHOT.jar app.jar
+COPY --from=builder /app/build/libs/app.jar app.jar
 
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
