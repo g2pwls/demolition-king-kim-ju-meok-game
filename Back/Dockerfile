@@ -6,6 +6,8 @@ WORKDIR /app
 COPY build.gradle settings.gradle ./
 RUN gradle build -x test || return 0
 
+COPY build/libs/app.jar app.jar
+
 # 전체 소스 복사 및 빌드
 COPY . .
 RUN gradle build -x test
