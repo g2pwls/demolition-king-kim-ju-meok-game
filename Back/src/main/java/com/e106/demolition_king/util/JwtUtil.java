@@ -23,8 +23,8 @@ import java.util.List;
 @Component
 public class JwtUtil {
 
-    @Value("${jwt.secret}")
-    private String secretKey;
+//    @Value("${jwt.secret}")
+    private String secretKey = "nF4g7Jd9uKjH6Qz8YxM5Rg1TyP2Ls3VwHtGh4Jd6Kf9Lp0Mn";
 
     private final long accessTokenExpiration = 1000L * 60 * 60; // 1시간
     private final long refreshTokenExpiration = 1000L * 60 * 60 * 24 * 7; // 7일
