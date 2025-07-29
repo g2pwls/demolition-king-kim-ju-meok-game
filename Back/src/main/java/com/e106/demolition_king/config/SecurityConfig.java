@@ -9,19 +9,29 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
+
+import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
+@EnableWebSecurity
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     private final JwtFilter jwtFilter;
+
     @Lazy
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, JwtFilter jwtFilter) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;       // JwtFilter는 이미 빈으로 등록됨
@@ -40,8 +50,25 @@ public class SecurityConfig {
     }
 
     @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        // 1) CORS 전체 설정 객체 생성
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of("http://localhost:5173"));   // 허용할 프론트 주소
+        config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));                       // 모든 요청 헤더 허용
+        config.setAllowCredentials(true);                             // 쿠키/인증 헤더 허용
+
+        // 2) URL 패턴별 CORS 설정 매핑
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/**", config);          // /api/** 에 위 설정 적용
+        return source;
+    }
+
+
+    @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                .cors(withDefaults())
                 .csrf(csrf -> csrf.disable())                      // CSRF 비활성화
                 .httpBasic(AbstractHttpConfigurer::disable)         // 기본 BasicAuth 비활성화
                 .sessionManagement(sm ->                           // 세션도 사용 안 함
