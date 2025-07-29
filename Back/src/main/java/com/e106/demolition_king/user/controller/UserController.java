@@ -62,23 +62,6 @@ public class UserController {
         return BaseResponse.of(userService.tokenRefresh(refreshToken));
     }
 
-    @PostMapping("/logout")
-    @Operation(summary = "로그아웃", description = "RefreshToken 무효화 후 로그아웃 처리")
-    public BaseResponse<SimpleMessageResponseVo> logout(
-            @Parameter(
-                    name = "RefreshToken",
-                    description = "쿠키 {리프레시 토큰}",
-                    required = true,
-                    example = "쿠키에 있는 리프레시 토큰을 가져오기"
-            )
-            @CookieValue("refreshToken") String refreshToken
-    ) {
-        userService.logout(refreshToken);
-        return BaseResponse.of(SimpleMessageResponseVo.builder()
-                .message("Logout success")
-                .build());
-    }
-
     @DeleteMapping("/withdraw")
     @Operation(summary = "회원 탈퇴", description = "비밀번호 확인 후 회원 탈퇴 처리")
     public BaseResponse<SimpleMessageResponseVo> withdraw(

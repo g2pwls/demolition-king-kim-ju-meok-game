@@ -29,28 +29,56 @@ import java.sql.SQLException;
 public class EmailVerificationController {
     private final EmailVerificationService service;
 
+    // ─── 회원가입용 인증 ───────────────────────────────
+
     @Operation(
-            summary = "인증 코드 전송",
-            description = "유저 이메일로 인증 코드를 전송합니다.",
+            summary = "회원가입용 인증 코드 전송",
+            description = "회원가입 전 사용자가 입력한 이메일로 인증 코드를 전송합니다.",
             tags = {"이메일 인증"}
     )
-    @PostMapping("/receive")
-    public BaseResponse<EmailVerificationResponseVo> sendCode(
-            @ParameterObject EmailVerificationRequestVo requestvo) {
-        EmailVerificationResponseVo responsevo = service.sendCode(requestvo);
-        return BaseResponse.of(responsevo);
+    @PostMapping("/signup/send")
+    public BaseResponse<EmailVerificationResponseVo> sendSignupCode(
+            @RequestBody EmailVerificationRequestVo requestVo) {
+        EmailVerificationResponseVo response = service.sendSignupCode(requestVo);
+        return BaseResponse.of(response);
     }
 
     @Operation(
-            summary = "인증 코드 검증",
-            description = "유저 이메일과 인증 코드로 비밀번호 변경화면 넘어가기전 인증합니다.",
+            summary = "회원가입용 인증 코드 검증",
+            description = "회원가입 과정에서 받은 인증 코드를 확인합니다.",
             tags = {"이메일 인증"}
     )
-    @PostMapping("/send")
-    public BaseResponse<EmailVerificationReResponseVo> checkCode(
-            @ParameterObject EmailVerificationReRequestVo requestvo) {
-        EmailVerificationReResponseVo responsevo = service.checkCode(requestvo);
-        return BaseResponse.of(responsevo);
+    @PostMapping("/signup/verify")
+    public BaseResponse<EmailVerificationReResponseVo> verifySignupCode(
+            @RequestBody EmailVerificationReRequestVo requestVo) {
+        EmailVerificationReResponseVo response = service.checkSignupCode(requestVo);
+        return BaseResponse.of(response);
+    }
+
+    // ─── 비밀번호 재설정용 인증 ─────────────────────────
+
+    @Operation(
+            summary = "비밀번호 재설정용 인증 코드 전송",
+            description = "비밀번호 찾기 화면에서 입력한 이메일로 인증 코드를 전송합니다.",
+            tags = {"이메일 인증"}
+    )
+    @PostMapping("/reset/send")
+    public BaseResponse<EmailVerificationResponseVo> sendResetCode(
+            @RequestBody EmailVerificationRequestVo requestVo) {
+        EmailVerificationResponseVo response = service.sendCode(requestVo);
+        return BaseResponse.of(response);
+    }
+
+    @Operation(
+            summary = "비밀번호 재설정용 인증 코드 검증",
+            description = "비밀번호 재설정 화면으로 넘어가기 전 인증 코드를 확인합니다.",
+            tags = {"이메일 인증"}
+    )
+    @PostMapping("/reset/verify")
+    public BaseResponse<EmailVerificationReResponseVo> verifyResetCode(
+            @RequestBody EmailVerificationReRequestVo requestVo) {
+        EmailVerificationReResponseVo response = service.checkCode(requestVo);
+        return BaseResponse.of(response);
     }
 
 }

@@ -13,22 +13,23 @@ public class EmailRedisRepository {
         this.redis = redis;
     }
 
-    private String key(String email) {
-        return "email:verify:" + email;
+    private String key(String prefix, String email) {
+        return prefix + email;
     }
 
     /** 인증 코드 저장 (10분 TTL) */
-    public void saveCode(String email, String code) {
-        redis.opsForValue().set(key(email), code, 600, TimeUnit.SECONDS);
+    public void saveCode(String prefix, String email, String code) {
+        redis.opsForValue().set(key(prefix, email), code, 600, TimeUnit.SECONDS);
     }
 
-    /** 나중에 검증할 때 꺼내 쓸 수 있도록 */
-    public String getCode(String email) {
-        return redis.opsForValue().get(key(email));
+    /** 인증 코드 조회 */
+    public String getCode(String prefix, String email) {
+        return redis.opsForValue().get(key(prefix, email));
     }
 
-    public void delete(String email) {
-        redis.delete(key(email));
+    /** 인증 코드 삭제 */
+    public void delete(String prefix, String email) {
+        redis.delete(key(prefix, email));
     }
 
 }

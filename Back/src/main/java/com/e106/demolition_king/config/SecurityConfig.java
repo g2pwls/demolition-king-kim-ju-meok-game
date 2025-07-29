@@ -2,6 +2,7 @@ package com.e106.demolition_king.config;
 
 import com.e106.demolition_king.util.JwtAuthenticationFilter;
 import com.e106.demolition_king.util.JwtFilter;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -53,7 +54,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         // 1) CORS 전체 설정 객체 생성
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173"));   // 허용할 프론트 주소
+        config.setAllowedOrigins(List.of("http://localhost:5173", "http://192.168.0.101:8080"));   // 허용할 프론트 주소
         config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
         config.setAllowedHeaders(List.of("*"));                       // 모든 요청 헤더 허용
         config.setAllowCredentials(true);                             // 쿠키/인증 헤더 허용
