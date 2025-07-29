@@ -1,8 +1,31 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import '../styles/EventPage.css';
-import paperSound from '../assets/sounds/paper.mp3'; // 사운드 파일 import
+import paperSound from '../assets/sounds/paper.mp3';
+import worldMap from '../assets/images/eventmode/worldmap.png';
+import koreaMap from '../assets/images/eventmode/koreamap.png';
+import mapP from '../assets/images/eventmode/mapp.png';
+import mapM from '../assets/images/eventmode/mapm.png';
+import pinImg from '../assets/images/eventmode/pin.png'; // 핀 이미지 import 추가
+import mapSelectBack from '../assets/images/eventmode/mapselectback.png';
+
 
 function EventPage() {
+  const [isWorldMap, setIsWorldMap] = useState(true);
+  const [selectedRegion, setSelectedRegion] = useState(null);
+  const pinData = [
+    { id: 1, name: '서울', top: '35.2%', left: '47.4%' },
+    { id: 2, name: '인천', top: '12px', left: '44.2%' },
+    { id: 3, name: '강원도', top: '-50px', left: '52.6%' },
+    { id: 4, name: '대전', top: '70px', left: '48.2%' },
+    { id: 5, name: '전주', top: '110px', left: '45.2%' },
+    { id: 6, name: '부산', top: '130px', left: '54.4%' },
+    { id: 7, name: '경주', top: '90px', left: '53.6%' },
+    { id: 8, name: '포항', top: '80px', left: '55.6%' },
+    { id: 9, name: '제주도', top: '270px', left: '44%' },
+    { id: 9, name: '북한', top: '-100px', left: '44%' },
+    { id: 9, name: '북한', top: '-200px', left: '46%' },
+  ];
+
   useEffect(() => {
     const audio = new Audio(paperSound);
     audio.play().catch(err => {
@@ -13,11 +36,53 @@ function EventPage() {
   return (
     <div className="event-page">
       <div className="event-background" />
-      
-      {/* 부드러운 밝아지는 효과 */}
+
+      {/* 밝아지는 효과 */}
       <div className="light-mask-gradient" />
 
       <h1 className="event-title">이벤트 모드</h1>
+
+      {/* 지도 + 핀을 감싸는 컨테이너 */}
+      <div className="map-container">
+        <img
+          src={isWorldMap ? worldMap : koreaMap}
+          alt={isWorldMap ? '월드맵' : '코리아맵'}
+          className={isWorldMap ? 'event-worldmap' : 'event-koreamap'}
+        />
+
+        {!isWorldMap &&
+          pinData.map((pin) => (
+            <button
+              key={pin.id}
+              className="pin-button"
+              style={{ top: pin.top, left: pin.left }}
+              onClick={() => setSelectedRegion(pin.name)}
+            >
+              <img src={pinImg} alt={pin.name} />
+            </button>
+          ))}
+      </div>
+
+      {!isWorldMap && selectedRegion && (
+  <div className="map-selection-box">
+    <img src={mapSelectBack} alt="선택박스" className="map-select-background" />
+
+    <div className="selection-content">
+      <p>{selectedRegion}</p>
+      <button onClick={() => alert(`${selectedRegion} 지역 선택됨!`)}>선택</button>
+    </div>
+  </div>
+)}
+
+
+      <div className="event-buttons">
+        <button className="event-button" onClick={() => setIsWorldMap(false)}>
+          <img src={mapP} alt="버튼P" />
+        </button>
+        <button className="event-button" onClick={() => setIsWorldMap(true)}>
+          <img src={mapM} alt="버튼M" />
+        </button>
+      </div>
     </div>
   );
 }

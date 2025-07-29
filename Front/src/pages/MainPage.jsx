@@ -16,6 +16,7 @@ import fcbottom from '../assets/images/main/fcbottom.png';
 import roomParticipation from '../assets/images/main/roomi.png';
 import roomMake from '../assets/images/main/roomm.png';
 import avatarUrl from '../assets/images/avatar.png';
+import pencilIcon from '../assets/images/mypage/pencil.png';
 import { useNavigate } from 'react-router-dom';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
@@ -86,46 +87,71 @@ import rare27 from '../assets/images/building/rare27.png';
 import rare28 from '../assets/images/building/rare28.png';
 import rare29 from '../assets/images/building/rare29.png';
 import rare30 from '../assets/images/building/rare30.png';
+import rare31 from '../assets/images/building/rare31.png';
+import rare32 from '../assets/images/building/rare32.png';
+import rare33 from '../assets/images/building/rare33.png';
+import rare34 from '../assets/images/building/rare34.png';
+import rare35 from '../assets/images/building/rare35.png';
+
+
 
 function MainPage() {
+  const friends = [
+    { id: 1, nickname: 'GO성현', online: true},
+    { id: 2, nickname: 'zl존예리', online: true},
+    { id: 3, nickname: '조은사람조은', online: true},
+    { id: 4, nickname: 'ID혜지니', online: true},
+    { id: 5, nickname: '킹왕짱창현', online: false},
+    { id: 6, nickname: '박민준민준', online: true},
+    { id: 7, nickname: '지훈남', online: false},
+    { id: 8, nickname: 'Ao준혁oA', online: true},
+    { id: 9, nickname: 'U빈', online: true},
+
+
+  ];
   const buildingImages = [
-  building1, building2, building3, building4, building5, building6,
-  building7, building8, building9, building10, building11, building12,
-  building13, building14, building15, building16, building17, building18,
-  building19, building20, building21, building22, building23, building24,
-];
+    building1, building2, building3, building4, building5, building6,
+    building7, building8, building9, building10, building11, building12,
+    building13, building14, building15, building16, building17, building18,
+    building19, building20, building21, building22, building23, building24,
+  ];
 
-const rareImages = [
-  rare1, rare2, rare3, rare4, rare5, rare6, rare7, rare8, rare9, rare10,
-  rare11, rare12, rare13, rare14, rare15, rare16, rare17, rare18, rare19, rare20,
-  rare21, rare22, rare23, rare24, rare25, rare26, rare27, rare28, rare29, rare30,
-];
-    const navigate = useNavigate();
-    const [modalType, setModalType] = useState(null); // 'tutorial' 또는 'mypage' 또는 null
-    const [isFriendPopupOpen, setIsFriendPopupOpen] = useState(false); // ✅ 반드시 함수 컴포넌트 내부에
-    const [activeTab, setActiveTab] = useState('통계');
+  const rareImages = [
+    rare1, rare2, rare3, rare4, rare5, rare6, rare7, rare8, rare9, rare10,
+    rare11, rare12, rare13, rare14, rare15, rare16, rare17, rare18, rare19, rare20,
+    rare21, rare22, rare23, rare24, rare25, rare26, rare27, rare28, rare29, rare30,
+    rare31, rare32, rare33, rare34, rare35
+  ];
+  const navigate = useNavigate();
+  const [modalType, setModalType] = useState(null); // 'tutorial' 또는 'mypage' 또는 null
+  const [isFriendPopupOpen, setIsFriendPopupOpen] = useState(false); // ✅ 반드시 함수 컴포넌트 내부에
+  const [activeTab, setActiveTab] = useState('통계');
 
-    const [userInfo] = useState({
-      nickname: '김싸피',
-      email: 'ssafy@samsung.com',
-      avatarUrl: avatarUrl // 혹은 다른 아바타 경로
-    });
-    const [playStats, setPlayStats] = useState({
-      totalPlayTime: 157,       // 누적 (분 단위)
-      todayPlayTime: 67,       // 오늘 (분 단위)
-      weeklyPlayTime: [110, 220, 50, 60, 300, 270, 60], // 일~토, 분 단위
-    });
-    const [dateRange, setDateRange] = useState([null, null]);
-    const [selectedCalorieData, setSelectedCalorieData] = useState([]);
-    const calorieData = {
-      '2025-07-25': 220,
-      '2025-07-26': 150,
-      '2025-07-27': 180,
-      '2025-07-28': 90,
-      '2025-07-29': 270,
-      '2025-07-30': 60,
-      '2025-07-31': 300,
-    };
+  const [userInfo] = useState({
+    nickname: '김싸피',
+    email: 'ssafy@samsung.com',
+    avatarUrl: avatarUrl // 혹은 다른 아바타 경로
+  });
+  const [isEditing, setIsEditing] = useState(false);           // 수정 모드 진입 여부
+  const [editNickname, setEditNickname] = useState(userInfo.nickname); // 수정할 닉네임 임시 저장
+  const [editEmail, setEditEmail] = useState(userInfo.email);          // 수정할 이메일 임시 저장
+  const [isEditingNickname, setIsEditingNickname] = useState(false);
+  const [playStats, setPlayStats] = useState({
+    totalPlayTime: 157,       // 누적 (분 단위)
+    todayPlayTime: 67,       // 오늘 (분 단위)
+    weeklyPlayTime: [110, 220, 50, 60, 300, 270, 60], // 일~토, 분 단위
+  });
+  const [dateRange, setDateRange] = useState([null, null]);
+  const [selectedCalorieData, setSelectedCalorieData] = useState([]);
+  const calorieData = {
+    '2025-07-25': 220,
+    '2025-07-26': 150,
+    '2025-07-27': 180,
+    '2025-07-28': 90,
+    '2025-07-29': 270,
+    '2025-07-30': 60,
+    '2025-07-31': 300,
+  };
     useEffect(() => {
   if (dateRange[0] && dateRange[1]) {
     const start = new Date(dateRange[0]);
@@ -182,10 +208,10 @@ const rareImages = [
       </div>
 
       {modalType && (
-        <div className="modal-overlay" onClick={() => {setModalType(null);setActiveTab('통계'); }}>
+        <div className="modal-overlay" onClick={() => {setModalType(null);setActiveTab('통계'); setIsEditing(false); setIsEditingNickname(false); setEditNickname(userInfo.nickname);}}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
 
-            {modalType === 'tutorial' && <img src={tutorialModal} alt="튜토리얼 모달" />}
+            {modalType === 'tutorial' && <img src={tutorialModal} alt="튜토리얼 모달" className="tutorial-modal-image"/>}
 
             {modalType === 'mypage' && (
               <div className="mypage-modal-wrapper">
@@ -197,7 +223,9 @@ const rareImages = [
                     <img className="mypage-avatar" src={userInfo.avatarUrl} alt="프로필" />
                     <div className="mypage-name">{userInfo.nickname}</div>
                     <div className="mypage-email">{userInfo.email}</div>
-                    <button className="mypage-edit-btn">정보수정</button>
+                    <button
+                      className={`mypage-edit-btn ${isEditing ? 'disabled' : ''}`}
+                      onClick={() => setIsEditing(!isEditing)}>정보수정</button>
                   </div>
                   
                   <div className="mypage-right">
@@ -218,7 +246,7 @@ const rareImages = [
                     </div>
 
                     {/* ✅ 통계 탭 내용 */}
-                    {activeTab === '통계' && (
+                    {activeTab === '통계' && !isEditing && (
                       <>
                         <div className="playtime-section">
                           {/* 총 플레이 시간 */}
@@ -316,6 +344,77 @@ const rareImages = [
                       </>
                     )}
 
+                    {/* 정보 수정 화면 - 보기 모드 */}
+                    {activeTab === '통계' && isEditing && !isEditingNickname && (
+                      <>
+                        <div className="profile-view">
+                          <div className="info-row">
+                            <label>닉네임:</label>
+                            <div className="info-me">{editNickname}</div>
+                            <button className="edit-icon-btn" onClick={() => setIsEditingNickname(true)}>
+                              <img src={pencilIcon} alt="수정" className="edit-icon" />
+                            </button>
+                          </div>
+                          <div className="info-row">
+                            <label>이메일:</label>
+                            <div className="info-me">{editEmail}</div>
+                          </div>
+                          <div className="info-row password-row">
+                            <button className="change-password-btn">비밀번호 변경</button>
+                          </div>
+                        </div>
+
+                        {/* ✅ 닫기 버튼: profile-view 밖에 둠 */}
+                        <div className="edit-close-wrapper">
+                          <button
+                            className="close-edit-btn"
+                            onClick={() => {
+                              setIsEditing(false);
+                              setIsEditingNickname(false);
+                              setEditNickname(userInfo.nickname);
+                            }}
+                          >
+                            닫기
+                          </button>
+                        </div>
+                      </>
+                    )}
+
+
+                    {/* 닉네임 수정 모드 */}
+                    {activeTab === '통계' && isEditing && isEditingNickname && (
+                      <div className="nickname-edit-form">
+                        <label>닉네임:</label>
+                        <input
+                          value={editNickname}
+                          onChange={(e) => setEditNickname(e.target.value)}
+                          className="nickname-input"
+                        />
+                        <div className="nickname-edit-buttons">
+                          <button className="check-btn">중복확인</button>
+                          <button
+                            className="cancel-btn"
+                            onClick={() => {
+                              setEditNickname(userInfo.nickname);
+                              setIsEditingNickname(false);
+                            }}
+                          >
+                            취소
+                          </button>
+                          <button
+                            className="save-btn"
+                            onClick={() => {
+                              // 저장 로직은 여기에
+                              setIsEditingNickname(false);
+                            }}
+                          >
+                            저장
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+
                     {/* ✅ 도감 탭 내용 */}
                     {activeTab === '도감' && (
                       <div className="collection-section">
@@ -353,9 +452,6 @@ const rareImages = [
         </div>
       )}
 
-
-
-
       <div className="friend-buttons">
         <button
           className={`floating-button ${modalType ? 'disabled' : ''}`}
@@ -379,8 +475,30 @@ const rareImages = [
               <img src={fcbottom} alt="닫기 버튼" />
             </button>
             <div className="friend-popup-content">
-              <p style={{ color: '#fff' }}>친구 리스트 또는 내용</p>
+              {/* 내 정보 */}
+              <div className="my-profile">
+                <img src={userInfo.avatarUrl} alt="내 아바타" className="friend-avatar" />
+                <div className="friend-nickname">{userInfo.nickname} (나)</div>
+              </div>
+
+              <hr className="friend-divider" />
+
+
+              {/* 친구 리스트 */}
+              <div className="friend-list">
+                <div className="friend-title">친구목록</div>
+                {friends.map(friend => (
+                  <div key={friend.id} className="friend-item">
+                    <div
+                    className="friend-status-dot"
+                    style={{ backgroundColor: friend.online ? '#00ff5f' : '#ffffff' }}
+                  ></div>
+                    <div className="friend-nickname">{friend.nickname}</div>
+                  </div>
+                ))}
+              </div>
             </div>
+
           </div>
         </div>
       )}

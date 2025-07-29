@@ -274,7 +274,9 @@
   flex-direction: column;
   overflow-y: auto;        /* ✅ 세로 스크롤 추가 */
   max-height: 480px;       /* ✅ 전체 높이 제한 (모달 안에서 넘치면 스크롤됨) */
-  scrollbar-width: thin; /* 스크롤 바 얇게 */
+  /* scrollbar-width: thin; 스크롤 바 얇게 */
+  scrollbar-color: #e6e6e6 #000f3b;       /* Firefox용 */
+
 }
 
 .mypage-tabs {
@@ -560,4 +562,179 @@
   display: flex;
   font-size: 20px;
   margin-top: 30px;
+}
+
+.profile-view {
+  background-color: #f8f8f8;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  width: 500px;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+  color: black;
+}
+
+.info-row label {
+  width: 80px;
+  margin-right: 10px;
+}
+
+.info-row span {
+  flex: 1;
+}
+
+.edit-icon-btn {
+  background: none;
+  border: none;
+  padding: 4px;
+}
+
+.edit-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.change-password-btn {
+  padding: 8px 16px;
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  margin-top: 50px;
+}
+
+.nickname-edit-form {
+  background-color: #f8f8f8;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  width: 500px;
+}
+
+.nickname-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  margin-top: 6px;
+  font-size: 14px;
+}
+
+.nickname-edit-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.nickname-edit-buttons .check-btn,
+.nickname-edit-buttons .cancel-btn,
+.nickname-edit-buttons .save-btn {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+}
+
+.check-btn {
+  background-color: #ff9800;
+  color: white;
+}
+
+.cancel-btn {
+  background-color: #ccc;
+  color: #333;
+}
+
+.save-btn {
+  background-color: #4caf50;
+  color: white;
+}
+
+.mypage-edit-btn.disabled {
+  background-color: gray;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.edit-close-wrapper {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.close-edit-btn {
+  padding: 8px 20px;
+  background-color: #ff0000;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  margin-left: 200px;
+}
+
+.close-edit-btn:hover {
+  background-color: #555;
+}
+
+.tutorial-modal-image {
+  width: 80%;              /* 원하는 비율로 조정 (예: 60%, 70% 등) */
+  display: block;
+  margin: 0 auto;          /* 가운데 정렬 */
+}
+
+.friend-popup-content {
+  padding: 16px;
+  color: white;
+  height: 780px;
+}
+
+.my-profile{
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.my-profile img{
+  height: 200px;
+}
+
+.friend-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  background-color: #e6e6e6;
+  color: black;
+  padding: 20px;
+}
+
+.friend-nickname {
+  font-size: 23px;
+}
+
+.friend-divider {
+  border: none;
+  border-top: 1px solid #ccc;
+  margin: 30px 0;
+}
+
+.friend-list {
+  max-height: 500px;
+  overflow-y: auto;
+  /* scrollbar-width: thin;               Firefox용 */
+  scrollbar-color: #e6e6e6 #3B3B3B;       /* Firefox용 */
+}
+
+.friend-title {
+  font-size: 20px;
+  margin-bottom: 20px;
+}
+
+.friend-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 10px;
+  border: 1px solid #444;
 }
