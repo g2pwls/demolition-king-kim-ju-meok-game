@@ -70,11 +70,11 @@ jar {
 //	archiveVersion = ''
 //}
 
-sourceSets {
-	main {
-		resources {
-			srcDirs = ['src/main/resources']
-			include '**/*.yml'
-		}
-	}
-}
+//sourceSets {
+//	main {
+//		resources {
+//			srcDirs = ['src/main/resources']
+//			include '**/*.yml'
+//		}
+//	}
+//}
