@@ -3,6 +3,7 @@ package com.e106.demolition_king.friend.service;
 import com.e106.demolition_king.friend.dto.FriendDto;
 import com.e106.demolition_king.friend.repository.FriendRepository;
 import com.e106.demolition_king.friend.vo.out.FriendStatusVo;
+import com.e106.demolition_king.friend.websocket.PresenceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class FriendServiceImpl implements FriendService {
 
+    private final PresenceService presenceService;
     private final FriendRepository friendRepository;
     private final RedisTemplate<String, String> redisTemplate;
 
@@ -35,14 +37,14 @@ public class FriendServiceImpl implements FriendService {
 
     @Override
     public List<FriendStatusVo> getFriendListWithStatus(String userUuid) {
-        List<FriendDto> dtoList = getFriends(userUuid); // 기존 getFriends() 재활용
+        List<FriendDto> dtoList = getFriends(userUuid);
 
         return dtoList.stream()
                 .map(dto -> {
                     String friendUuid = dto.getFriendUuid();
-                    boolean isOnline = Boolean.TRUE.equals(redisTemplate.hasKey("online:" + friendUuid));
+                    boolean isOnline = presenceService.isOnline(friendUuid);
                     String status = isOnline ? "online" : "offline";
-                    return FriendStatusVo.fromDto(dto, status);
+                    return FriendStatusVo.fromDto(dto, status); // 이 부분이 핵심
                 })
                 .collect(Collectors.toList());
     }
