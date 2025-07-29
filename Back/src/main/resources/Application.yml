@@ -49,12 +49,15 @@ springdoc:
     default-model-rendering: example
 
 swagger:
-  uri: http://localhost:8080
+  uri: http://172.26.14.249:8080
 
 logging:
   level:
     root: DEBUG
     com.e106.demolition_king.game.service: DEBUG
+    
+jwt:
+  secret: "nF4g7Jd9uKjH6Qz8YxM5Rg1TyP2Ls3VwHtGh4Jd6Kf9Lp0Mn"
 
 #jwt:
 #  secret: "nF4g7Jd9uKjH6Qz8YxM5Rg1TyP2Ls3VwHtGh4Jd6Kf9Lp0Mn"
