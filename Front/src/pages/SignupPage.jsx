@@ -83,41 +83,71 @@ function SignUp() {
     <div className="signup-page" style={{ backgroundImage: `url(${loginBack})` }}>
       <div className="signup-box">
         
-        {/* 좌측: 캐릭터 선택 */}
         <div className="character-select-box">
-          {/* 추후 캐릭터 넣을 영역 */}
+          {/* 추후 캐릭터 선택 UI 구현 */}
         </div>
 
-        {/* 우측: 입력 폼 */}
-        <form className="signup-form">
-          
+        <form className="signup-form" onSubmit={handleSignup}>
           {/* 닉네임 */}
           <div className="form-row2 with-button">
             <label>닉네임</label>
-            <input type="text" />
+            <input
+              type="text"
+              value={userNickname}
+              onChange={(e) => setUserNickname(e.target.value)}
+            />
             <button type="button">중복확인</button>
           </div>
 
-          {/* 이메일 */}
+          {/* 이메일 + 인증요청 버튼 */}
           <div className="form-row2 with-button">
             <label>이메일</label>
-            <input type="email" />
-            <button type="button">중복확인</button>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={isVerified}
+            />
+            <button type="button" onClick={requestAuthCode} disabled={!email || isVerified}>
+              인증요청
+            </button>
+          </div>
+
+          {/* 인증번호 입력 + 확인 버튼 */}
+          <div className="form-row2 with-button">
+            <label>인증번호</label>
+            <input
+              type="text"
+              value={authCode}
+              onChange={(e) => setAuthCode(e.target.value)}
+              disabled={isVerified}
+            />
+            <button type="button" onClick={verifyAuthCode} disabled={!authCode || isVerified}>
+              확인
+            </button>
           </div>
 
           {/* 비밀번호 */}
           <div className="form-row2">
             <label>비밀번호</label>
-            <input type="password" />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
           </div>
 
           {/* 비밀번호 확인 */}
           <div className="form-row2">
             <label>비밀번호 확인</label>
-            <input type="password" />
+            <input
+              type="password"
+              value={passwordConfirm}
+              onChange={(e) => setPasswordConfirm(e.target.value)}
+            />
           </div>
 
-          {/* 회원가입 버튼 */}
+          {/* 회원가입 */}
           <div className="form-row2 button-row">
             <button type="submit" className="signup-button">회원가입 하기</button>
           </div>
