@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <title>WebSocket 테스트</title>
+</head>
+<body>
+<h2>👋 WebSocket 연결 테스트</h2>
+
+<label for="uuid">User UUID:</label>
+<input id="uuid" type="text" placeholder="예: abc-111" />
+<button onclick="connect()">연결</button>
+<button onclick="disconnect()">종료</button>
+
+<p id="status">🔌 상태: Not Connected</p>
+
+<script>
+    let socket = null;
+
+    function connect() {
+        const userUuid = document.getElementById("uuid").value;
+        if (!userUuid) {
+            alert("UUID를 입력해주세요.");
+            return;
+        }
+
+        socket = new WebSocket(`ws://localhost:8080/ws/friend?user_uuid=${userUuid}`);
+
+        socket.onopen = () => {
+            console.log("✅ 연결됨");
+            document.getElementById("status").innerText = "🔌 상태: Connected";
+        };
+
+        socket.onclose = () => {
+            console.log("❌ 연결 종료");
+            document.getElementById("status").innerText = "🔌 상태: Disconnected";
+        };
+
+        socket.onerror = (e) => {
+            console.error("⚠️ 에러 발생", e);
+            document.getElementById("status").innerText = "🔌 상태: Error";
+        };
+
+        socket.onmessage = (msg) => {
+            console.log("📨 수신:", msg.data);
+        };
+    }
+
+    function disconnect() {
+        if (socket) {
+            socket.close();
+        }
+    }
+</script>
+</body>
+</html>
