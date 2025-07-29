@@ -1,15 +1,55 @@
-import React from 'react';
+import React, { useState } from 'react';
+import axios from 'axios';
 import '../styles/LoginPage.css';
 import googleIcon from '../assets/images/login/google.png';
 import kakaoIcon from '../assets/images/login/kakao.png';
 import loginBack from '../assets/images/login/loginbackf.png';
+import backIcon from '../assets/images/back.png';
 import { Link } from 'react-router-dom';
 function LoginPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+
+    try {
+      const response = await axios.post(
+        'http://192.168.30.201:8080/api/user/auth/login',
+        null, // POST body 없음
+        {
+          params: {
+            email,
+            password,
+          },
+        }
+      );
+
+      console.log('로그인 성공:', response.data);
+      alert('로그인 성공!');
+      // 예: 토큰 저장 후 이동
+      // localStorage.setItem('token', response.data.token);
+      // navigate('/main');
+
+    } catch (error) {
+      console.error('로그인 실패:', error);
+      alert('아이디 또는 비밀번호가 잘못되었습니다.');
+    }
+  };
+
   return (
     <div
       className="login-page-background"
       style={{ backgroundImage: `url(${loginBack})` }}
     >
+      {/* 왼쪽 상단 뒤로가기 버튼 */}
+      <button
+        className="back-button"
+        onClick={() => navigate(-1)}
+      >
+        <img src={backIcon} alt="뒤로가기" />
+      </button>
+
       <div className="login-box">
         <form className="login-form">
           {/* 아이디 + 비밀번호 + 로그인 버튼 같은 줄 */}

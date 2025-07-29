@@ -1,5 +1,7 @@
 // StartPage.jsx
 import React, { useState } from 'react';
+import { useEffect } from 'react';
+import axios from 'axios';
 import '../styles/MainPage.css';
 import myPageIcon from '../assets/images/main/mypageicon1.png';
 import tutorialIcon from '../assets/images/main/tutorialicon1.png';
@@ -13,16 +15,148 @@ import fbottom from '../assets/images/main/fbottom.png';
 import fcbottom from '../assets/images/main/fcbottom.png';
 import roomParticipation from '../assets/images/main/roomi.png';
 import roomMake from '../assets/images/main/roomm.png';
+import avatarUrl from '../assets/images/avatar.png';
 import { useNavigate } from 'react-router-dom';
+import Calendar from 'react-calendar';
+import 'react-calendar/dist/Calendar.css';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
+
+// 베이직 건물 이미지 import
+import building1 from '../assets/images/building/building1.png';
+import building2 from '../assets/images/building/building2.png';
+import building3 from '../assets/images/building/building3.png';
+import building4 from '../assets/images/building/building4.png';
+import building5 from '../assets/images/building/building5.png';
+import building6 from '../assets/images/building/building6.png';
+import building7 from '../assets/images/building/building7.png';
+import building8 from '../assets/images/building/building8.png';
+import building9 from '../assets/images/building/building9.png';
+import building10 from '../assets/images/building/building10.png';
+import building11 from '../assets/images/building/building11.png';
+import building12 from '../assets/images/building/building12.png';
+import building13 from '../assets/images/building/building13.png';
+import building14 from '../assets/images/building/building14.png';
+import building15 from '../assets/images/building/building15.png';
+import building16 from '../assets/images/building/building16.png';
+import building17 from '../assets/images/building/building17.png';
+import building18 from '../assets/images/building/building18.png';
+import building19 from '../assets/images/building/building19.png';
+import building20 from '../assets/images/building/building20.png';
+import building21 from '../assets/images/building/building21.png';
+import building22 from '../assets/images/building/building22.png';
+import building23 from '../assets/images/building/building23.png';
+import building24 from '../assets/images/building/building24.png';
+
+// 레어 건물 이미지 import
+import rare1 from '../assets/images/building/rare1.png';
+import rare2 from '../assets/images/building/rare2.png';
+import rare3 from '../assets/images/building/rare3.png';
+import rare4 from '../assets/images/building/rare4.png';
+import rare5 from '../assets/images/building/rare5.png';
+import rare6 from '../assets/images/building/rare6.png';
+import rare7 from '../assets/images/building/rare7.png';
+import rare8 from '../assets/images/building/rare8.png';
+import rare9 from '../assets/images/building/rare9.png';
+import rare10 from '../assets/images/building/rare10.png';
+import rare11 from '../assets/images/building/rare11.png';
+import rare12 from '../assets/images/building/rare12.png';
+import rare13 from '../assets/images/building/rare13.png';
+import rare14 from '../assets/images/building/rare14.png';
+import rare15 from '../assets/images/building/rare15.png';
+import rare16 from '../assets/images/building/rare16.png';
+import rare17 from '../assets/images/building/rare17.png';
+import rare18 from '../assets/images/building/rare18.png';
+import rare19 from '../assets/images/building/rare19.png';
+import rare20 from '../assets/images/building/rare20.png';
+import rare21 from '../assets/images/building/rare21.png';
+import rare22 from '../assets/images/building/rare22.png';
+import rare23 from '../assets/images/building/rare23.png';
+import rare24 from '../assets/images/building/rare24.png';
+import rare25 from '../assets/images/building/rare25.png';
+import rare26 from '../assets/images/building/rare26.png';
+import rare27 from '../assets/images/building/rare27.png';
+import rare28 from '../assets/images/building/rare28.png';
+import rare29 from '../assets/images/building/rare29.png';
+import rare30 from '../assets/images/building/rare30.png';
 
 function MainPage() {
+  const buildingImages = [
+  building1, building2, building3, building4, building5, building6,
+  building7, building8, building9, building10, building11, building12,
+  building13, building14, building15, building16, building17, building18,
+  building19, building20, building21, building22, building23, building24,
+];
+
+const rareImages = [
+  rare1, rare2, rare3, rare4, rare5, rare6, rare7, rare8, rare9, rare10,
+  rare11, rare12, rare13, rare14, rare15, rare16, rare17, rare18, rare19, rare20,
+  rare21, rare22, rare23, rare24, rare25, rare26, rare27, rare28, rare29, rare30,
+];
     const navigate = useNavigate();
     const [modalType, setModalType] = useState(null); // 'tutorial' 또는 'mypage' 또는 null
     const [isFriendPopupOpen, setIsFriendPopupOpen] = useState(false); // ✅ 반드시 함수 컴포넌트 내부에
+    const [activeTab, setActiveTab] = useState('통계');
+
+    const [userInfo] = useState({
+      nickname: '김싸피',
+      email: 'ssafy@samsung.com',
+      avatarUrl: avatarUrl // 혹은 다른 아바타 경로
+    });
+    const [playStats, setPlayStats] = useState({
+      totalPlayTime: 157,       // 누적 (분 단위)
+      todayPlayTime: 67,       // 오늘 (분 단위)
+      weeklyPlayTime: [110, 220, 50, 60, 300, 270, 60], // 일~토, 분 단위
+    });
+    const [dateRange, setDateRange] = useState([null, null]);
+    const [selectedCalorieData, setSelectedCalorieData] = useState([]);
+    const calorieData = {
+      '2025-07-25': 220,
+      '2025-07-26': 150,
+      '2025-07-27': 180,
+      '2025-07-28': 90,
+      '2025-07-29': 270,
+      '2025-07-30': 60,
+      '2025-07-31': 300,
+    };
+    useEffect(() => {
+  if (dateRange[0] && dateRange[1]) {
+    const start = new Date(dateRange[0]);
+    const end = new Date(dateRange[1]);
+    const result = [];
+
+    const current = new Date(start);
+    while (current <= end) {
+      const key = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}-${String(current.getDate()).padStart(2, '0')}`;
+      if (calorieData[key]) {
+        result.push({
+          date: key,
+          calorie: calorieData[key],
+        });
+      }
+      current.setDate(current.getDate() + 1);
+    }
+
+    setSelectedCalorieData(result);
+  } else {
+    setSelectedCalorieData([]);
+  }
+}, [dateRange]);
+    const formatDate = (date) => {
+      if (!date) return '';
+      return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
+    };
 
   return (
     <div className="main-page-background">
-      <div class="main-fixed-wrapper">
+      <div className="main-fixed-wrapper">
       <div className="top-right-buttons">
         <button className="top-icon-button" onClick={() => setModalType('lank')}>
           <img src={lankingIcon} alt="랭킹" />
@@ -48,23 +182,177 @@ function MainPage() {
       </div>
 
       {modalType && (
-        <div className="modal-overlay" onClick={() => setModalType(null)}>
+        <div className="modal-overlay" onClick={() => {setModalType(null);setActiveTab('통계'); }}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+
             {modalType === 'tutorial' && <img src={tutorialModal} alt="튜토리얼 모달" />}
-            {modalType === 'mypage' && <img src={myPageModal} alt="마이페이지 모달" />}
+
+            {modalType === 'mypage' && (
+              <div className="mypage-modal-wrapper">
+                <img src={myPageModal} alt="마이페이지 모달" className="mypage-modal-bg" />
+
+                <div className="mypage-overlay">
+                  {/* 왼쪽: 프로필 영역 */}
+                  <div className="mypage-left">
+                    <img className="mypage-avatar" src={userInfo.avatarUrl} alt="프로필" />
+                    <div className="mypage-name">{userInfo.nickname}</div>
+                    <div className="mypage-email">{userInfo.email}</div>
+                    <button className="mypage-edit-btn">정보수정</button>
+                  </div>
+                  
+                  <div className="mypage-right">
+                    {/* 탭 버튼 */}
+                    <div className="mypage-tabs">
+                      <button
+                        className={`tab-button ${activeTab === '통계' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('통계')}
+                      >
+                        통계
+                      </button>
+                      <button
+                        className={`tab-button ${activeTab === '도감' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('도감')}
+                      >
+                        도감
+                      </button>
+                    </div>
+
+                    {/* ✅ 통계 탭 내용 */}
+                    {activeTab === '통계' && (
+                      <>
+                        <div className="playtime-section">
+                          {/* 총 플레이 시간 */}
+                          <div className="playtime-row-vertical1">
+                            <div className="play-label">누적 플레이 시간</div>
+                            <div className="bar-with-text">
+                              <span className="time-text">
+                                {Math.floor(playStats.totalPlayTime / 60)}시간 {playStats.totalPlayTime % 60}분
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* 오늘의 플레이 시간 */}
+                          <div className="playtime-row-vertical">
+                            <div className="play-label1">오늘의 플레이 시간</div>
+                            <div className="bar-with-text">
+                              <div className="bar-bg">
+                                <div className="bar-fill red" style={{ width: `${(playStats.todayPlayTime / 240) * 100}%` }}></div>
+                              </div>
+                              <span className="time-text">{playStats.todayPlayTime}분</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 주간 그래프 */}
+                        <div className="weekly-chart-label">이번 주 게임 시간</div>
+                        <div className="weekly-chart">
+                          {playStats.weeklyPlayTime.map((minutes, i) => {
+                            const maxMinutes = 300;
+                            const maxHeight = 120;
+                            const heightPx = Math.min((minutes / maxMinutes) * maxHeight, maxHeight);
+
+                            const timeLabel =
+                              minutes >= 60
+                                ? `${Math.floor(minutes / 60)}시간 ${minutes % 60 > 0 ? minutes % 60 + '분' : ''}`
+                                : `${minutes}분`;
+
+                            const dayLabels = ['일', '월', '화', '수', '목', '금', '토'];
+
+                            return (
+                              <div key={i} className="bar-wrapper">
+                                <div className="bar-column" style={{ height: `${heightPx}px` }}>
+                                  <div className="bar-tooltip">{timeLabel}</div>
+                                </div>
+                                <div className="bar-day-label">{dayLabels[i]}</div>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* 캘린더 */}
+                        <div className="calendar-section">
+                          <Calendar
+                            onChange={setDateRange}
+                            value={dateRange}
+                            selectRange={true}
+                            tileDisabled={({ date, view }) =>
+                              view === 'month' &&
+                              dateRange[0] &&
+                              Math.abs((date - dateRange[0]) / (1000 * 60 * 60 * 24)) > 7
+                            }
+                          />
+
+                          <div className="calendar-summary-row">
+                            <div className="calendar-summary-block">
+                              <div className="summary-label">시작일</div>
+                              <div className="summary-date">
+                                {dateRange[0] ? formatDate(dateRange[0]) : '-'}
+                              </div>
+                            </div>
+                            <div className="calendar-summary-block">
+                              <div className="summary-label">종료일</div>
+                              <div className="summary-date">
+                                {dateRange[1] ? formatDate(dateRange[1]) : '-'}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 칼로리 그래프 */}
+                        {selectedCalorieData.length > 0 && (
+                          <div className="calorie-graph-section">
+                            <h3>소모 칼로리 기록</h3>
+                            <ResponsiveContainer width="100%" height={200}>
+                              <LineChart data={selectedCalorieData}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="date" />
+                                <YAxis />
+                                <Tooltip />
+                                <Line type="monotone" dataKey="calorie" stroke="#8884d8" />
+                              </LineChart>
+                            </ResponsiveContainer>
+                          </div>
+                        )}
+                      </>
+                    )}
+
+                    {/* ✅ 도감 탭 내용 */}
+                    {activeTab === '도감' && (
+                      <div className="collection-section">
+                        <div className="buildingname">BASIC</div>
+                        <div className="building-grid">
+                          {buildingImages.map((src, i) => (
+                            <div key={i} className="building-item">
+                              <img src={src} alt={`베이직 건물 ${i + 1}`} className="building-image" />
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="buildingname1">RARE</div>
+                        <div className="building-grid">
+                          {rareImages.map((src, i) => (
+                            <div key={i} className="building-item">
+                              <img src={src} alt={`레어 건물 ${i + 1}`} className="building-image" />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {modalType === 'multi' && (
               <div className="multi-mode-buttons">
-                <button>
-                  <img src={roomMake} alt="방 만들기" />
-                </button>
-                <button>
-                  <img src={roomParticipation} alt="방 참가하기" />
-                </button>
+                <button><img src={roomMake} alt="방 만들기" /></button>
+                <button><img src={roomParticipation} alt="방 참가하기" /></button>
               </div>
             )}
           </div>
         </div>
       )}
+
 
 
 
