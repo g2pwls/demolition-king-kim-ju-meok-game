@@ -75,6 +75,16 @@ public class SecurityConfig {
                 .sessionManagement(sm ->                           // 세션도 사용 안 함
                         sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/login")
+                        .addLogoutHandler((request, response, authentication) -> {
+                            HttpSession session = request.getSession();
+                            session.invalidate();
+                        })
+                        .logoutSuccessHandler((request, response, authentication) ->
+                                response.sendRedirect("/login"))
+                        .deleteCookies("JSESSIONID", "refresh_token"))
                 .authorizeHttpRequests(auth ->
                         auth
                                 // 이 한 줄이면 모든 엔드포인트를 인증 없이 허용합니다

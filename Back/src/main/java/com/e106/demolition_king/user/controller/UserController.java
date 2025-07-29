@@ -4,7 +4,9 @@ import com.e106.demolition_king.common.base.BaseResponse;
 import com.e106.demolition_king.user.dto.SignupRequestDto;
 import com.e106.demolition_king.user.service.UserServiceImpl;
 import com.e106.demolition_king.user.vo.in.LoginRequestVo;
+import com.e106.demolition_king.user.vo.in.NicknameCheckRequestVo;
 import com.e106.demolition_king.user.vo.in.WithdrawRequestVo;
+import com.e106.demolition_king.user.vo.out.NicknameCheckResponseVo;
 import com.e106.demolition_king.user.vo.out.SimpleMessageResponseVo;
 import com.e106.demolition_king.user.vo.out.TokenResponseVo;
 import io.swagger.v3.oas.annotations.Parameter;import io.swagger.v3.oas.annotations.Operation;
@@ -33,6 +35,19 @@ public class UserController {
     public ResponseEntity<String> signup(@ParameterObject SignupRequestDto dto) {
         userService.signup(dto);
         return ResponseEntity.ok("Signup success");
+    }
+
+    @Operation(
+            summary = "닉네임 중복 검사",
+            description = "회원가입 시 입력한 닉네임의 중복 여부를 확인합니다.",
+            tags = {"회원&권한"}
+    )
+    @PostMapping("/signup/nickname/check")
+    public BaseResponse<NicknameCheckResponseVo> checkNickname(
+            @RequestBody NicknameCheckRequestVo requestVo
+    ) {
+        NicknameCheckResponseVo result = userService.checkNickname(requestVo.getNickname());
+        return BaseResponse.of(result);
     }
 
     @Operation(
