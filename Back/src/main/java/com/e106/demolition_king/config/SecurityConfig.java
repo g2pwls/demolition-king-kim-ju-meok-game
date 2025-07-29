@@ -54,9 +54,10 @@ public class SecurityConfig {
         // 1) CORS 전체 설정 객체 생성
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of(
-                "http://localhost:5173",                  // 프론트 개발용
-                "http://172.26.14.249:8080",              // Swagger UI 실행 위치
-                "http://54.180.226.214:8080"              // EC2 퍼블릭 IP에서 Swagger UI 실행하는 경우
+                "*"
+//                "http://localhost:5173",                  // 프론트 개발용
+//                "http://172.26.14.249:8080",              // Swagger UI 실행 위치
+//                "http://54.180.226.214:8080"              // EC2 퍼블릭 IP에서 Swagger UI 실행하는 경우
         ));
 //        config.setAllowedOrigins(List.of("http://localhost:5173"));   // 허용할 프론트 주소
         config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
