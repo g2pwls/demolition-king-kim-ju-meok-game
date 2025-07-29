@@ -59,6 +59,9 @@ jwt:
     access: 900000       # 15분
     refresh: 604800000   # 7일
 
-
+logging:
+  level:
+    root: DEBUG
+    com.e106.demolition_king.game.service: DEBUG
 #001
 #  uri: http://54.180.226.214:8080
