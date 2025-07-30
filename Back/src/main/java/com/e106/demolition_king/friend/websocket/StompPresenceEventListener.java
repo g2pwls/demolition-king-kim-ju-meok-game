@@ -14,19 +14,27 @@ import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 public class StompPresenceEventListener {
 
     private final PresenceService presenceService;
+    private final FriendRedisService friendRedisService;
+    private final FriendWebSocketService friendWebSocketService;
+
 
     @EventListener
     public void handleSessionConnect(SessionConnectEvent event) {
         StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(event.getMessage(), StompHeaderAccessor.class);
         String userUuid = (String) accessor.getSessionAttributes().get("userUuid");
+
         System.out.println("🧩 세션에서 꺼낸 userUuid = " + userUuid);
         if (userUuid != null) {
+            // 1. 상태 등록
             presenceService.setOnline(userUuid);
             System.out.println("✅ Redis 등록 완료: " + userUuid);
+            // 2. Redis에 보류된 친구 요청 꺼내서 STOMP로 전송
+            friendRedisService.sendAndDeletePendingRequests(userUuid, friendWebSocketService);
         } else {
             System.out.println("❌ 세션에 userUuid 없음");
         }
     }
+
 
     @EventListener
     public void handleSessionDisconnect(SessionDisconnectEvent event) {
