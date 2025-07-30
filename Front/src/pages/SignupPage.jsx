@@ -127,7 +127,6 @@ function SignUp() {
             </button>
           </div>
 
-          {/* 비밀번호 */}
           <div className="form-row2">
             <label>비밀번호</label>
             <input
@@ -137,7 +136,13 @@ function SignUp() {
             />
           </div>
 
-          {/* 비밀번호 확인 */}
+          {/* 비밀번호 길이 에러 메시지 */}
+          {passwordError && (
+            <div style={{ color: "red", marginBottom: "10px" }}>
+              {passwordError}
+            </div>
+          )}
+
           <div className="form-row2">
             <label>비밀번호 확인</label>
             <input
@@ -149,7 +154,9 @@ function SignUp() {
 
           {/* 회원가입 */}
           <div className="form-row2 button-row">
-            <button type="submit" className="signup-button">회원가입 하기</button>
+            <button type="submit" className="signup-button">
+              회원가입 하기
+            </button>
           </div>
         </form>
       </div>

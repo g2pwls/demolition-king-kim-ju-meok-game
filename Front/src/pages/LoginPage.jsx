@@ -76,7 +76,12 @@ function LoginPage() {
 
           <div className="login-options">
             <label>
-              <input type="checkbox" /> 자동로그인
+              <input
+                type="checkbox"
+                checked={autoLogin}
+                onChange={(e) => setAutoLogin(e.target.checked)}
+              />{" "}
+              자동로그인
             </label>
           </div>
 
@@ -86,7 +91,8 @@ function LoginPage() {
           </div>
 
           <div className="login-links">
-            <Link to="/signup">회원가입</Link> | <Link to="/password">비밀번호 찾기</Link>
+            <Link to="/signup">회원가입</Link> |{" "}
+            <Link to="/password">비밀번호 찾기</Link>
           </div>
         </form>
       </div>
