@@ -19,10 +19,10 @@ public interface FriendRepository extends JpaRepository<Friend, Long> {
     //특정 친구 관계 단건 조회
     Optional<Friend> findByUserUserUuidAndFriendUserUuid(String userUuid, String friendUuid);
 
-    //친구 관계 삭제
-    @Transactional
-    void deleteByUserUserUuidAndFriendUserUuid(String userUuid, String friendUuid);
-
     boolean existsByUser_UserUuidAndFriend_UserUuidAndStatus(String userUuid, String friendUuid, String status);
+
+    Optional<Friend> findByUser_UserUuidAndFriend_UserUuidAndStatus(String userUuid, String friendUuid, String status);
+
+    Optional<Friend> findByUser_UserUuidAndFriend_UserUuid(String userUuid, String friendUuid);
 
 }
