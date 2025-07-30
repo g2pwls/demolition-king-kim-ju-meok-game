@@ -14,6 +14,7 @@ import EventPage from './pages/EventPage';
 import PasswordPage from './pages/PasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import AppLayout from './components/AppLayout'; // 경로는 상황에 맞게 조정
+import SingleTestPage from './pages/SingleTestPage';
 
 
 function AppRoutes() {
@@ -31,6 +32,7 @@ function AppRoutes() {
         <Route path="/event" element={<AppLayout><EventPage /></AppLayout>} />
         <Route path="/password" element={<AppLayout><PasswordPage /></AppLayout>} />
         <Route path="/resetpassword" element={<AppLayout><ResetPasswordPage /></AppLayout>} />
+        <Route path="/singletest" element={<SingleTestPage />}></Route>
       </Routes>
     </AnimatePresence>
   );

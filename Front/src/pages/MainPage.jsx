@@ -55,6 +55,9 @@ import building21 from '../assets/images/building/building21.png';
 import building22 from '../assets/images/building/building22.png';
 import building23 from '../assets/images/building/building23.png';
 import building24 from '../assets/images/building/building24.png';
+import building25 from '../assets/images/building/building25.png';
+import building26 from '../assets/images/building/building26.png';
+
 
 // 레어 건물 이미지 import
 import rare1 from '../assets/images/building/rare1.png';
@@ -92,7 +95,19 @@ import rare32 from '../assets/images/building/rare32.png';
 import rare33 from '../assets/images/building/rare33.png';
 import rare34 from '../assets/images/building/rare34.png';
 import rare35 from '../assets/images/building/rare35.png';
-
+import rare36 from '../assets/images/building/rare36.png';
+import rare37 from '../assets/images/building/rare37.png';
+import rare38 from '../assets/images/building/rare38.png';
+import rare39 from '../assets/images/building/rare39.png';
+import rare40 from '../assets/images/building/rare40.png';
+import rare41 from '../assets/images/building/rare41.png';
+import rare42 from '../assets/images/building/rare42.png';
+import rare43 from '../assets/images/building/rare43.png';
+import rare44 from '../assets/images/building/rare44.png';
+import rare45 from '../assets/images/building/rare45.png';
+import rare46 from '../assets/images/building/rare46.png';
+import rare47 from '../assets/images/building/rare47.png';
+import rare48 from '../assets/images/building/rare48.png';
 
 
 function MainPage() {
@@ -114,13 +129,15 @@ function MainPage() {
     building7, building8, building9, building10, building11, building12,
     building13, building14, building15, building16, building17, building18,
     building19, building20, building21, building22, building23, building24,
+    building25, building26, 
   ];
 
   const rareImages = [
     rare1, rare2, rare3, rare4, rare5, rare6, rare7, rare8, rare9, rare10,
     rare11, rare12, rare13, rare14, rare15, rare16, rare17, rare18, rare19, rare20,
     rare21, rare22, rare23, rare24, rare25, rare26, rare27, rare28, rare29, rare30,
-    rare31, rare32, rare33, rare34, rare35
+    rare31, rare32, rare33, rare34, rare35, rare36, rare37, rare38, rare39, rare40,
+    rare41, rare42, rare43, rare44, rare45, rare46, rare47, rare48,
   ];
   const navigate = useNavigate();
   const [modalType, setModalType] = useState(null); // 'tutorial' 또는 'mypage' 또는 null
@@ -199,7 +216,7 @@ function MainPage() {
         <button className="bottom-icon-button" onClick={() => navigate('/event')}>
           <img src={modeEvent} alt="이벤트 모드" />
         </button>
-        <button className="bottom-icon-button">
+        <button className="bottom-icon-button" onClick={() => navigate('/singletest')}>
           <img src={modeSingle} alt="싱글 모드" />
         </button>
         <button className="bottom-icon-button" onClick={() => setModalType('multi')}>
