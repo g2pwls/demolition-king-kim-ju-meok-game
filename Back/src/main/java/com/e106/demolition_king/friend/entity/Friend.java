@@ -35,4 +35,7 @@ public class Friend {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Column(name = "status", nullable = false)
+    private String status; // <- ✅ 요거 추가!
 }

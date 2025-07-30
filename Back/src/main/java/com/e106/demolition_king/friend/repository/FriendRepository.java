@@ -22,4 +22,7 @@ public interface FriendRepository extends JpaRepository<Friend, Long> {
     //친구 관계 삭제
     @Transactional
     void deleteByUserUserUuidAndFriendUserUuid(String userUuid, String friendUuid);
+
+    boolean existsByUser_UserUuidAndFriend_UserUuidAndStatus(String userUuid, String friendUuid, String status);
+
 }
