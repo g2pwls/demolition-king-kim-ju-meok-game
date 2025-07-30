@@ -9,4 +9,10 @@ import lombok.Getter;
 public class SimpleMessageResponseVo {
     @Schema(description = "응답 메시지")
     private String message;
+
+    public static SimpleMessageResponseVo of(String message) {
+        return SimpleMessageResponseVo.builder()
+                .message(message)
+                .build();
+    }
 }
