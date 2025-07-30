@@ -5,8 +5,10 @@ import com.e106.demolition_king.user.dto.SignupRequestDto;
 import com.e106.demolition_king.user.service.UserServiceImpl;
 import com.e106.demolition_king.user.vo.in.LoginRequestVo;
 import com.e106.demolition_king.user.vo.in.NicknameCheckRequestVo;
+import com.e106.demolition_king.user.vo.in.ResetPasswordRequestVo;
 import com.e106.demolition_king.user.vo.in.WithdrawRequestVo;
 import com.e106.demolition_king.user.vo.out.NicknameCheckResponseVo;
+import com.e106.demolition_king.user.vo.out.ResetPasswordResponseVo;
 import com.e106.demolition_king.user.vo.out.SimpleMessageResponseVo;
 import com.e106.demolition_king.user.vo.out.TokenResponseVo;
 import io.swagger.v3.oas.annotations.Parameter;import io.swagger.v3.oas.annotations.Operation;
@@ -42,6 +44,7 @@ public class UserController {
             description = "회원가입 시 입력한 닉네임의 중복 여부를 확인합니다.",
             tags = {"회원&권한"}
     )
+
     @PostMapping("/signup/nickname/check")
     public BaseResponse<NicknameCheckResponseVo> checkNickname(
             @RequestBody NicknameCheckRequestVo requestVo
@@ -49,6 +52,8 @@ public class UserController {
         NicknameCheckResponseVo result = userService.checkNickname(requestVo.getNickname());
         return BaseResponse.of(result);
     }
+
+
 
     @Operation(
             summary = "로그인",
@@ -59,6 +64,19 @@ public class UserController {
     public BaseResponse<TokenResponseVo> login(@ParameterObject LoginRequestVo vo) {
         return BaseResponse.of(userService.login(vo));
     }
+
+    @Operation(
+            summary = "비밀번호 변경",
+            description = "인증 완료된 이메일에 대해 새 비밀번호를 입력받아 변경합니다.",
+            tags = {"회원"}
+    )
+    @PostMapping("/password/reset")
+    public BaseResponse<ResetPasswordResponseVo> resetPassword(
+            @RequestBody ResetPasswordRequestVo requestVo) {
+        ResetPasswordResponseVo result = userService.resetPassword(requestVo);
+        return BaseResponse.of(result);
+    }
+
 
     @Operation(
             summary = "리프레쉬 토큰 갱신",
@@ -89,6 +107,4 @@ public class UserController {
                 .message("Withdraw success")
                 .build());
     }
-
 }
-
