@@ -49,6 +49,9 @@ springdoc:
     default-model-expand-depth: 1
     default-model-rendering: example
 
+swagger:
+  uri: http://54.180.226.214:8080
+
 logging:
   level:
     root: DEBUG
