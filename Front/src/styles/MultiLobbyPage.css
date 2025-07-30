@@ -1,0 +1,23 @@
+.multi-lobby-container {
+  padding: 40px;
+  text-align: center;
+  font-family: 'DungGeunMo', sans-serif;
+}
+
+.players-list {
+  margin-top: 30px;
+  font-size: 24px;
+}
+
+.lobby-buttons {
+  margin-top: 50px;
+}
+
+.lobby-buttons button {
+  padding: 12px 24px;
+  font-size: 18px;
+  background-color: #fdd835;
+  border: none;
+  border-radius: 8px;
+  cursor: not-allowed;
+}
