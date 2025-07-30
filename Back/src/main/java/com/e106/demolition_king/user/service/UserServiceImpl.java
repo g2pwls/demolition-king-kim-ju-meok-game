@@ -1,14 +1,19 @@
 package com.e106.demolition_king.user.service;
 
+import com.e106.demolition_king.common.base.BaseResponseStatus;
+import com.e106.demolition_king.common.exception.BaseException;
 import com.e106.demolition_king.user.dto.SignupRequestDto;
 import com.e106.demolition_king.user.entity.User;
 import com.e106.demolition_king.user.repository.UserRepository;
 import com.e106.demolition_king.user.vo.in.LoginRequestVo;
+import com.e106.demolition_king.user.vo.in.ResetPasswordRequestVo;
 import com.e106.demolition_king.user.vo.out.NicknameCheckResponseVo;
+import com.e106.demolition_king.user.vo.out.ResetPasswordResponseVo;
 import com.e106.demolition_king.user.vo.out.TokenResponseVo;
 import com.e106.demolition_king.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -63,6 +68,32 @@ public class UserServiceImpl implements UserService, UserDetailsService {
                     .build();
         }
     }
+
+    @Override
+    public ResetPasswordResponseVo resetPassword(ResetPasswordRequestVo req) {
+        // 1) 비밀번호/확인 일치 여부
+        if (!req.getNewPassword().equals(req.getConfirmPassword())) {
+            return ResetPasswordResponseVo.builder()
+                    .available(false)
+                    .message("새 비밀번호와 확인이 일치하지 않습니다.")
+                    .build();
+        }
+
+        // 2) 이메일로 사용자 조회
+        User user = userRepository.findByUserEmail(req.getEmail())
+                .orElseThrow(() -> new BaseException(BaseResponseStatus.INVALID_EMAIL_ADDRESS));
+
+        // 3) 비밀번호 업데이트
+        user.setPassword(passwordEncoder.encode(req.getNewPassword()));
+        userRepository.save(user);
+
+        return ResetPasswordResponseVo.builder()
+                .available(true)
+                .message("비밀번호가 성공적으로 변경되었습니다.")
+                .build();
+    }
+
+
 
     /**
      * 로그인 처리: 이메일/비밀번호 검증 후 Access & Refresh 토큰 발급
