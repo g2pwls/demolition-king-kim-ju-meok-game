@@ -56,3 +56,26 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+bootJar {
+	archiveFileName = 'app.jar'
+}
+
+jar {
+	enabled = false // 일반 jar 비활성화 (Spring Boot에서는 필요 없음)
+}
+
+
+//jar {
+//	archiveBaseName = 'app'
+//	archiveVersion = ''
+//}
+
+//sourceSets {
+//	main {
+//		resources {
+//			srcDirs = ['src/main/resources']
+//			include '**/*.yml'
+//		}
+//	}
+//}

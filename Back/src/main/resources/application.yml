@@ -1,18 +1,17 @@
 #001  추후  Spring 배포시 변경 (로컬 Spring 기반 세팅)
-
 spring:
   application:
     name: demolition_king
 
   datasource:
     #001
-    url: jdbc:mysql://54.180.226.214:3306/demolition?serverTimezone=Asia/Seoul
+    url: jdbc:mysql://172.26.14.249/demolition?serverTimezone=Asia/Seoul
     username: root
     password: ssafy
 
   redis:
     #001
-    host: 54.180.226.214
+    host: 172.26.14.249
     port: 6379
     password: ssafyel06
 
@@ -50,15 +49,18 @@ springdoc:
     default-model-rendering: example
 
 swagger:
-  uri: http://localhost:8080
+  uri: http://172.26.14.249:8080
 
-
+logging:
+  level:
+    root: DEBUG
+    com.e106.demolition_king.game.service: DEBUG
+    
 jwt:
   secret: "nF4g7Jd9uKjH6Qz8YxM5Rg1TyP2Ls3VwHtGh4Jd6Kf9Lp0Mn"
-  exp:
-    access: 900000       # 15분
-    refresh: 604800000   # 7일
 
+#jwt:
+#  secret: "nF4g7Jd9uKjH6Qz8YxM5Rg1TyP2Ls3VwHtGh4Jd6Kf9Lp0Mn"
 
 #001
 #  uri: http://54.180.226.214:8080

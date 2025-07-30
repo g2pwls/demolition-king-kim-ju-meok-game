@@ -30,9 +30,11 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
     public EmailVerificationResponseVo sendCode(EmailVerificationRequestVo req) {
         String email = req.getEmail();
         log.info("이메일 인증 요청 받음 → {}", email);
+        boolean testEmail = dao.existsByEmail(email);
 
+        log.warn("이메일 값: {}", testEmail);
         // 1) DB 중복 체크
-        if (!dao.existsByEmail(email)) {
+        if (!testEmail) {
             log.warn("이미 가입된 이메일로 요청: {}", email);
             return EmailVerificationResponseVo.builder()
                     .available(false)

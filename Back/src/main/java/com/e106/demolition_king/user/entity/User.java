@@ -39,26 +39,6 @@ public class User implements UserDetails {
     private Timestamp createdAt;
     private Timestamp updatedAt;
 
-    // 일대 다
-//    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
-//    private List<PlayerSkin> skins;
-//
-//    //일대일
-//    @OneToOne(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
-//    private List<Report> reports;
-//
-//    // 일자별 리포트 수정 필요
-//
-//
-//    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
-//    private List<Friend> friends;
-//
-//    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
-//    private List<InviteList> invites;
-//
-//    @OneToOne(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
-//    private List<Gold> golds;
-
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Collections.emptyList();
