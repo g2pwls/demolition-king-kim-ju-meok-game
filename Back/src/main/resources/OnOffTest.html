@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>🔌 STOMP Presence 테스트</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 30px;
+        }
+        #log {
+            background: #f8f8f8;
+            border: 1px solid #ddd;
+            padding: 10px;
+            height: 200px;
+            overflow-y: scroll;
+            white-space: pre-wrap;
+        }
+        input, button {
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+<h2>🧪 STOMP Presence 테스트</h2>
+
+<label for="uuid">📌 유저 UUID:</label>
+<input type="text" id="uuid" placeholder="예: abc-123" size="40">
+<br><br>
+
+<button onclick="connect()">🔌 연결</button>
+<button onclick="disconnect()">❌ 해제</button>
+
+<h3 id="status">🔍 상태: Not connected</h3>
+
+<h4>📄 로그</h4>
+<div id="log"></div>
+
+<script>
+    let stompClient = null;
+
+    function log(msg) {
+        const logArea = document.getElementById("log");
+        logArea.textContent += msg + "\n";
+        logArea.scrollTop = logArea.scrollHeight;
+    }
+
+    function connect() {
+        const userUuid = document.getElementById("uuid").value.trim();
+        if (!userUuid) {
+            alert("유저 UUID를 입력해주세요.");
+            return;
+        }
+
+        const socketUrl = "http://localhost:8080/ws?userUuid=" + encodeURIComponent(userUuid);
+        log("🟡 연결 시도: " + socketUrl);
+
+        const socket = new SockJS(socketUrl);
+        stompClient = Stomp.over(socket);
+        stompClient.debug = null; // 콘솔 로그 끄기
+
+        stompClient.connect({}, (frame) => {
+            document.getElementById("status").innerText = "🟢 상태: Connected";
+            log("✅ 연결 성공: " + frame);
+        }, (error) => {
+            document.getElementById("status").innerText = "🔴 상태: Connection Error";
+            log("❌ 연결 실패: " + error);
+        });
+    }
+
+    function disconnect() {
+        if (stompClient !== null) {
+            stompClient.disconnect(() => {
+                document.getElementById("status").innerText = "🔌 상태: Disconnected";
+                log("🔌 연결 해제됨");
+            });
+        }
+    }
+</script>
+</body>
+</html>

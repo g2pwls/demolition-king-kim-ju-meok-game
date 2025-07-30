@@ -62,8 +62,19 @@ public enum BaseResponseStatus {
     NO_EXIST_NOTIFICATION_SETTING(HttpStatus.NOT_FOUND, false, 404, "유저의 알림 설정이 존재하지 않습니다."),
     EXIST_NOTIFICATION_SETTING(HttpStatus.BAD_REQUEST, false, 409, "유저의 알림 설정이 이미 존재합니다."),
     NO_EXIST_NOTIFICATION(HttpStatus.NOT_FOUND, false, 410, "존재하지 않는 알림입니다."),
-    CANNOT_SHARE(HttpStatus.BAD_REQUEST, false, 451, "공유할 수 없는 유저입니다.");
+    CANNOT_SHARE(HttpStatus.BAD_REQUEST, false, 451, "공유할 수 없는 유저입니다."),
 
+    // 여기에 친구 관련 상태 추가
+    FRIEND_REQUEST_SENT(HttpStatus.OK, true, 200, "친구 요청을 전송했습니다."),
+    FRIEND_REQUEST_ALREADY_SENT(HttpStatus.BAD_REQUEST, false, 400, "이미 친구 요청을 보냈습니다."),
+    FRIEND_ALREADY_EXISTS(HttpStatus.CONFLICT, false, 409, "이미 친구 상태입니다."),
+    FRIEND_REQUEST_ACCEPTED(HttpStatus.OK, true, 200, "친구 요청을 수락했습니다."),
+    FRIEND_REQUEST_REJECTED(HttpStatus.OK, true, 200, "친구 요청을 거절했습니다."),
+    FRIEND_REMOVED(HttpStatus.OK, true, 200, "친구를 삭제했습니다."),
+    FRIEND_NOT_FOUND(HttpStatus.NOT_FOUND, false, 404, "해당 친구 관계를 찾을 수 없습니다."),
+    FRIEND_ONLINE(HttpStatus.OK, true, 200, "친구가 온라인입니다."),
+    FRIEND_OFFLINE(HttpStatus.OK, true, 200, "친구가 오프라인입니다."),
+    FRIEND_STATUS_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, false, 500, "친구 온라인 상태를 조회하는 도중 오류가 발생했습니다.");
     private final HttpStatusCode httpStatusCode;
     private final boolean isSuccess;
     private final int code;
