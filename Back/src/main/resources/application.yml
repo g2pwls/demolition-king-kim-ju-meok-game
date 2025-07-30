@@ -5,13 +5,19 @@ spring:
 
   datasource:
     #001
+    #내부 배포용
     url: jdbc:mysql://172.26.14.249/demolition?serverTimezone=Asia/Seoul
+    #외부 local용
+#    url: jdbc:mysql://54.180.226.214/demolition?serverTimezone=Asia/Seoul
     username: root
     password: ssafy
 
   redis:
     #001
+    #내부 배포용
     host: 172.26.14.249
+    #외부 local용
+#    host: 54.180.226.214
     port: 6379
     password: ssafyel06
 
@@ -41,6 +47,8 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
     url: http://54.180.226.214:8080/v3/api-docs
+#    로컬용
+#    url: http://localhost:8080/v3/api-docs
     operations-sorter: method
     tags-sorter: alpha
     display-request-duration: true
@@ -51,6 +59,8 @@ springdoc:
 
 swagger:
   uri: http://54.180.226.214:8080
+#  로컬용
+#  uri: http://localhost:8080
 
 logging:
   level:
