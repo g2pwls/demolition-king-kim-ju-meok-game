@@ -54,7 +54,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         // 1) CORS 전체 설정 객체 생성
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of(
+        config.setAllowedOriginPatterns(List.of(
                 "*"
 //                "http://localhost:5173",                  // 프론트 개발용
 //                "http://172.26.14.249:8080",              // Swagger UI 실행 위치
