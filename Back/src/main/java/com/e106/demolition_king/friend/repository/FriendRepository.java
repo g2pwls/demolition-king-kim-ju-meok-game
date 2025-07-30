@@ -7,19 +7,19 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-@Transactional
+
 public interface FriendRepository extends JpaRepository<Friend, Long> {
 
-    void deleteByUserUserUuidAndFriendUserUuid(String userUuid, String friendUuid);
-
     //특정 사용자의 친구 목록 조회
-
     List<Friend> findAllByUserUserUuid(String userUuid);
+
     //친구 관계 존재 여부 확인 (중복 신청/등록 방지용)
-
     boolean existsByUserUserUuidAndFriendUserUuid(String userUuid, String friendUuid);
-    //특정 친구 관계 단건 조회
 
+    //특정 친구 관계 단건 조회
     Optional<Friend> findByUserUserUuidAndFriendUserUuid(String userUuid, String friendUuid);
+
     //친구 관계 삭제
+    @Transactional
+    void deleteByUserUserUuidAndFriendUserUuid(String userUuid, String friendUuid);
 }

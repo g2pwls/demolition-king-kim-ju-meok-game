@@ -54,14 +54,21 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         // 1) CORS 전체 설정 객체 생성
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173", "http://192.168.0.101:8080"));   // 허용할 프론트 주소
+        config.setAllowedOrigins(List.of(
+                "*"
+//                "http://localhost:5173",                  // 프론트 개발용
+//                "http://172.26.14.249:8080",              // Swagger UI 실행 위치
+//                "http://54.180.226.214:8080"              // EC2 퍼블릭 IP에서 Swagger UI 실행하는 경우
+        ));
+//        config.setAllowedOrigins(List.of("http://localhost:5173"));   // 허용할 프론트 주소
         config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
         config.setAllowedHeaders(List.of("*"));                       // 모든 요청 헤더 허용
         config.setAllowCredentials(true);                             // 쿠키/인증 헤더 허용
 
         // 2) URL 패턴별 CORS 설정 매핑
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/api/**", config);          // /api/** 에 위 설정 적용
+//        source.registerCorsConfiguration("/api/**", config);          // /api/** 에 위 설정 적용
+        source.registerCorsConfiguration("/**", config); // 일단 개발 환경에서 모두 허용
         return source;
     }
 

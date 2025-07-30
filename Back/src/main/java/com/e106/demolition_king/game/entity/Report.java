@@ -24,7 +24,7 @@ public class Report {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "report_seq")
-    private Long reportSeq;
+    private Integer reportSeq;
 
     @Column(name = "single_top_building")
     private Integer singleTopBuilding;

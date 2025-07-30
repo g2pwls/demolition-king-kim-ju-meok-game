@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Builder
 public class ReportResponseVo {
 
-    private Long reportSeq;
+    private Integer reportSeq;
     private Integer singleTopBuilding;
     private Integer multiTopBuilding;
     private Integer goldMedal;
