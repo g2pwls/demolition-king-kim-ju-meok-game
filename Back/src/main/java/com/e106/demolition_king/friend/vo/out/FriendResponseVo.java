@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @Builder
 public class FriendResponseVo {
     /** 친구 관계 시퀀스 */
-    private Long id;
+    private Integer id;
 
     /** 본인 UUID */
     private String userUuid;

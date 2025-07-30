@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ReportDto {
-    private Long reportSeq;
+    private Integer reportSeq;
     private String userUuid;
     private Integer singleTopBuilding;
     private Integer multiTopBuilding;
