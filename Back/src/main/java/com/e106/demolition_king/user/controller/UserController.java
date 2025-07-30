@@ -4,7 +4,9 @@ import com.e106.demolition_king.common.base.BaseResponse;
 import com.e106.demolition_king.user.dto.SignupRequestDto;
 import com.e106.demolition_king.user.service.UserServiceImpl;
 import com.e106.demolition_king.user.vo.in.LoginRequestVo;
+import com.e106.demolition_king.user.vo.in.NicknameCheckRequestVo;
 import com.e106.demolition_king.user.vo.in.WithdrawRequestVo;
+import com.e106.demolition_king.user.vo.out.NicknameCheckResponseVo;
 import com.e106.demolition_king.user.vo.out.SimpleMessageResponseVo;
 import com.e106.demolition_king.user.vo.out.TokenResponseVo;
 import io.swagger.v3.oas.annotations.Parameter;import io.swagger.v3.oas.annotations.Operation;
@@ -36,6 +38,19 @@ public class UserController {
     }
 
     @Operation(
+            summary = "닉네임 중복 검사",
+            description = "회원가입 시 입력한 닉네임의 중복 여부를 확인합니다.",
+            tags = {"회원&권한"}
+    )
+    @PostMapping("/signup/nickname/check")
+    public BaseResponse<NicknameCheckResponseVo> checkNickname(
+            @RequestBody NicknameCheckRequestVo requestVo
+    ) {
+        NicknameCheckResponseVo result = userService.checkNickname(requestVo.getNickname());
+        return BaseResponse.of(result);
+    }
+
+    @Operation(
             summary = "로그인",
             description = "로그인으로 사용자의 엑세스 & 리프레쉬 토큰을 발급받습니다.",
             tags = {"회원&권한"}
@@ -60,23 +75,6 @@ public class UserController {
             )
             @CookieValue("refreshToken") String refreshToken ) {
         return BaseResponse.of(userService.tokenRefresh(refreshToken));
-    }
-
-    @PostMapping("/logout")
-    @Operation(summary = "로그아웃", description = "RefreshToken 무효화 후 로그아웃 처리")
-    public BaseResponse<SimpleMessageResponseVo> logout(
-            @Parameter(
-                    name = "RefreshToken",
-                    description = "쿠키 {리프레시 토큰}",
-                    required = true,
-                    example = "쿠키에 있는 리프레시 토큰을 가져오기"
-            )
-            @CookieValue("refreshToken") String refreshToken
-    ) {
-        userService.logout(refreshToken);
-        return BaseResponse.of(SimpleMessageResponseVo.builder()
-                .message("Logout success")
-                .build());
     }
 
     @DeleteMapping("/withdraw")

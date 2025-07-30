@@ -4,6 +4,7 @@ import com.e106.demolition_king.user.dto.SignupRequestDto;
 import com.e106.demolition_king.user.entity.User;
 import com.e106.demolition_king.user.repository.UserRepository;
 import com.e106.demolition_king.user.vo.in.LoginRequestVo;
+import com.e106.demolition_king.user.vo.out.NicknameCheckResponseVo;
 import com.e106.demolition_king.user.vo.out.TokenResponseVo;
 import com.e106.demolition_king.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +46,22 @@ public class UserServiceImpl implements UserService, UserDetailsService {
                 .build();
 
         userRepository.save(user);
+    }
+
+    @Override
+    public NicknameCheckResponseVo checkNickname(String nickname) {
+        boolean exists = userRepository.existsByUserNickname(nickname);
+        if (exists) {
+            return NicknameCheckResponseVo.builder()
+                    .available(false)
+                    .message("이미 사용 중인 닉네임입니다.")
+                    .build();
+        } else {
+            return NicknameCheckResponseVo.builder()
+                    .available(true)
+                    .message("사용 가능한 닉네임입니다.")
+                    .build();
+        }
     }
 
     /**
@@ -119,18 +136,6 @@ public class UserServiceImpl implements UserService, UserDetailsService {
                 .accessToken(newAccessToken)
                 .refreshToken(newRefreshToken)
                 .build();
-    }
-
-    @Override
-    @Transactional
-    public void logout(String refreshToken) {
-        // 1) 토큰 유효성 검사
-        if (!jwtUtil.validateToken(refreshToken)) {
-            throw new RuntimeException("유효하지 않은 리프레시 토큰입니다.");
-        }
-        String userUuid = jwtUtil.getUserUuid(refreshToken);
-        // 2) Redis 에서 해당 키 삭제
-        redisTemplate.delete("RT:" + userUuid);
     }
 
     @Override

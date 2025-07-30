@@ -26,19 +26,17 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
     private final EmailRedisRepository      redisRepo;
     private final JavaMailSender            mailSender;
 
-    @Override
-    public EmailVerificationResponseVo sendCode(EmailVerificationRequestVo req) {
-        String email = req.getEmail();
-        log.info("이메일 인증 요청 받음 → {}", email);
-        boolean testEmail = dao.existsByEmail(email);
+    private EmailVerificationResponseVo send(VerificationType type, String email, boolean mustExist) {
+        log.info("{} 인증 요청 → {}", type.name(), email);
 
-        log.warn("이메일 값: {}", testEmail);
-        // 1) DB 중복 체크
-        if (!testEmail) {
-            log.warn("이미 가입된 이메일로 요청: {}", email);
+        boolean exists = dao.existsByEmail(email);
+        if (mustExist ? !exists : exists) {
+            String msg = mustExist
+                    ? "가입되지 않은 이메일입니다."
+                    : "이미 가입된 이메일입니다.";
             return EmailVerificationResponseVo.builder()
                     .available(false)
-                    .message("가입되지 않은 이메일입니다.")
+                    .message(msg)
                     .build();
         }
 
@@ -51,62 +49,68 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
         log.debug("생성된 인증 코드 [{}] → {}", code, email);
 
         // 3) Redis에 10분간 저장
-        redisRepo.saveCode(email, code);
-        log.debug("Redis에 인증 코드 저장 완료 (10분 TTL)");
+        redisRepo.saveCode(type.getRedisPrefix(), email, code);
+        log.debug("Redis 저장 ({}): {}", type.getRedisPrefix(), code);
 
-        // 4) 메일 발송
         try {
             SimpleMailMessage msg = new SimpleMailMessage();
             msg.setTo(email);
-            msg.setSubject("[권투왕 김주먹] 이메일 인증 코드 발송");
-            msg.setText( "안녕하세요,\n" +
-                    "권투왕 김주먹입니다.\n\n" +
-                    "고객님의 인증 코드는 아래와 같습니다.\n\n" +
-                    "🔒 인증 코드: " + code + "\n" +
-                    "⏰ 유효 기간: 발송 후 10분\n\n" +
-                    "안전한 서비스 이용을 위해 유효 시간 내에 인증 절차를 완료해주시기 바랍니다.\n\n" +
-                    "감사합니다.");
+            msg.setSubject(type.getEmailSubject());
+            msg.setText(
+                    "안녕하세요,\n" +
+                            type.getEmailBodyIntro() + "\n\n" +
+                            "🔒 인증 코드: " + code + "\n" +
+                            "⏰ 유효 시간: 10분\n\n" +
+                            "감사합니다."
+            );
             mailSender.send(msg);
-            log.info("이메일 전송 성공 → {}", email);
+            log.info("메일 전송 성공 → {}", email);
+
+            return EmailVerificationResponseVo.builder()
+                    .available(true)
+                    .message("인증 코드가 메일로 발송되었습니다.")
+                    .build();
         } catch (Exception e) {
-            log.error("이메일 전송 중 오류 발생", e);
+            log.error("메일 전송 실패 → {}", email, e);
             throw new BaseException(BaseResponseStatus.EMAIL_SEND_FAIL);
         }
+    }
 
-        // 5) 성공 응답
-        return EmailVerificationResponseVo.builder()
-                .available(true)
-                .message("인증 코드가 메일로 발송되었습니다.")
+    // 공통: 코드 검증 로직
+    private EmailVerificationReResponseVo check(VerificationType type, String email, String inputCode) {
+        log.info("{} 코드 확인 → {}", type.name(), email);
+
+        String saved = redisRepo.getCode(type.getRedisPrefix(), email);
+        boolean ok = saved != null && saved.equals(inputCode);
+
+        String message = ok
+                ? "인증 성공"
+                : "인증 코드가 일치하지 않거나 만료되었습니다.";
+
+        return EmailVerificationReResponseVo.builder()
+                .available(ok)
+                .message(message)
                 .build();
+    }
+
+    // ─────────── 회원가입용 ───────────
+    public EmailVerificationResponseVo sendSignupCode(EmailVerificationRequestVo req) {
+        return send(VerificationType.SIGNUP, req.getEmail(), /*mustExist=*/false);
+    }
+
+    public EmailVerificationReResponseVo checkSignupCode(EmailVerificationReRequestVo req) {
+        return check(VerificationType.SIGNUP, req.getEmail(), req.getCode());
+    }
+
+    // ─────────── 비밀번호 재설정용 ───────────
+    @Override
+    public EmailVerificationResponseVo sendCode(EmailVerificationRequestVo req) {
+        return send(VerificationType.PASSWORD_RESET, req.getEmail(), /*mustExist=*/true);
     }
 
     @Override
     public EmailVerificationReResponseVo checkCode(EmailVerificationReRequestVo req) {
-        boolean status;
-        String message;
-
-        // 1) 이메일 가져온다
-        String email = req.getEmail();
-        log.info("사용자 입력 이메일 → {}", email);
-
-        // 2) 이메일로 레디스에 조회한다
-        String code = redisRepo.getCode(email);
-        log.info("DB 저장 코드 → {}", email);
-
-        // 3) requestvo 객체와 비교한다.
-        if (req.getCode().equals(code)){
-            // 같으면
-            status = BaseResponseStatus.EMAIL_RECIEVE_SUCCESS.isSuccess();
-            message = BaseResponseStatus.EMAIL_RECIEVE_SUCCESS.getMessage();
-        }else{
-            status = BaseResponseStatus.EMAIL_RECIEVE_FAIL.isSuccess();
-            message = BaseResponseStatus.EMAIL_RECIEVE_FAIL.getMessage();
-        }
-
-        // 4) 일치하면 true : false
-        return EmailVerificationReResponseVo.builder()
-                .available(status)
-                .message(message)
-                .build();
+        return check(VerificationType.PASSWORD_RESET, req.getEmail(), req.getCode());
     }
+
 }

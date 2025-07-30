@@ -10,9 +10,15 @@ import java.sql.SQLException;
 
 public interface EmailVerificationService {
 
+    //회원가입 시
+    EmailVerificationResponseVo sendSignupCode(EmailVerificationRequestVo req);
+    EmailVerificationReResponseVo checkSignupCode(EmailVerificationReRequestVo req);
+
     // 이메일 발송
     EmailVerificationResponseVo sendCode(EmailVerificationRequestVo req);
 
     // 이메일 수신 체크
     EmailVerificationReResponseVo checkCode(EmailVerificationReRequestVo req);
+
+    //
 }
