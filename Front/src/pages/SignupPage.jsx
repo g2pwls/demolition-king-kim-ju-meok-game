@@ -13,10 +13,32 @@ function SignUp() {
   const [userNickname, setUserNickname] = useState('');
   const [profileSeq, setProfileSeq] = useState(1); // 기본 캐릭터 번호
 
+  // 닉네임 중복검사
+  const checkNicknameDuplication = async () => {
+  try {
+    const res = await axios.post('http://54.180.226.214:8080/api/user/auth/signup/nickname/check', {
+      nickname: userNickname,
+    });
+
+    if (res.data.result.available) {
+      alert('사용 가능한 닉네임입니다.');
+    } else {
+      alert('이미 사용 중인 닉네임입니다.');
+    }
+  } catch (err) {
+    console.error(err);
+    alert('닉네임 중복 확인 실패');
+  }
+};
+
+
   // 이메일 인증코드 요청
   const requestAuthCode = async () => {
     try {
-      await axios.post('http://192.168.30.201:8080/api/v1/user/email/send', { email });
+      await axios.post('http://54.180.226.214:8080/api/v1/user/email/signup/send', { email });
+
+// 인증번호 확인
+
       alert('인증번호가 이메일로 전송되었습니다.');
     } catch (err) {
       console.error(err);
@@ -27,16 +49,17 @@ function SignUp() {
   // 인증코드 확인
   const verifyAuthCode = async () => {
     try {
-      const res = await axios.post('http://192.168.30.201:8080/api/v1/user/email/receive', {
-        email,
-        code: authCode,
-      });
-      if (res.data === true) {
-        alert('이메일 인증 성공!');
-        setIsVerified(true);
-      } else {
-        alert('인증번호가 올바르지 않습니다.');
-      }
+    const res = await axios.post('http://54.180.226.214:8080/api/v1/user/email/signup/verify', {
+      email,
+      code: authCode,
+    });
+
+    if (res.data.result.available === true) {
+      alert('이메일 인증 성공!');
+      setIsVerified(true);
+    } else {
+      alert('인증번호가 올바르지 않습니다.');
+    }
     } catch (err) {
       console.error(err);
       alert('인증 확인 실패');
@@ -58,7 +81,7 @@ function SignUp() {
 
     try {
       const response = await axios.post(
-        'http://192.168.30.201:8080/api/user/auth/signup',
+        'http://54.180.226.214:8080/api/user/auth/signup',
         null,
         {
           params: {
@@ -96,7 +119,10 @@ function SignUp() {
               value={userNickname}
               onChange={(e) => setUserNickname(e.target.value)}
             />
-            <button type="button">중복확인</button>
+            <button type="button" onClick={checkNicknameDuplication}>
+              중복확인
+            </button>
+
           </div>
 
           {/* 이메일 + 인증요청 버튼 */}
@@ -127,6 +153,7 @@ function SignUp() {
             </button>
           </div>
 
+          {/* 비밀번호 */}
           <div className="form-row2">
             <label>비밀번호</label>
             <input
@@ -136,13 +163,7 @@ function SignUp() {
             />
           </div>
 
-          {/* 비밀번호 길이 에러 메시지 */}
-          {passwordError && (
-            <div style={{ color: "red", marginBottom: "10px" }}>
-              {passwordError}
-            </div>
-          )}
-
+          {/* 비밀번호 확인 */}
           <div className="form-row2">
             <label>비밀번호 확인</label>
             <input
@@ -154,9 +175,7 @@ function SignUp() {
 
           {/* 회원가입 */}
           <div className="form-row2 button-row">
-            <button type="submit" className="signup-button">
-              회원가입 하기
-            </button>
+            <button type="submit" className="signup-button">회원가입 하기</button>
           </div>
         </form>
       </div>

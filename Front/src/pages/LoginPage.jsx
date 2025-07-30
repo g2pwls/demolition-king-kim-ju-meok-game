@@ -6,16 +6,17 @@ import kakaoIcon from '../assets/images/login/kakao.png';
 import loginBack from '../assets/images/login/loginbackf.png';
 import backIcon from '../assets/images/back.png';
 import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
+  const navigate = useNavigate();
   const handleLogin = async (e) => {
     e.preventDefault();
 
     try {
       const response = await axios.post(
-        'http://192.168.30.201:8080/api/user/auth/login',
+        'http://54.180.226.214:8080/api/user/auth/login',
         null, // POST body 없음
         {
           params: {
@@ -28,8 +29,9 @@ function LoginPage() {
       console.log('로그인 성공:', response.data);
       alert('로그인 성공!');
       // 예: 토큰 저장 후 이동
-      // localStorage.setItem('token', response.data.token);
-      // navigate('/main');
+      localStorage.setItem('accessToken', response.data.result.accessToken);
+      localStorage.setItem('refreshToken', response.data.result.refreshToken);
+      navigate('/main'); // 로그인 성공 후 메인 페이지로 이동 
 
     } catch (error) {
       console.error('로그인 실패:', error);
@@ -76,12 +78,7 @@ function LoginPage() {
 
           <div className="login-options">
             <label>
-              <input
-                type="checkbox"
-                checked={autoLogin}
-                onChange={(e) => setAutoLogin(e.target.checked)}
-              />{" "}
-              자동로그인
+              <input type="checkbox" /> 자동로그인
             </label>
           </div>
 
@@ -91,8 +88,7 @@ function LoginPage() {
           </div>
 
           <div className="login-links">
-            <Link to="/signup">회원가입</Link> |{" "}
-            <Link to="/password">비밀번호 찾기</Link>
+            <Link to="/signup">회원가입</Link> | <Link to="/password">비밀번호 찾기</Link>
           </div>
         </form>
       </div>

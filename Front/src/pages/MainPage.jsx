@@ -1,6 +1,7 @@
 // StartPage.jsx
 import React, { useState } from 'react';
 import { useEffect } from 'react';
+import api from '../utils/api';
 import axios from 'axios';
 import '../styles/MainPage.css';
 import myPageIcon from '../assets/images/main/mypageicon1.png';
@@ -109,8 +110,49 @@ import rare46 from '../assets/images/building/rare46.png';
 import rare47 from '../assets/images/building/rare47.png';
 import rare48 from '../assets/images/building/rare48.png';
 
+import character1 from "../assets/images/main/character1.png";
+import character2 from "../assets/images/main/character2.png";
+import character3 from "../assets/images/main/character3.png";
+import arrowLeft from "../assets/images/main/left.png";
+import arrowRight from "../assets/images/main/right.png";
+import selectButton from "../assets/images/main/select.png";
 
 function MainPage() {
+    const [userNickname, setUserNickname] = useState('');
+  
+  const characterList = [character1, character2, character3];
+  const [animationDirection, setAnimationDirection] = useState(null);
+  const [nickname, setNickname] = useState("");
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [selectedIndex, setSelectedIndex] = useState(null);
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (user?.nickname) setNickname(user.nickname);
+
+    const savedIndex = localStorage.getItem("selectedCharacter");
+    if (savedIndex !== null) {
+      setCurrentIndex(parseInt(savedIndex));
+      setSelectedIndex(parseInt(savedIndex));
+    }
+  }, []);
+
+  const handleLeft = () => {
+    setAnimationDirection("left");
+    setCurrentIndex(
+      (prev) => (prev - 1 + characterList.length) % characterList.length
+    );
+  };
+
+  const handleRight = () => {
+    setAnimationDirection("right");
+    setCurrentIndex((prev) => (prev + 1) % characterList.length);
+  };
+
+  const handleSelect = () => {
+    localStorage.setItem("selectedCharacter", currentIndex);
+    setSelectedIndex(currentIndex);
+  };
+
   const friends = [
     { id: 1, nickname: 'GO성현', online: true},
     { id: 2, nickname: 'zl존예리', online: true},
@@ -169,6 +211,22 @@ function MainPage() {
     '2025-07-30': 60,
     '2025-07-31': 300,
   };
+
+  useEffect(() => {
+  api.post('/user/auth/login', null, {
+    params: {
+      email: 'test@email.com',
+      password: '1234',
+    }
+  })
+    .then((res) => {
+      console.log('✅ 로그인 테스트 성공:', res.data);
+    })
+    .catch((err) => {
+      console.error('❌ 로그인 테스트 실패:', err);
+    });
+}, []);
+
     useEffect(() => {
   if (dateRange[0] && dateRange[1]) {
     const start = new Date(dateRange[0]);
@@ -222,6 +280,18 @@ function MainPage() {
         <button className="bottom-icon-button" onClick={() => setModalType('multi')}>
           <img src={modeMulti} alt="멀티 모드" />
         </button>
+      </div>
+
+      <div className="character-section">
+          <div className="nickname-text">{userNickname}</div>
+          <div className={`character-selector animate-${animationDirection}`}>
+            <img src={arrowLeft} alt="왼쪽" className="arrow-button large" onClick={handleLeft} />
+            <img src={characterList[currentIndex]} alt="캐릭터" className="main-character large" onAnimationEnd={() => setAnimationDirection(null)} />
+            <img src={arrowRight} alt="오른쪽" className="arrow-button large" onClick={handleRight} />
+          </div>
+          <div className="select-button-wrapper">
+            <img src={selectButton} alt="선택 버튼" className={`select-button ${selectedIndex === currentIndex ? 'selected' : ''}`} onClick={handleSelect} />
+          </div>
       </div>
 
       {modalType && (
