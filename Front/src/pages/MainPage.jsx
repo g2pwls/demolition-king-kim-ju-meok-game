@@ -18,6 +18,7 @@ import roomParticipation from '../assets/images/main/roomi.png';
 import roomMake from '../assets/images/main/roomm.png';
 import avatarUrl from '../assets/images/avatar.png';
 import pencilIcon from '../assets/images/mypage/pencil.png';
+import newIcon from '../assets/images/main/new.png';
 import { useNavigate } from 'react-router-dom';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
@@ -119,7 +120,28 @@ import selectButton from "../assets/images/main/select.png";
 
 function MainPage() {
     const [userNickname, setUserNickname] = useState('');
-  
+    const [friendRequests, setFriendRequests] = useState([
+    { id: 1, nickname: '유재석' },
+    { id: 2, nickname: '복싱보이' },
+    { id: 3, nickname: '다죽었음' },
+
+  ]);
+const acceptFriend = (requestId) => {
+  const accepted = friendRequests.find(req => req.id === requestId);
+
+  console.log('✅ 수락 요청된 ID:', requestId);
+  console.log('✅ 수락할 친구:', accepted);
+  if (accepted) {
+    setFriends(prev => [...prev, { id: accepted.id, nickname: accepted.nickname, online: false }]);
+    console.log('✅ 업데이트된 친구 목록:', updated);
+    setFriendRequests(prev => prev.filter(req => req.id !== requestId));
+  }
+};
+
+const rejectFriend = (requestId) => {
+  setFriendRequests(prev => prev.filter(req => req.id !== requestId));
+};
+
   const characterList = [character1, character2, character3];
   const [animationDirection, setAnimationDirection] = useState(null);
   const [nickname, setNickname] = useState("");
@@ -572,8 +594,10 @@ function MainPage() {
 
 
               {/* 친구 리스트 */}
+              <div className="friend-title">친구목록
+                <img src={newIcon} alt="새로고침" className="new-button" />
+              </div>
               <div className="friend-list">
-                <div className="friend-title">친구목록</div>
                 {friends.map(friend => (
                   <div key={friend.id} className="friend-item">
                     <div
@@ -584,6 +608,25 @@ function MainPage() {
                   </div>
                 ))}
               </div>
+                {/* 친구 요청 알림 */}
+                {friendRequests.length > 0 && (
+                  <>
+                    <hr className="friend-divider" />
+                      <div className="friend-title">친구 요청</div>
+                    <div className="friend-request-section">
+                      {friendRequests.map((req) => (
+                        <div key={req.id} className="friend-request-item">
+                          <div className="friend-nickname">{req.nickname}</div>
+                          <div className="friend-request-buttons">
+                            <button onClick={() => acceptFriend(req.id)}>✅</button>
+                            <button onClick={() => rejectFriend(req.id)}>❌</button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+
             </div>
 
           </div>
