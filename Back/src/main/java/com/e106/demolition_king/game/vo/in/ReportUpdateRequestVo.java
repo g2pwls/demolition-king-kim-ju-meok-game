@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Builder
 public class ReportUpdateRequestVo {
     private String userUuid;
-    private Long reportSeq;
+    private Integer reportSeq;
     private Integer singleTopBuilding;
     private Integer multiTopBuilding;
     private Integer goldMedal;

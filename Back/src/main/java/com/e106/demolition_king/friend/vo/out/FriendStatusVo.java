@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class FriendStatusVo {
-    private Long id;
+    private Integer id;
     private String userUuid;
     private String friendUuid;
     private String friendNickname;
