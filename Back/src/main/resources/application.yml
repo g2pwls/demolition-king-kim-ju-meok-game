@@ -40,6 +40,7 @@ server:
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
+    url: http://54.180.226.214:8080/v3/api-docs
     operations-sorter: method
     tags-sorter: alpha
     display-request-duration: true
@@ -47,9 +48,6 @@ springdoc:
     bearer-format: JWT
     default-model-expand-depth: 1
     default-model-rendering: example
-
-swagger:
-  uri: http://172.26.14.249:8080
 
 logging:
   level:
