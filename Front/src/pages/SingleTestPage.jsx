@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { OpenVidu } from 'openvidu-browser';
+import PoseOverlay from './PoseOverlay';
 
 const SingleTestPage = () => {
   const [session, setSession] = useState(null);
@@ -90,7 +91,7 @@ const getToken = async () => {
       <div>
         <video autoPlay={true} ref={localUserRef} style={{ width: '400px' }}></video>
       </div>
-
+        <PoseOverlay /> 
       <div>
         {subscribers.map((sub, index) => {
           const videoRef = useRef(null);

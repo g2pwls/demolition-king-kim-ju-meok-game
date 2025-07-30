@@ -8,6 +8,9 @@
     "build": "vite build"
   },
   "dependencies": {
+    "@mediapipe/camera_utils": "^0.3.1675466862",
+    "@mediapipe/drawing_utils": "^0.3.1675466124",
+    "@mediapipe/pose": "^0.5.1675469404",
     "axios": "^1.11.0",
     "framer-motion": "^12.23.7",
     "node-fetch": "^3.3.2",
