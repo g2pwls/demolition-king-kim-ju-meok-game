@@ -89,4 +89,46 @@ public class FriendServiceImpl implements FriendService {
         }
     }
 
+
+    @Transactional
+    @Override
+    public void acceptFriendRequest(String receiverUuid, String requesterUuid) {
+        Friend request = friendRepository.findByUser_UserUuidAndFriend_UserUuidAndStatus(
+                requesterUuid, receiverUuid, "PENDING"
+        ).orElseThrow(() -> new RuntimeException("친구 요청이 존재하지 않습니다."));
+
+        request.setStatus("FRIEND");
+        friendRepository.save(request);
+
+        // 필요 시 양방향 관계 추가도 가능
+        Friend reverse = Friend.builder()
+                .user(request.getFriend())  // 수락자
+                .friend(request.getUser())  // 요청자
+                .status("FRIEND")
+                .build();
+        friendRepository.save(reverse);
+    }
+
+    @Transactional
+    @Override
+    public void rejectFriendRequest(String receiverUuid, String requesterUuid) {
+        Friend request = friendRepository.findByUser_UserUuidAndFriend_UserUuidAndStatus(
+                requesterUuid, receiverUuid, "PENDING"
+        ).orElseThrow(() -> new RuntimeException("친구 요청이 존재하지 않습니다."));
+
+        friendRepository.delete(request);
+    }
+
+    @Transactional
+    @Override
+    public void deleteFriend(String userUuid, String friendUuid) {
+        // 한쪽 방향
+        friendRepository.findByUser_UserUuidAndFriend_UserUuid(userUuid, friendUuid)
+                .ifPresent(friendRepository::delete);
+
+        // 반대 방향
+        friendRepository.findByUser_UserUuidAndFriend_UserUuid(friendUuid, userUuid)
+                .ifPresent(friendRepository::delete);
+    }
+
 }

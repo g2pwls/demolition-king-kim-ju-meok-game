@@ -37,5 +37,5 @@ public class Friend {
     private LocalDateTime updatedAt;
 
     @Column(name = "status", nullable = false)
-    private String status; // <- ✅ 요거 추가!
+    private String status;
 }

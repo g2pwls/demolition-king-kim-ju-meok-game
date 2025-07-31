@@ -50,4 +50,35 @@ public class FriendController {
         List<FriendStatusVo> friendStatusList = friendService.getFriendListWithStatus(userUuid);
         return BaseResponse.of(friendStatusList);
     }
+
+    @Operation(summary = "친구 요청 수락")
+    @PatchMapping("/accept")
+    public ResponseEntity<String> acceptFriendRequest(
+            @PathVariable String userUuid,
+            @RequestParam String friendUuid
+    ) {
+        friendService.acceptFriendRequest(userUuid, friendUuid);
+        return ResponseEntity.ok("친구 요청을 수락했습니다.");
+    }
+
+    @Operation(summary = "친구 요청 거절")
+    @DeleteMapping("/reject")
+    public ResponseEntity<String> rejectFriendRequest(
+            @PathVariable String userUuid,
+            @RequestParam String friendUuid
+    ) {
+        friendService.rejectFriendRequest(userUuid, friendUuid);
+        return ResponseEntity.ok("친구 요청을 거절했습니다.");
+    }
+
+    @Operation(summary = "친구 삭제")
+    @DeleteMapping
+    public ResponseEntity<String> deleteFriend(
+            @PathVariable String userUuid,
+            @RequestParam String friendUuid
+    ) {
+        friendService.deleteFriend(userUuid, friendUuid);
+        return ResponseEntity.ok("친구가 삭제되었습니다.");
+    }
+
 }

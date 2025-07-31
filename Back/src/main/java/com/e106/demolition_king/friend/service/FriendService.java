@@ -10,4 +10,7 @@ public interface FriendService {
     List<FriendDto> getFriends(String userUuid);
     List<FriendStatusVo> getFriendListWithStatus(String userUuid);
     void sendFriendRequest(String senderUuid, FriendRequestDto requestDto);
+    void acceptFriendRequest(String receiverUuid, String requesterUuid);
+    void rejectFriendRequest(String receiverUuid, String requesterUuid);
+    void deleteFriend(String userUuid, String friendUuid);
 }
