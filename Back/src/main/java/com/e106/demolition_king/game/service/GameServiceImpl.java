@@ -1,9 +1,12 @@
 package com.e106.demolition_king.game.service;
 
+import com.e106.demolition_king.game.dto.GoldDto;
 import com.e106.demolition_king.game.dto.ReportDto;
 import com.e106.demolition_king.game.dto.ReportPerDateRequestDto;
+import com.e106.demolition_king.game.entity.Gold;
 import com.e106.demolition_king.game.entity.Report;
 import com.e106.demolition_king.game.entity.ReportPerDate;
+import com.e106.demolition_king.game.repository.GoldRepository;
 import com.e106.demolition_king.game.repository.ReportPerDateRepository;
 import com.e106.demolition_king.game.repository.ReportRepository;
 import com.e106.demolition_king.game.vo.out.ReportUpdateResponseVo;
@@ -41,6 +44,7 @@ public class GameServiceImpl implements GameService {
 
     private final ReportRepository reportRepository;
     private final ReportPerDateRepository reportPerDateRepository;
+    private final GoldRepository goldRepository;
 
     @Override
     @Transactional
@@ -118,5 +122,42 @@ public class GameServiceImpl implements GameService {
                             reportPerDateRepository.save(newReport);
                         }
                 );
+    }
+
+    @Transactional
+    public void updateGold(GoldDto dto) {
+        Gold gold = goldRepository.findByUserUuid(dto.getUserUuid())
+                .orElseThrow(() -> new IllegalArgumentException("해당 유저의 골드 정보가 존재하지 않습니다: " + dto.getUserUuid()));
+
+        int updatedGold = (gold.getGoldCnt() != null ? gold.getGoldCnt() : 0) + dto.getGoldCnt();
+        gold.setGoldCnt(updatedGold);
+        goldRepository.save(gold);
+    }
+
+    public int getGold(String userUuid) {
+        Gold gold = goldRepository.findByUserUuid(userUuid)
+                .orElseThrow(() -> new IllegalArgumentException("해당 유저의 골드 정보가 존재하지 않습니다: " + userUuid));
+
+       return gold.getGoldCnt();
+    }
+
+    @Override
+    @Transactional
+    public String payGold(String userUuid, Integer spendGold) {
+        // 1. 현재 골드 가져오기
+        Gold gold = goldRepository.findByUserUuid(userUuid)
+                .orElseThrow(() -> new IllegalArgumentException("해당 유저의 골드 정보가 존재하지 않습니다: " + userUuid));
+
+        int currentGold = (gold.getGoldCnt() != null ? gold.getGoldCnt() : 0);
+
+        // 2. 보유 골드 부족 시 예외 발생
+        if (currentGold < spendGold) {
+           return "보유 골드가 부족합니다. 현재 골드: " + currentGold + ", 사용 요청: " + spendGold;
+        }
+
+        // 3. 골드 차감 및 저장
+        gold.setGoldCnt(currentGold - spendGold);
+        goldRepository.save(gold);
+        return "정상처리 되었습니다.";
     }
 }
