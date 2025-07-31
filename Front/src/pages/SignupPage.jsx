@@ -2,8 +2,24 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import '../styles/SignupPage.css';
 import loginBack from '../assets/images/login/loginbackf.png';
+import profileBack from '../assets/images/login/profileback.png';
+import girl1 from '../assets/images/character/girl1.png';
+import girl2 from '../assets/images/character/girl2.png';
+import girl3 from '../assets/images/character/girl3.png';
+import boy1 from '../assets/images/character/boy1.png';
+import boy2 from '../assets/images/character/boy2.png';
+import boy3 from '../assets/images/character/boy3.png';
 
 function SignUp() {
+  const profileList = [
+  { image: girl1 },
+  { image: boy1 },
+  { image: girl2 },
+  { image: boy3 },
+  { image: girl3 },
+  { image: boy3 }
+];
+
   const [email, setEmail] = useState('');
   const [authCode, setAuthCode] = useState('');
   const [isVerified, setIsVerified] = useState(false);
@@ -106,8 +122,17 @@ function SignUp() {
     <div className="signup-page" style={{ backgroundImage: `url(${loginBack})` }}>
       <div className="signup-box">
         
-        <div className="character-select-box">
-          {/* 추후 캐릭터 선택 UI 구현 */}
+        <div
+          className="character-select-box"
+          style={{ backgroundImage: `url(${profileBack})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+        >
+          <div className="character-grid">
+            {profileList.map((profile, index) => (
+              <div key={index} className="character-item">
+                <img src={profile.image} alt={`Character ${index + 1}`} />
+              </div>
+            ))}
+          </div>
         </div>
 
         <form className="signup-form" onSubmit={handleSignup}>
