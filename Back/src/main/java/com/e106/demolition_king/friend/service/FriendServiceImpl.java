@@ -5,6 +5,7 @@ import com.e106.demolition_king.friend.dto.FriendRequestDto;
 import com.e106.demolition_king.friend.entity.Friend;
 import com.e106.demolition_king.friend.repository.FriendRepository;
 import com.e106.demolition_king.friend.service.validator.FriendValidator;
+import com.e106.demolition_king.friend.sse.SseEmitters;
 import com.e106.demolition_king.friend.vo.out.FriendStatusVo;
 import com.e106.demolition_king.friend.websocket.FriendRedisService;
 import com.e106.demolition_king.friend.websocket.FriendWebSocketService;
@@ -12,6 +13,7 @@ import com.e106.demolition_king.friend.websocket.PresenceService;
 import com.e106.demolition_king.user.entity.User;
 import com.e106.demolition_king.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +33,7 @@ public class FriendServiceImpl implements FriendService {
     private final FriendValidator friendValidator;
     private final FriendWebSocketService friendWebSocketService;
     private final FriendRedisService friendRedisService;
+    private final SseEmitters sseEmitters;
 
     @Override
     public List<FriendStatusVo> getInvitableFriends(String userUuid) {
@@ -102,7 +105,6 @@ public class FriendServiceImpl implements FriendService {
                 .collect(Collectors.toList());
     }
 
-
     @Transactional
     @Override
     public void sendFriendRequest(String senderUuid, FriendRequestDto requestDto) {
@@ -123,12 +125,12 @@ public class FriendServiceImpl implements FriendService {
                 .build();
         friendRepository.save(friend);
 
-        // 다음 단계: 온라인 여부에 따라 STOMP or Redis 알림
-        String friendUuid = receiver.getUserUuid();
-        if (presenceService.isOnline(friendUuid)) {
-            friendWebSocketService.sendFriendRequest(friendUuid, sender.getUserUuid(), sender.getUserNickname());
+        // SSE 알림 전송
+        String receiverUuid = receiver.getUserUuid();
+        if (sseEmitters.isOnline(receiverUuid)) {
+            String message = sender.getUserNickname() + " sent you a friend request!";
+            sseEmitters.send(receiverUuid, message);
         } else {
-            friendRedisService.savePendingRequest(friendUuid, sender.getUserUuid(), sender.getUserNickname());
         }
     }
 
