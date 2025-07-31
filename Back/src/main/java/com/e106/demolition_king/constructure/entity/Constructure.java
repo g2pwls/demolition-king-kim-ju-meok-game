@@ -27,4 +27,7 @@ public class Constructure {
 
     @Column(name = "rate", nullable = false)
     private BigDecimal rate; // 예: 0.1 → 10%
+
+    @Column(name = "name", nullable = false)
+    private String name; // 예: 0.1 → 10%
 }

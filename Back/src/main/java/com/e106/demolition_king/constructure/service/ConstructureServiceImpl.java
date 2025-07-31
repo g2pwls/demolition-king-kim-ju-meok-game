@@ -5,6 +5,7 @@ import com.e106.demolition_king.constructure.entity.UserConstructure;
 import com.e106.demolition_king.constructure.repository.ConstructureRepository;
 import com.e106.demolition_king.constructure.repository.UserConstructureRepository;
 import com.e106.demolition_king.constructure.vo.out.ConstructureResponseVo;
+import com.e106.demolition_king.constructure.vo.out.GetConstructureResponseVo;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -72,5 +73,23 @@ public class ConstructureServiceImpl implements ConstructureService {
                 .toList();
 
         userConstructureRepository.saveAll(toSave);
+    }
+
+    public List<GetConstructureResponseVo> getUserConstructures(String userUuid) {
+        // 1. 보유한 건물 SEQ 조회
+        Set<Integer> ownedSeqSet = userConstructureRepository.findByUserUuid(userUuid).stream()
+                .map(UserConstructure::getConstructureSeq)
+                .collect(Collectors.toSet());
+        System.out.println("ownedSeqSet : " + ownedSeqSet);
+        // 2. 전체 건물 목록 조회
+        List<Constructure> allConstructures = constructureRepository.findAll();
+        System.out.println("allConstructures : " + allConstructures);
+        // 3. 전체 목록 순회하며 lock 여부 태깅
+        return allConstructures.stream()
+                .map(constructure -> GetConstructureResponseVo.fromEntityWithLock(
+                        constructure,
+                        ownedSeqSet.contains(constructure.getConstructureSeq()) // 보유한 경우만 lock: true
+                ))
+                .toList();
     }
 }

@@ -61,7 +61,7 @@ public class SecurityConfig {
 //                "http://54.180.226.214:8080"              // EC2 퍼블릭 IP에서 Swagger UI 실행하는 경우
         ));
 //        config.setAllowedOrigins(List.of("http://localhost:5173"));   // 허용할 프론트 주소
-        config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
+        config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","PATCH","OPTIONS"));
         config.setAllowedHeaders(List.of("*"));                       // 모든 요청 헤더 허용
         config.setAllowCredentials(true);                             // 쿠키/인증 헤더 허용
 

@@ -5,6 +5,7 @@ import com.e106.demolition_king.common.base.BaseResponse;
 import com.e106.demolition_king.constructure.service.ConstructureService;
 import com.e106.demolition_king.constructure.vo.in.ConstructureSaveRequestVo;
 import com.e106.demolition_king.constructure.vo.out.ConstructureResponseVo;
+import com.e106.demolition_king.constructure.vo.out.GetConstructureResponseVo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -36,4 +37,12 @@ public class ConstructureController {
         constructureService.insertNewConstructures(request.getUserUuid(), request.getConstructureSeqList());
         return BaseResponse.ok();
     }
+
+    @Operation(summary = "사용자 건물 조회", description = "사용자가 해금한 건물 조회")
+    @GetMapping("/getConstructure")
+    public BaseResponse<List<GetConstructureResponseVo>> generateConstructures(@RequestParam String userUuid) {
+        List<GetConstructureResponseVo> generated = constructureService.getUserConstructures(userUuid);
+        return BaseResponse.of(generated);
+    }
+
 }

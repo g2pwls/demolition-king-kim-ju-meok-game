@@ -10,12 +10,14 @@ public class ConstructureResponseVo {
     private Integer constructureSeq;
     private Integer hp;
     private String imageUrl;
+    private String name;
 
     public static ConstructureResponseVo fromEntity(Constructure entity) {
         return ConstructureResponseVo.builder()
                 .constructureSeq(entity.getConstructureSeq())
                 .hp(entity.getHp())
                 .imageUrl(entity.getImageUrl())
+                .name(entity.getName())
                 .build();
     }
 }
