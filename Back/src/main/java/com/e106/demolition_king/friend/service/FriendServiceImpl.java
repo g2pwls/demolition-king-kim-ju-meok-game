@@ -33,32 +33,75 @@ public class FriendServiceImpl implements FriendService {
     private final FriendRedisService friendRedisService;
 
     @Override
-    public List<FriendDto> getFriends(String userUuid) {
-        return friendRepository.findAllByUserUserUuid(userUuid).stream()
-                .map(f -> FriendDto.builder()
-                        .id(f.getId())
-                        .userUuid(f.getUser().getUserUuid())
-                        .friendUuid(f.getFriend().getUserUuid())
-                        .friendNickname(f.getFriend().getUserNickname())
-                        .createdAt(f.getCreatedAt())
-                        .updatedAt(f.getUpdatedAt())
-                        .build())
+    public List<FriendStatusVo> getInvitableFriends(String userUuid) {
+        return friendRepository.findAllByUserUserUuidAndStatus(userUuid, "FRIEND").stream()
+                .filter(friend -> {
+                    String targetUuid = friend.getFriend().getUserUuid();
+                    return presenceService.isOnline(targetUuid);
+                })
+                .map(friend -> {
+                    String targetUuid = friend.getFriend().getUserUuid();
+
+                    FriendDto dto = FriendDto.builder()
+                            .id(friend.getId())
+                            .userUuid(friend.getUser().getUserUuid())
+                            .friendUuid(targetUuid)
+                            .friendNickname(friend.getFriend().getUserNickname())
+                            .createdAt(friend.getCreatedAt())
+                            .updatedAt(friend.getUpdatedAt())
+                            .build();
+
+                    return FriendStatusVo.fromDto(dto, "online");
+                })
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<FriendStatusVo> getFriendListWithStatus(String userUuid) {
-        List<FriendDto> dtoList = getFriends(userUuid);
-
-        return dtoList.stream()
-                .map(dto -> {
-                    String friendUuid = dto.getFriendUuid();
-                    boolean isOnline = presenceService.isOnline(friendUuid);
+    public List<FriendStatusVo> getPendingRequestList(String myUuid) {
+        return friendRepository.findAllByFriendUserUuidAndStatus(myUuid, "PENDING").stream()
+                .map(f -> {
+                    String requesterUuid = f.getUser().getUserUuid();
+                    boolean isOnline = presenceService.isOnline(requesterUuid);
                     String status = isOnline ? "online" : "offline";
-                    return FriendStatusVo.fromDto(dto, status); // 이 부분이 핵심
+
+                    FriendDto dto = FriendDto.builder()
+                            .id(f.getId())
+                            .userUuid(requesterUuid)
+                            .friendUuid(f.getFriend().getUserUuid())
+                            .friendNickname(f.getUser().getUserNickname())  // 요청 보낸 사람
+                            .createdAt(f.getCreatedAt())
+                            .updatedAt(f.getUpdatedAt())
+                            .build();
+
+                    return FriendStatusVo.fromDto(dto, status);
                 })
                 .collect(Collectors.toList());
     }
+
+
+
+    @Override
+    public List<FriendStatusVo> getFriendListWithStatus(String userUuid) {
+        return friendRepository.findAllByUserUserUuidAndStatus(userUuid,"FRIEND").stream()
+                .map(f -> {
+                    String friendUuid = f.getFriend().getUserUuid();
+                    boolean isOnline = presenceService.isOnline(friendUuid);
+                    String status = isOnline ? "online" : "offline";
+
+                    FriendDto dto = FriendDto.builder()
+                            .id(f.getId())
+                            .userUuid(f.getUser().getUserUuid())
+                            .friendUuid(friendUuid)
+                            .friendNickname(f.getFriend().getUserNickname())
+                            .createdAt(f.getCreatedAt())
+                            .updatedAt(f.getUpdatedAt())
+                            .build();
+
+                    return FriendStatusVo.fromDto(dto, status);
+                })
+                .collect(Collectors.toList());
+    }
+
 
     @Transactional
     @Override
