@@ -1,0 +1,39 @@
+package com.e106.demolition_king.skin.controller;
+
+
+import com.e106.demolition_king.common.base.BaseResponse;
+import com.e106.demolition_king.constructure.service.ConstructureService;
+import com.e106.demolition_king.constructure.vo.in.ConstructureSaveRequestVo;
+import com.e106.demolition_king.constructure.vo.out.ConstructureResponseVo;
+import com.e106.demolition_king.constructure.vo.out.GetConstructureResponseVo;
+import com.e106.demolition_king.skin.service.SkinServiceImpl;
+import com.e106.demolition_king.skin.vo.in.SelectSkinRequestVo;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/skins")
+@Tag(name = "Skin", description = "스킨 관련 API")
+@RequiredArgsConstructor
+public class SkinController {
+
+    private final SkinServiceImpl skinService;
+
+    @Operation(summary = "스킨 선택", description = "원하는 스킨을 선택하여 플레이용 스킨 적용")
+    @GetMapping("/selectSkin")
+    public BaseResponse<String> generateConstructures(@ParameterObject SelectSkinRequestVo vo) {
+        skinService.selectSkin(vo.getUserUuid(), vo.getPlayerSkinItemSeq());
+        return BaseResponse.of("스킨 선택 완료");
+    }
+
+    @Operation(summary = "선택된 스킨 url 조회", description = "회원의 선택된 스킨 url을 가져옵니다.")
+    @GetMapping("/getSkin")
+    public BaseResponse<String> generateConstructures(@RequestParam String userUuid) {
+        return BaseResponse.of(skinService.getSelectedSkinImageUrl(userUuid));
+    }
+}
