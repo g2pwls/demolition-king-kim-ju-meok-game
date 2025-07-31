@@ -6,7 +6,7 @@ spring:
   datasource:
     #001
     #내부 배포용
-  url: jdbc:mysql://172.26.14.249/demolition?serverTimezone=Asia/Seoul
+    url: jdbc:mysql://172.26.14.249/demolition?serverTimezone=Asia/Seoul
     #외부 local용
 #    url: jdbc:mysql://54.180.226.214/demolition?serverTimezone=Asia/Seoul
     username: root
