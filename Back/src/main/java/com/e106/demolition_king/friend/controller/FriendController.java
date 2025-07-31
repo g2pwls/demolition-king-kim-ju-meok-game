@@ -12,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Tag(name = "Friend", description = "친구 목록 조회 API")
 @RestController
@@ -21,6 +20,21 @@ import java.util.stream.Collectors;
 public class FriendController {
 
     private final FriendService friendService;
+
+
+    @Operation(summary = "초대 가능한 친구 목록 조회", description = "FRIEND 상태이며 현재 온라인 중인 친구만 반환")
+    @GetMapping("/invite-targets")
+    public BaseResponse<List<FriendStatusVo>> listInvitableFriends(@PathVariable String userUuid) {
+        List<FriendStatusVo> inviteTargets = friendService.getInvitableFriends(userUuid);
+        return BaseResponse.of(inviteTargets);
+    }
+
+    @Operation(summary = "받은 친구 요청 목록 조회")
+    @GetMapping("/requests")
+    public BaseResponse<List<FriendStatusVo>> listFriendRequests(@PathVariable String userUuid) {
+        List<FriendStatusVo> pendingList = friendService.getPendingRequestList(userUuid);
+        return BaseResponse.of(pendingList);
+    }
 
     @Operation(summary = "친구 요청 보내기")
     @PostMapping("/invite")
@@ -35,16 +49,7 @@ public class FriendController {
         return ResponseEntity.ok("친구 요청이 전송되었습니다.");
     }
 
-    @Operation(summary = "친구 목록 조회", description = "특정 사용자의 친구 목록을 반환합니다.")
-    @GetMapping
-    public BaseResponse<List<FriendResponseVo>> listFriends(@PathVariable String userUuid) {
-        List<FriendResponseVo> friends = friendService.getFriends(userUuid).stream()
-                .map(FriendResponseVo::fromDto)
-                .collect(Collectors.toList());
-        return BaseResponse.of(friends);
-    }
-
-    @Operation(summary = "친구 목록 + 온라인 상태 조회", description = "친구 목록과 온라인 상태를 반환합니다.")
+    @Operation(summary = "친구 목록 + 온라인 상태 조회", description = "친구 목록과 온라인 상태를 반환(내uuid를 기준으로 frienduuid 목록을 온라인유무를 반환)")
     @GetMapping("/status")
     public BaseResponse<List<FriendStatusVo>> listFriendsWithStatus(@PathVariable String userUuid) {
         List<FriendStatusVo> friendStatusList = friendService.getFriendListWithStatus(userUuid);
