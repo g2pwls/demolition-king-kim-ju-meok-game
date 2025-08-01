@@ -6,6 +6,7 @@ import com.e106.demolition_king.friend.service.FriendService;
 import com.e106.demolition_king.friend.vo.out.FriendResponseVo;
 import com.e106.demolition_king.game.service.GameService;
 import com.e106.demolition_king.game.service.GameServiceImpl;
+import com.e106.demolition_king.game.vo.in.GoldUpdateRequestVo;
 import com.e106.demolition_king.game.vo.in.ReportPerDateUpdateRequestVo;
 import com.e106.demolition_king.game.vo.in.ReportUpdateRequestVo;
 import com.e106.demolition_king.game.vo.out.ReportResponseVo;
@@ -53,6 +54,19 @@ public class GameController {
     public BaseResponse<String> upsertReport(@ParameterObject ReportPerDateUpdateRequestVo vo) {
         gameService.upsertReport(vo.toDto(vo));
         return BaseResponse.of("일일 통계 저장 완료");
+    }
+
+    @Operation(summary = "게임 종료시 골드 업데이트", description = "게임 종료시 골드 업데이트")
+    @PatchMapping("/addGoldCnt")
+    public BaseResponse<String> upsertReport(@ParameterObject GoldUpdateRequestVo vo) {
+        gameService.updateGold(vo.toDto(vo));
+        return BaseResponse.of("골드 저장 완료");
+    }
+
+    @Operation(summary = "회원 골드 조회", description = "회원의 골드를 조회합니다.")
+    @GetMapping("/{userUuid}/getGoldByUuid")
+    public BaseResponse<Integer> upsertReport(@PathVariable String userUuid) {
+        return BaseResponse.of(gameService.getGold(userUuid));
     }
 
 }

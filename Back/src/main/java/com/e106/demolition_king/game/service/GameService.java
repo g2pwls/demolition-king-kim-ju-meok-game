@@ -1,6 +1,7 @@
 package com.e106.demolition_king.game.service;
 
 
+import com.e106.demolition_king.game.dto.GoldDto;
 import com.e106.demolition_king.game.dto.ReportDto;
 import com.e106.demolition_king.game.dto.ReportPerDateRequestDto;
 import com.e106.demolition_king.user.dto.SignupRequestDto;
@@ -16,4 +17,10 @@ public interface GameService {
     public List<ReportDto> getUserReport(String uuid);
 
     void upsertReport(ReportPerDateRequestDto dto);
+
+    public void updateGold(GoldDto dto);
+
+    public int getGold(String userUuid);
+
+    public String payGold(String userUuid, Integer spendGold);
 }
