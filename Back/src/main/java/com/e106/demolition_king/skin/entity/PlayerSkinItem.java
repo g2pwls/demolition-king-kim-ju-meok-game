@@ -18,4 +18,6 @@ public class PlayerSkinItem {
     private String image;
 
     private String name;
+
+    private Integer price;
 }

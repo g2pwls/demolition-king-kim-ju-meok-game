@@ -24,6 +24,8 @@ public class PlayerSkin {
     @Column(name = "playerskin_item_seq")
     private Integer playerSkinItemSeq;
 
+    private Integer isUnlock;
+
 //    @CreationTimestamp
 //    private Timestamp createdAt;
 //
