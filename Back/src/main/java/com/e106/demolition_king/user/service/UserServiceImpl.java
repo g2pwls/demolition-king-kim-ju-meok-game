@@ -7,6 +7,7 @@ import com.e106.demolition_king.user.entity.User;
 import com.e106.demolition_king.user.repository.UserRepository;
 import com.e106.demolition_king.user.vo.in.LoginRequestVo;
 import com.e106.demolition_king.user.vo.in.ResetPasswordRequestVo;
+import com.e106.demolition_king.user.vo.out.GetUserInfoResponseVo;
 import com.e106.demolition_king.user.vo.out.NicknameCheckResponseVo;
 import com.e106.demolition_king.user.vo.out.ResetPasswordResponseVo;
 import com.e106.demolition_king.user.vo.out.TokenResponseVo;
@@ -184,4 +185,23 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         // 4) 로그아웃 처리: 남아 있는 RefreshToken 삭제
         redisTemplate.delete("RT:" + userUuid);
     }
+
+    @Transactional(readOnly = true)
+    public GetUserInfoResponseVo getUserByUuid(String userUuid) {
+        User user = userRepository.findByUserUuid(userUuid)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        return GetUserInfoResponseVo.builder()
+                .userUuid(user.getUserUuid())
+                .userEmail(user.getUserEmail())
+                .password(user.getPassword())
+                .userNickname(user.getUserNickname())
+                .kakaoAccessToken(user.getKakaoAccessToken())
+                .googleAccess(user.getGoogleAccess())
+                .profile(user.getProfile())
+                .createdAt(user.getCreatedAt())
+                .updatedAt(user.getUpdatedAt())
+                .build();
+    }
+
 }
