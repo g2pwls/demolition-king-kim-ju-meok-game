@@ -45,7 +45,6 @@ public class SkinController {
         return BaseResponse.of(skinService.getUserSkinList(userUuid));
     }
 
-
     //    스킨 구매시 해금 update
     @Operation(summary = "스킨 구매", description = "회원의 골드로 스킨을 구매하여 해금합니다.")
     @PatchMapping("/unLockUserSkin")
