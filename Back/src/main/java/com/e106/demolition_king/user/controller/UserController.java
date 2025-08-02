@@ -7,10 +7,8 @@ import com.e106.demolition_king.user.vo.in.LoginRequestVo;
 import com.e106.demolition_king.user.vo.in.NicknameCheckRequestVo;
 import com.e106.demolition_king.user.vo.in.ResetPasswordRequestVo;
 import com.e106.demolition_king.user.vo.in.WithdrawRequestVo;
-import com.e106.demolition_king.user.vo.out.NicknameCheckResponseVo;
-import com.e106.demolition_king.user.vo.out.ResetPasswordResponseVo;
-import com.e106.demolition_king.user.vo.out.SimpleMessageResponseVo;
-import com.e106.demolition_king.user.vo.out.TokenResponseVo;
+import com.e106.demolition_king.user.vo.out.*;
+import com.e106.demolition_king.util.JwtUtil;
 import io.swagger.v3.oas.annotations.Parameter;import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "회원&권한", description = "회원&권한 인증 관련 API")
 public class UserController {
     private final UserServiceImpl userService;
+    private final JwtUtil jwtUtil;
 
     @Operation(
             summary = "회원 가입",
@@ -107,4 +106,38 @@ public class UserController {
                 .message("Withdraw success")
                 .build());
     }
+
+    @Operation(
+            summary = "회원 조회",
+            description = "회원 uuid로 회원 조회합니다.",
+            tags = {"회원&권한"}
+    )
+    @GetMapping("/getUserInfo")
+    public BaseResponse<GetUserInfoResponseVo> getUserInfo(
+            @RequestHeader("Authorization") String authorizationHeader
+    ) {
+        // 1. Bearer 토큰 파싱
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            throw new RuntimeException("Authorization 헤더가 잘못되었습니다.");
+        }
+
+        String token = authorizationHeader.substring(7); // "Bearer " 제거
+
+        // 2. 유효성 검사
+        if (!jwtUtil.validateToken(token)) {
+            throw new RuntimeException("유효하지 않은 토큰입니다.");
+        }
+
+        // 3. UUID 추출
+        String userUuid = jwtUtil.getUserUuid(token);
+
+        // 4. 서비스 호출
+        return BaseResponse.of(userService.getUserByUuid(userUuid));
+    }
+
+
+
+
+
+
 }
