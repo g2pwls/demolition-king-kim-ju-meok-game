@@ -2,10 +2,10 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:8080/api', // API 서버 주소
+  baseURL: 'http://54.180.226.214:8080/api',
 });
 
-// 요청 전에 accessToken을 자동으로 헤더에 붙임
+// 요청마다 최신 토큰 자동 추가
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('accessToken');

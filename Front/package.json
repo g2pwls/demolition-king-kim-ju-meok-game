@@ -16,6 +16,7 @@
     "framer-motion": "^12.23.12",
     "gsap": "^3.13.0",
     "howler": "^2.2.4",
+    "jwt-decode": "^4.0.0",
     "node-fetch": "^3.3.2",
     "openvidu-browser": "^2.31.0",
     "pixi.js": "^7.4.3",

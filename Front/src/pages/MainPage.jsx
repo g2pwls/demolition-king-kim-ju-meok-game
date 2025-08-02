@@ -208,14 +208,47 @@ const rejectFriend = (requestId) => {
   const [isFriendPopupOpen, setIsFriendPopupOpen] = useState(false); // ✅ 반드시 함수 컴포넌트 내부에
   const [activeTab, setActiveTab] = useState('통계');
 
-  const [userInfo] = useState({
-    nickname: '김싸피',
-    email: 'ssafy@samsung.com',
-    avatarUrl: avatarUrl // 혹은 다른 아바타 경로
-  });
+  const [userInfo, setUserInfo] = useState(null);
+
+useEffect(() => {
+  const fetchUserInfo = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        console.error('⛔️ 토큰이 없습니다. 로그인 먼저 필요합니다.');
+        return;
+      }
+
+      const res = await api.get('/user/auth/getUserInfo');
+
+      console.log("✅ 받은 유저 정보:", res.data.result);
+      if (res.data.result) {
+        setUserInfo(res.data.result);
+      }
+    } catch (err) {
+      console.error('유저 정보 가져오기 실패:', err);
+    }
+  };
+
+  fetchUserInfo();
+}, []);
+
+
+// userInfo 바뀌면 nickname, email 같이 업데이트
+useEffect(() => {
+  if (userInfo) {
+    setEditNickname(userInfo.nickname);
+    setEditEmail(userInfo.email);
+    setUserNickname(userInfo.nickname);  // 캐릭터 아래 닉네임 표기용
+  }
+}, [userInfo]);
+
+
+
+
   const [isEditing, setIsEditing] = useState(false);           // 수정 모드 진입 여부
-  const [editNickname, setEditNickname] = useState(userInfo.nickname); // 수정할 닉네임 임시 저장
-  const [editEmail, setEditEmail] = useState(userInfo.email);          // 수정할 이메일 임시 저장
+  const [editNickname, setEditNickname] = useState(userInfo?.nickname); // 수정할 닉네임 임시 저장
+  const [editEmail, setEditEmail] = useState(userInfo?.email);          // 수정할 이메일 임시 저장
   const [isEditingNickname, setIsEditingNickname] = useState(false);
   const [playStats, setPlayStats] = useState({
     totalPlayTime: 157,       // 누적 (분 단위)
@@ -235,19 +268,27 @@ const rejectFriend = (requestId) => {
   };
 
   useEffect(() => {
-  api.post('/user/auth/login', null, {
-    params: {
-      email: 'test@email.com',
-      password: '1234',
-    }
-  })
-    .then((res) => {
-      console.log('✅ 로그인 테스트 성공:', res.data);
-    })
-    .catch((err) => {
-      console.error('❌ 로그인 테스트 실패:', err);
-    });
+  const userEmail = localStorage.getItem('userEmail');
+  console.log('🔐 로그인한 유저 이메일:', userEmail);
+
+  const userNickname = localStorage.getItem('userNickname');
+  console.log('🔐 로그인한 유저 닉네임:', userNickname);
 }, []);
+
+//   useEffect(() => {
+//   api.post('/user/auth/login', null, {
+//     params: {
+//       email: 'yhjyhw1004@naver.com',
+//       password: '1234',
+//     }
+//   })
+//     .then((res) => {
+//       console.log('✅ 로그인 테스트 성공:', res.data);
+//     })
+//     .catch((err) => {
+//       console.error('❌ 로그인 테스트 실패:', err);
+//     });
+// }, []);
 
     useEffect(() => {
   if (dateRange[0] && dateRange[1]) {
@@ -317,7 +358,7 @@ const rejectFriend = (requestId) => {
       </div>
 
       {modalType && (
-        <div className="modal-overlay" onClick={() => {setModalType(null);setActiveTab('통계'); setIsEditing(false); setIsEditingNickname(false); setEditNickname(userInfo.nickname);}}>
+        <div className="modal-overlay" onClick={() => {setModalType(null);setActiveTab('통계'); setIsEditing(false); setIsEditingNickname(false); setEditNickname(userInfo?.nickname);}}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
 
             {modalType === 'tutorial' && <img src={tutorialModal} alt="튜토리얼 모달" className="tutorial-modal-image"/>}
@@ -329,9 +370,9 @@ const rejectFriend = (requestId) => {
                 <div className="mypage-overlay">
                   {/* 왼쪽: 프로필 영역 */}
                   <div className="mypage-left">
-                    <img className="mypage-avatar" src={userInfo.avatarUrl} alt="프로필" />
-                    <div className="mypage-name">{userInfo.nickname}</div>
-                    <div className="mypage-email">{userInfo.email}</div>
+                    <img className="mypage-avatar" src={userInfo?.avatarUrl} alt="프로필" />
+                    <div className="mypage-name">{userInfo?.userNickname}</div>
+                    <div className="mypage-email">{userInfo?.userEmail}</div>
                     <button
                       className={`mypage-edit-btn ${isEditing ? 'disabled' : ''}`}
                       onClick={() => setIsEditing(!isEditing)}>정보수정</button>
