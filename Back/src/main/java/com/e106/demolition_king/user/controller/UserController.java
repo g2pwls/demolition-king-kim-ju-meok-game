@@ -7,10 +7,7 @@ import com.e106.demolition_king.user.vo.in.LoginRequestVo;
 import com.e106.demolition_king.user.vo.in.NicknameCheckRequestVo;
 import com.e106.demolition_king.user.vo.in.ResetPasswordRequestVo;
 import com.e106.demolition_king.user.vo.in.WithdrawRequestVo;
-import com.e106.demolition_king.user.vo.out.NicknameCheckResponseVo;
-import com.e106.demolition_king.user.vo.out.ResetPasswordResponseVo;
-import com.e106.demolition_king.user.vo.out.SimpleMessageResponseVo;
-import com.e106.demolition_king.user.vo.out.TokenResponseVo;
+import com.e106.demolition_king.user.vo.out.*;
 import io.swagger.v3.oas.annotations.Parameter;import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -107,4 +104,20 @@ public class UserController {
                 .message("Withdraw success")
                 .build());
     }
+
+    @Operation(
+            summary = "회원 조회",
+            description = "회원 uuid로 회원 조회합니다.",
+            tags = {"회원&권한"}
+    )
+    @GetMapping("/getUserInfo")
+    public BaseResponse<GetUserInfoResponseVo> getUserInfo(@RequestParam String userUuid){
+        return BaseResponse.of( userService.getUserByUuid(userUuid));
+    }
+
+
+
+
+
+
 }
