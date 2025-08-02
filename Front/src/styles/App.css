@@ -1,4 +1,4 @@
-div,
+/* div,
 body,
 img,
 button,
@@ -8,7 +8,28 @@ select,
 textarea {
   cursor: url('/mouse65.png') 16 16, auto;
   /* 16 16은 핫스팟 위치(x, y)입니다. 마우스 클릭 기준점이 PNG에서 어디인지 지정 */
+/* } */ *
+
+/* 기본 커서: 클릭 불가능 영역은 mousego */
+body,
+div {
+  cursor: url('/mouse50.png') 0 0, auto;
 }
+
+/* 클릭 가능한 요소는 기본도 mouse65 */
+button,
+img,
+input,
+a[href],
+input[type="button"],
+input[type="submit"],
+input[type="checkbox"],
+input[type="radio"],
+select,
+textarea {
+  cursor: url('/mouse65.png') 16 16, auto;
+}
+
 
 @font-face {
   font-family: 'DungGeunMo';

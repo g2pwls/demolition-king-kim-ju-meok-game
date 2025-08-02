@@ -7,7 +7,7 @@ WORKDIR /app
 # package.json과 lock 파일 복사 후 의존성 설치
 COPY package*.json ./
 RUN npm install
-
+# 1
 # 전체 앱 소스 복사
 COPY . .
 

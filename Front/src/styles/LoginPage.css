@@ -123,3 +123,20 @@ body, .login-page-background, .login-box, .login-form, .form-row, .login-button,
   color: #e6c200; /* ← 마우스 호버 시 색상 변경 (선택사항) */
 }
 
+/* 뒤로가기 버튼 - 왼쪽 상단 */
+.back-button {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  z-index: 10;
+}
+
+.back-button img {
+  width: 100px;
+  height: 100px;
+  image-rendering: pixelated;
+}
