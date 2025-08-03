@@ -3,11 +3,13 @@ package com.e106.demolition_king.game.vo.in;
 import com.e106.demolition_king.game.dto.ReportDto;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Getter
+@Setter
 @Builder
 public class ReportUpdateRequestVo {
     private String userUuid;

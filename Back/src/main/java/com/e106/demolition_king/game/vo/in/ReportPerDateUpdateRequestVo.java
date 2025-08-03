@@ -4,12 +4,14 @@ import com.e106.demolition_king.game.dto.ReportDto;
 import com.e106.demolition_king.game.dto.ReportPerDateRequestDto;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 @Getter
+@Setter
 @Builder
 public class ReportPerDateUpdateRequestVo {
     private String userUuid;

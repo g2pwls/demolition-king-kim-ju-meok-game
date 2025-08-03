@@ -6,6 +6,7 @@ import com.e106.demolition_king.constructure.service.ConstructureService;
 import com.e106.demolition_king.constructure.vo.in.ConstructureSaveRequestVo;
 import com.e106.demolition_king.constructure.vo.out.ConstructureResponseVo;
 import com.e106.demolition_king.constructure.vo.out.GetConstructureResponseVo;
+import com.e106.demolition_king.util.JwtUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ import java.util.List;
 public class ConstructureController {
 
     private final ConstructureService constructureService;
+    private final JwtUtil jwtUtil;
 
     @Operation(summary = "건물 생성 요청", description = "입력 개수에 맞춰 확률적으로 건물 생성")
     @GetMapping("/generate")
@@ -40,7 +42,21 @@ public class ConstructureController {
 
     @Operation(summary = "사용자 건물 조회", description = "사용자가 해금한 건물 조회")
     @GetMapping("/getConstructure")
-    public BaseResponse<List<GetConstructureResponseVo>> generateConstructures(@RequestParam String userUuid) {
+    public BaseResponse<List<GetConstructureResponseVo>> generateConstructures(@RequestHeader("Authorization") String authorizationHeader) {
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            throw new RuntimeException("Authorization 헤더가 잘못되었습니다.");
+        }
+
+        String token = authorizationHeader.substring(7); // "Bearer " 제거
+
+        // 2. 유효성 검사
+        if (!jwtUtil.validateToken(token)) {
+            throw new RuntimeException("유효하지 않은 토큰입니다.");
+        }
+
+        // 3. UUID 추출
+        String userUuid = jwtUtil.getUserUuid(token);
+
         List<GetConstructureResponseVo> generated = constructureService.getUserConstructures(userUuid);
         return BaseResponse.of(generated);
     }
