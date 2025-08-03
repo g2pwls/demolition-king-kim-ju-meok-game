@@ -40,7 +40,7 @@ public enum BaseResponseStatus {
 
     // token
     TOKEN_NOT_VALID(HttpStatus.UNAUTHORIZED, false, 403, "토큰이 유효하지 않습니다."),
-
+    INVALID_AUTH_HEADER(HttpStatus.UNAUTHORIZED, false, 403, "헤더가 유효하지 않습니다."),
     // Users
     DUPLICATED_USER(HttpStatus.CONFLICT, false, 409, "이미 가입된 멤버입니다."),
     FAILED_TO_LOGIN(HttpStatus.UNAUTHORIZED, false, 400, "아이디 또는 패스워드를 다시 확인하세요."),

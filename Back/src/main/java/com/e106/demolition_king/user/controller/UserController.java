@@ -1,7 +1,9 @@
 package com.e106.demolition_king.user.controller;
 
 import com.e106.demolition_king.common.base.BaseResponse;
+import com.e106.demolition_king.common.base.BaseResponseStatus;
 import com.e106.demolition_king.user.dto.SignupRequestDto;
+import com.e106.demolition_king.user.dto.VerifyPasswordRequestDto;
 import com.e106.demolition_king.user.service.UserServiceImpl;
 import com.e106.demolition_king.user.vo.in.LoginRequestVo;
 import com.e106.demolition_king.user.vo.in.NicknameCheckRequestVo;
@@ -9,6 +11,7 @@ import com.e106.demolition_king.user.vo.in.ResetPasswordRequestVo;
 import com.e106.demolition_king.user.vo.in.WithdrawRequestVo;
 import com.e106.demolition_king.user.vo.out.*;
 import com.e106.demolition_king.util.JwtUtil;
+import com.fasterxml.jackson.databind.ser.Serializers;
 import io.swagger.v3.oas.annotations.Parameter;import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -51,8 +54,31 @@ public class UserController {
         NicknameCheckResponseVo result = userService.checkNickname(requestVo.getNickname());
         return BaseResponse.of(result);
     }
-
-
+    @Operation(
+            summary = "닉네임 변경",
+            description = "마이페이지에서 인증된 유저의 닉네임을 변경합니다.",
+            tags = {"회원&권한"}
+    )
+    @PutMapping("/nickname")
+    public BaseResponse<Void> changeNickname(
+            @RequestHeader(value = "Authorization", required = false) String authorizationHeader,
+            @RequestBody NicknameCheckRequestVo req
+    ) {
+        // 1) Authorization 헤더 검사
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            return BaseResponse.error(BaseResponseStatus.INVALID_AUTH_HEADER);
+        }
+        String token = authorizationHeader.substring(7);
+        // 2) JWT 유효성 검사
+        if (!jwtUtil.validateToken(token)) {
+            return BaseResponse.error(BaseResponseStatus.TOKEN_NOT_VALID);
+        }
+        String userUuid = jwtUtil.getUserUuid(token);
+        // 4) 닉네임 변경
+        userService.updateNickname(userUuid, req.getNickname());
+        // 5) 성공 응답
+        return BaseResponse.ok();
+    }
 
     @Operation(
             summary = "로그인",
@@ -63,16 +89,42 @@ public class UserController {
     public BaseResponse<TokenResponseVo> login(@ParameterObject LoginRequestVo vo) {
         return BaseResponse.of(userService.login(vo));
     }
+    @Operation(
+            summary = "비밀번호 검증",
+            description = "올바른 비밀번호를 입력했는지 검증합니다."
+    )
+    @PostMapping("/password/verify")
+    public BaseResponse<Void> verifyPassword(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestBody VerifyPasswordRequestDto dto
+    ) {
+        // 1. Bearer 토큰 파싱
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            throw new RuntimeException("Authorization 헤더가 잘못되었습니다.");
+        }
+        String token = authorizationHeader.substring(7); // "Bearer " 제거
+        // 2. 유효성 검사
+        if (!jwtUtil.validateToken(token)) {
+            throw new RuntimeException("유효하지 않은 토큰입니다.");
+        }
+
+        String userUuid = jwtUtil.getUserUuid(token);
+
+        if (!userService.isCurrentPasswordValid(userUuid, dto.getCurrentPassword())) {
+            throw new RuntimeException("현재 비밀번호가 일치하지 않습니다.");
+        }
+        return BaseResponse.ok();
+    }
+
 
     @Operation(
             summary = "비밀번호 변경",
-            description = "인증 완료된 이메일에 대해 새 비밀번호를 입력받아 변경합니다.",
-            tags = {"회원"}
+            description = "인증 완료된 이메일에 대해 새 비밀번호를 입력받아 변경합니다."
     )
     @PostMapping("/password/reset")
-    public BaseResponse<ResetPasswordResponseVo> resetPassword(
+    public BaseResponse<PasswordResponseVo> resetPassword(
             @RequestBody ResetPasswordRequestVo requestVo) {
-        ResetPasswordResponseVo result = userService.resetPassword(requestVo);
+        PasswordResponseVo result = userService.resetPassword(requestVo);
         return BaseResponse.of(result);
     }
 
