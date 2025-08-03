@@ -9,12 +9,11 @@ import com.e106.demolition_king.user.vo.in.LoginRequestVo;
 import com.e106.demolition_king.user.vo.in.ResetPasswordRequestVo;
 import com.e106.demolition_king.user.vo.out.GetUserInfoResponseVo;
 import com.e106.demolition_king.user.vo.out.NicknameCheckResponseVo;
-import com.e106.demolition_king.user.vo.out.ResetPasswordResponseVo;
+import com.e106.demolition_king.user.vo.out.PasswordResponseVo;
 import com.e106.demolition_king.user.vo.out.TokenResponseVo;
 import com.e106.demolition_king.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -69,26 +68,38 @@ public class UserServiceImpl implements UserService, UserDetailsService {
                     .build();
         }
     }
+    @Override
+    @Transactional
+    public void updateNickname(String userUuid, String newNickname) {
+        User user = userRepository.findByUserUuid(userUuid)
+                .orElseThrow(() -> new BaseException(BaseResponseStatus.NO_EXIST_USER));
+        user.setUserNickname(newNickname);
+    }
 
     @Override
-    public ResetPasswordResponseVo resetPassword(ResetPasswordRequestVo req) {
+    public boolean isCurrentPasswordValid(String userUuid, String currentPassword) {
+        User user = userRepository.findByUserUuid(userUuid)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+        return passwordEncoder.matches(currentPassword, user.getPassword());
+    }
+
+    @Override
+    public PasswordResponseVo resetPassword(ResetPasswordRequestVo req) {
         // 1) 비밀번호/확인 일치 여부
         if (!req.getNewPassword().equals(req.getConfirmPassword())) {
-            return ResetPasswordResponseVo.builder()
+            return PasswordResponseVo.builder()
                     .available(false)
                     .message("새 비밀번호와 확인이 일치하지 않습니다.")
                     .build();
         }
-
         // 2) 이메일로 사용자 조회
         User user = userRepository.findByUserEmail(req.getEmail())
                 .orElseThrow(() -> new BaseException(BaseResponseStatus.INVALID_EMAIL_ADDRESS));
-
         // 3) 비밀번호 업데이트
         user.setPassword(passwordEncoder.encode(req.getNewPassword()));
         userRepository.save(user);
 
-        return ResetPasswordResponseVo.builder()
+        return PasswordResponseVo.builder()
                 .available(true)
                 .message("비밀번호가 성공적으로 변경되었습니다.")
                 .build();
