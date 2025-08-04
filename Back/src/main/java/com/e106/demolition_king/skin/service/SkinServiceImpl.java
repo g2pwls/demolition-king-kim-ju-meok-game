@@ -1,5 +1,7 @@
 package com.e106.demolition_king.skin.service;
 
+import com.e106.demolition_king.common.base.BaseResponseStatus;
+import com.e106.demolition_king.common.exception.BaseException;
 import com.e106.demolition_king.constructure.entity.Constructure;
 import com.e106.demolition_king.constructure.entity.UserConstructure;
 import com.e106.demolition_king.constructure.repository.ConstructureRepository;
@@ -14,6 +16,8 @@ import com.e106.demolition_king.skin.repository.PlayerSkinItemRepository;
 import com.e106.demolition_king.skin.repository.PlayerSkinRepository;
 import com.e106.demolition_king.skin.vo.in.SelectSkinRequestVo;
 import com.e106.demolition_king.skin.vo.out.getSkinResponseVo;
+import com.e106.demolition_king.user.entity.User;
+import com.e106.demolition_king.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,38 +33,45 @@ public class SkinServiceImpl implements SkinService {
 
     private final PlayerSkinRepository playerSkinRepository;
     private final PlayerSkinItemRepository playerSkinItemRepository;
+    private final UserRepository userRepository;
     private final GameService gameService;
 
 
     @Override
+    @Transactional
     public void selectSkin(String userUuid, Integer playerSkinItemSeq) {
+        // 1) 사용자의 모든 스킨 조회
+        List<PlayerSkin> skins = playerSkinRepository.findAllByUser_UserUuid(userUuid);
 
-        // 1. 기존에 선택된 스킨이 있다면 선택 해제
-        playerSkinRepository.findByUserUuidAndIsSelect(userUuid, 1)
-                .ifPresent(oldSkin -> {
-                    oldSkin.setIsSelect(0);
-                    playerSkinRepository.save(oldSkin);
-                });
-
-        // 2. 새로 선택한 스킨을 가져와서 is_select = 1 로 변경
-        playerSkinRepository.findByUserUuidAndPlayerSkinItemSeq(userUuid, playerSkinItemSeq)
-                .ifPresentOrElse(newSkin -> {
-                    newSkin.setIsSelect(1);
-                    playerSkinRepository.save(newSkin);
-                }, () -> {
-                    // 기존에 없던 경우 새로 추가
-                    PlayerSkin newSkin = PlayerSkin.builder()
-                            .userUuid(userUuid)
-                            .playerSkinItemSeq(playerSkinItemSeq)
-                            .isSelect(1)
-                            .build();
-                    playerSkinRepository.save(newSkin);
-                });
+        boolean found = false;
+        for (PlayerSkin ps : skins) {
+            // 2) 선택하려는 스킨인지 확인
+            if (ps.getPlayerSkinItemSeq().equals(playerSkinItemSeq)) {
+                // 3) 잠겨 있으면 예외 발생
+                if (ps.getIsUnlock() == 0) {
+                    throw new BaseException(BaseResponseStatus.SKIN_LOCKED);
+                }
+                // 4) 잠금 해제된 스킨만 선택
+                ps.setIsSelect(1);
+                found = true;
+            }
+            // 5) 나머지 중에 이미 선택된 건이 있으면 해제
+            else if (ps.getIsSelect() == 1) {
+                ps.setIsSelect(0);
+            }
+        }
+        // 6) 목록에 아예 없는 스킨이면 => 잠긴 상태이므로 선택 불가
+        if (!found) {
+            throw new BaseException(BaseResponseStatus.SKIN_LOCKED);
+        }
+        // 7) 변경된 엔티티를 한 번에 저장
+        playerSkinRepository.saveAll(skins);
     }
+
 
     @Override
     public String getSelectedSkinImageUrl(String userUuid) {
-        return playerSkinRepository.findByUserUuidAndIsSelect(userUuid, 1)
+        return playerSkinRepository.findByUser_UserUuidAndIsSelect(userUuid, 1)
                 .flatMap(selectedSkin ->
                         playerSkinItemRepository.findById(selectedSkin.getPlayerSkinItemSeq()))
                 .map(PlayerSkinItem::getImage)
@@ -69,7 +80,7 @@ public class SkinServiceImpl implements SkinService {
 
     @Override
     public List<getSkinResponseVo> getUserSkinList(String userUuid) {
-        List<PlayerSkin> skins = playerSkinRepository.findAllByUserUuid(userUuid);
+        List<PlayerSkin> skins = playerSkinRepository.findAllByUser_UserUuid(userUuid);
         return skins.stream()
                 .map(skin -> {
                     String image = playerSkinItemRepository.findById(skin.getPlayerSkinItemSeq())
@@ -80,49 +91,45 @@ public class SkinServiceImpl implements SkinService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional
     @Override
+    @Transactional
     public String unlockPlayerSkin(SelectSkinRequestVo vo) {
-        String userUuid = vo.getUserUuid();
-        Integer itemSeq = vo.getPlayerSkinItemSeq();
+        String uuid = vo.getUserUuid();
+        Integer seq = vo.getPlayerSkinItemSeq();
 
-        // 이미 해당 스킨을 보유 중인지 확인
-        boolean alreadyUnlocked = playerSkinRepository
-                .findByUserUuidAndPlayerSkinItemSeq(userUuid, itemSeq)
-                .filter(skin -> skin.getIsUnlock() == 1)
-                .isPresent();
+        // 이미 언락됐는지 확인
+        Optional<PlayerSkin> opt = playerSkinRepository
+                .findByUser_UserUuidAndPlayerSkinItemSeq(uuid, seq);
 
-        if (alreadyUnlocked) {
+        if (opt.filter(ps -> ps.getIsUnlock() == 1).isPresent()) {
             return "이미 보유 중인 스킨입니다.";
         }
 
-        // 1. 스킨 아이템 가격 가져오기
-        PlayerSkinItem skinItem = playerSkinItemRepository.findById(itemSeq)
-                .orElseThrow(() -> new IllegalArgumentException("해당 스킨 아이템이 존재하지 않습니다."));
-
-        int price = skinItem.getPrice();  // price 필드 있다고 가정
-
-        // 2. 골드 차감 처리 (GameService 호출 또는 GoldRepository 직접 사용 가능)
-        String result = gameService.payGold(userUuid, price);
-        if (!"정상처리 되었습니다.".equals(result)) {
-            return result;
+        // 가격 차감
+        PlayerSkinItem item = playerSkinItemRepository.findById(seq)
+                .orElseThrow(() -> new IllegalArgumentException("스킨 아이템이 없습니다."));
+        String payResult = gameService.payGold(uuid, item.getPrice());
+        if (!"정상처리 되었습니다.".equals(payResult)) {
+            return payResult;
         }
-        Optional<PlayerSkin> existing = playerSkinRepository.findByUserUuidAndPlayerSkinItemSeq(userUuid, itemSeq);
 
-        PlayerSkin skin = existing.get();
-        skin.setIsUnlock(1);  // 언락 처리
-        playerSkinRepository.save(skin); // -> PK인 playerskin_seq로 update 됨
-        // 3. 스킨 언락 (PlayerSkin insert)
-//        PlayerSkin newSkin = PlayerSkin.builder()
-//                .userUuid(userUuid)
-//                .playerSkinItemSeq(itemSeq)
-//                .isSelect(0) // 기본은 선택 안 된 상태
-//                .isUnlock(1) // 언락시키기
-//                .build();
+        // 언락 로직
+        if (opt.isPresent()) {
+            opt.get().setIsUnlock(1);
+            // Dirty-Checking으로 UPDATE
+        } else {
+            // 새로 추가
+            User user = userRepository.findByUserUuid(uuid)
+                    .orElseThrow(() -> new BaseException(BaseResponseStatus.NO_EXIST_USER));
+            PlayerSkin newSkin = PlayerSkin.builder()
+                    .user(user)
+                    .playerSkinItemSeq(seq)
+                    .isSelect(0)
+                    .isUnlock(1)
+                    .build();
+            playerSkinRepository.save(newSkin);
+        }
 
-//        playerSkinRepository.save(newSkin);
         return "정상처리 되었습니다.";
     }
-
-
 }

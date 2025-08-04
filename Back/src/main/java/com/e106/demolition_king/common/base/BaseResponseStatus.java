@@ -74,7 +74,11 @@ public enum BaseResponseStatus {
     FRIEND_NOT_FOUND(HttpStatus.NOT_FOUND, false, 404, "해당 친구 관계를 찾을 수 없습니다."),
     FRIEND_ONLINE(HttpStatus.OK, true, 200, "친구가 온라인입니다."),
     FRIEND_OFFLINE(HttpStatus.OK, true, 200, "친구가 오프라인입니다."),
-    FRIEND_STATUS_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, false, 500, "친구 온라인 상태를 조회하는 도중 오류가 발생했습니다.");
+    FRIEND_STATUS_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, false, 500, "친구 온라인 상태를 조회하는 도중 오류가 발생했습니다."),
+
+    //스킨 관련 상태
+    SKIN_LOCKED(HttpStatus.BAD_REQUEST, false, 400, "스킨이 해금되지 않았습니다.");
+
     private final HttpStatusCode httpStatusCode;
     private final boolean isSuccess;
     private final int code;

@@ -79,7 +79,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     @Override
     public boolean isCurrentPasswordValid(String userUuid, String currentPassword) {
         User user = userRepository.findByUserUuid(userUuid)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BaseException(BaseResponseStatus.NO_EXIST_USER));
         return passwordEncoder.matches(currentPassword, user.getPassword());
     }
 
