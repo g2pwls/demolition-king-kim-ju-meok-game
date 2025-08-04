@@ -13,8 +13,8 @@ import java.util.Optional;
 public interface GoldRepository extends JpaRepository<Gold, Integer> {
 
     // userUuid로 골드 정보 조회
-    Optional<Gold> findByUserUuid(String userUuid);
+    Optional<Gold> findByUser_UserUuid(String userUuid);
 
     // 존재 여부 체크
-    boolean existsByUserUuid(String userUuid);
+    boolean existsByUser_UserUuid(String userUuid);
 }

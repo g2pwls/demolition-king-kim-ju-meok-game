@@ -1,5 +1,6 @@
 package com.e106.demolition_king.game.entity;
 
+import com.e106.demolition_king.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -21,9 +22,6 @@ public class Gold {
     @Column(name = "gold_seq")
     private Integer goldSeq;
 
-    @Column(name = "user_uuid", nullable = false, length = 36)
-    private String userUuid;
-
     @Column(name = "gold_cnt")
     private Integer goldCnt;
 
@@ -34,4 +32,8 @@ public class Gold {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_uuid", referencedColumnName = "user_uuid", nullable = false)
+    private User user;
 }

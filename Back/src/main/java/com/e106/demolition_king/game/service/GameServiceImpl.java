@@ -33,6 +33,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -45,6 +46,7 @@ public class GameServiceImpl implements GameService {
     private final ReportRepository reportRepository;
     private final ReportPerDateRepository reportPerDateRepository;
     private final GoldRepository goldRepository;
+    private final UserRepository userRepository;
 
     @Override
     @Transactional
@@ -124,18 +126,18 @@ public class GameServiceImpl implements GameService {
                 );
     }
 
+    @Override
     @Transactional
     public void updateGold(GoldDto dto) {
-        Gold gold = goldRepository.findByUserUuid(dto.getUserUuid())
+        Gold gold = goldRepository.findByUser_UserUuid(dto.getUserUuid())
                 .orElseThrow(() -> new IllegalArgumentException("해당 유저의 골드 정보가 존재하지 않습니다: " + dto.getUserUuid()));
 
         int updatedGold = (gold.getGoldCnt() != null ? gold.getGoldCnt() : 0) + dto.getGoldCnt();
         gold.setGoldCnt(updatedGold);
-        goldRepository.save(gold);
     }
-
+    @Override
     public int getGold(String userUuid) {
-        Gold gold = goldRepository.findByUserUuid(userUuid)
+        Gold gold = goldRepository.findByUser_UserUuid(userUuid)
                 .orElseThrow(() -> new IllegalArgumentException("해당 유저의 골드 정보가 존재하지 않습니다: " + userUuid));
 
        return gold.getGoldCnt();
@@ -145,7 +147,7 @@ public class GameServiceImpl implements GameService {
     @Transactional
     public String payGold(String userUuid, Integer spendGold) {
         // 1. 현재 골드 가져오기
-        Gold gold = goldRepository.findByUserUuid(userUuid)
+        Gold gold = goldRepository.findByUser_UserUuid(userUuid)
                 .orElseThrow(() -> new IllegalArgumentException("해당 유저의 골드 정보가 존재하지 않습니다: " + userUuid));
 
         int currentGold = (gold.getGoldCnt() != null ? gold.getGoldCnt() : 0);
