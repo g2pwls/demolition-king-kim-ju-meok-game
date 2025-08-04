@@ -11,5 +11,5 @@ import java.util.Optional;
 @Repository
 public interface ReportPerDateRepository extends JpaRepository<ReportPerDate, Integer> {
 
-    Optional<ReportPerDate> findByUserUuidAndPlayDate(String userUuid, String playDate);
+    Optional<ReportPerDate> findByUser_UserUuidAndPlayDate(String userUuid, String playDate);
 }

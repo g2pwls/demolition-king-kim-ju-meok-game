@@ -1,5 +1,9 @@
 package com.e106.demolition_king.user.entity;
 
+import com.e106.demolition_king.game.entity.Gold;
+import com.e106.demolition_king.game.entity.Report;
+import com.e106.demolition_king.game.entity.ReportPerDate;
+import com.e106.demolition_king.skin.entity.PlayerSkin;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -7,8 +11,10 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 @Entity
 @Data
@@ -61,5 +67,34 @@ public class User implements UserDetails {
     @Override
     public boolean isEnabled() { return true; }
 
+    @OneToOne(
+            mappedBy      = "user",
+            cascade       = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch         = FetchType.LAZY
+    )
+    private Gold gold;
+
+    @OneToMany(
+            mappedBy      = "user",
+            cascade       = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<PlayerSkin> playerSkins = new ArrayList<>();
+
+    @OneToOne(
+            mappedBy      = "user",
+            cascade       = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch         = FetchType.LAZY
+    )
+    private Report report;
+
+    @OneToMany(
+            mappedBy      = "user",
+            cascade       = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<ReportPerDate> reportPerDates = new ArrayList<>();
 
 }
