@@ -118,6 +118,15 @@ import arrowLeft from "../assets/images/main/left.png";
 import arrowRight from "../assets/images/main/right.png";
 import selectButton from "../assets/images/main/select.png";
 
+import girl1 from '../assets/images/character/girl1.png';
+import girl2 from '../assets/images/character/girl2.png';
+import girl3 from '../assets/images/character/girl3.png';
+import boy1 from '../assets/images/character/boy1.png';
+import boy2 from '../assets/images/character/boy2.png';
+import boy3 from '../assets/images/character/boy3.png';
+
+const profileImages = [girl1, boy1, girl2, boy2, girl3, boy3]; // 순서대로 profileSeq: 1~6
+
 function MainPage() {
     const [userNickname, setUserNickname] = useState('');
     const [friendRequests, setFriendRequests] = useState([
@@ -370,12 +379,31 @@ useEffect(() => {
                 <div className="mypage-overlay">
                   {/* 왼쪽: 프로필 영역 */}
                   <div className="mypage-left">
-                    <img className="mypage-avatar" src={userInfo?.avatarUrl} alt="프로필" />
+                    <img
+  className="mypage-avatar"
+  src={userInfo?.avatarUrl || profileImages[(userInfo?.profileSeq || 1) - 1]}
+  alt="프로필"
+/>
                     <div className="mypage-name">{userInfo?.userNickname}</div>
                     <div className="mypage-email">{userInfo?.userEmail}</div>
                     <button
                       className={`mypage-edit-btn ${isEditing ? 'disabled' : ''}`}
-                      onClick={() => setIsEditing(!isEditing)}>정보수정</button>
+                      onClick={() => setIsEditing(!isEditing)}>정보수정
+                    </button>
+                    <button
+  className="mypage-logout-btn"
+  onClick={() => {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('user'); // 로그인 시 저장한 사용자 정보도 제거
+    localStorage.removeItem('userNickname');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('selectedCharacter');
+    navigate('/login'); // 로그인 페이지로 이동 (라우트 이름은 실제 프로젝트에 맞게 수정)
+  }}
+>
+  로그아웃
+</button>
+
                   </div>
                   
                   <div className="mypage-right">
@@ -627,8 +655,12 @@ useEffect(() => {
             <div className="friend-popup-content">
               {/* 내 정보 */}
               <div className="my-profile">
-                <img src={userInfo.avatarUrl} alt="내 아바타" className="friend-avatar" />
-                <div className="friend-nickname">{userInfo.nickname} (나)</div>
+                <img
+  src={profileImages[(userInfo?.profileSeq || 1) - 1]}
+  className="friend-avatar"
+/>
+
+                <div className="friend-nickname">{userInfo.userNickname} (나)</div>
               </div>
 
               <hr className="friend-divider" />

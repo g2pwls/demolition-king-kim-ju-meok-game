@@ -311,6 +311,9 @@
 .mypage-left {
   width: 220px;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .mypage-avatar {
@@ -847,3 +850,17 @@
   height: 40px;
 }
 
+.mypage-logout-btn {
+  margin-top: 120px;
+  padding: 10px 30px;
+  background-color: #ff0000;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+}
+
+.mypage-logout-btn:hover {
+  background-color: #e14b4b;
+}

@@ -15,7 +15,7 @@ function SignUp() {
   { image: girl1 },
   { image: boy1 },
   { image: girl2 },
-  { image: boy3 },
+  { image: boy2 },
   { image: girl3 },
   { image: boy3 }
 ];
@@ -127,12 +127,17 @@ function SignUp() {
           style={{ backgroundImage: `url(${profileBack})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
         >
           <div className="character-grid">
-            {profileList.map((profile, index) => (
-              <div key={index} className="character-item">
-                <img src={profile.image} alt={`Character ${index + 1}`} />
-              </div>
-            ))}
-          </div>
+  {profileList.map((profile, index) => (
+    <div
+      key={index}
+      className={`character-item ${profileSeq === index + 1 ? 'selected' : ''}`}
+      onClick={() => setProfileSeq(index + 1)}
+    >
+      <img src={profile.image} alt={`Character ${index + 1}`} />
+    </div>
+  ))}
+</div>
+
         </div>
 
         <form className="signup-form" onSubmit={handleSignup}>
