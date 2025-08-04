@@ -16,6 +16,8 @@ import java.util.List;
 public interface GameService {
     public List<ReportDto> getUserReport(String uuid);
 
+    public void updateUserReport(ReportDto newData);
+
     void upsertReport(ReportPerDateRequestDto dto);
 
     public void updateGold(GoldDto dto);

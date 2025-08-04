@@ -1,5 +1,6 @@
 package com.e106.demolition_king.game.entity;
 
+import com.e106.demolition_king.user.entity.User;
 import jakarta.persistence.Entity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -44,9 +45,6 @@ public class Report {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @Column(name = "user_uuid", length = 36)
-    private String userUuid;
-
     @Column(name = "gold_medal")
     private Integer goldMedal;
 
@@ -66,4 +64,8 @@ public class Report {
     public void onUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_uuid", referencedColumnName = "user_uuid", nullable = false)
+    private User user;
 }

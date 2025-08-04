@@ -1,5 +1,7 @@
 package com.e106.demolition_king.game.service;
 
+import com.e106.demolition_king.common.base.BaseResponseStatus;
+import com.e106.demolition_king.common.exception.BaseException;
 import com.e106.demolition_king.game.dto.GoldDto;
 import com.e106.demolition_king.game.dto.ReportDto;
 import com.e106.demolition_king.game.dto.ReportPerDateRequestDto;
@@ -54,9 +56,10 @@ public class GameServiceImpl implements GameService {
         return reportRepository.findReportDtoByUserUuid(uuid);
     }
 
+    @Override
     @Transactional
     public void updateUserReport(ReportDto newData) {
-        Report report = reportRepository.findByUserUuid(newData.getUserUuid())
+        Report report = reportRepository.findByUser_UserUuid(newData.getUserUuid())
                 .orElseThrow(() -> new RuntimeException("해당 사용자의 리포트가 존재하지 않습니다."));
         // 2) 갱신 전 상태 로깅
         log.debug(">>> Before Update - reportSeq={}, playCnt={}, singleTopBuilding={}, multiTopBuilding={}, gold={}, silver={}, bronze={}",
@@ -100,28 +103,25 @@ public class GameServiceImpl implements GameService {
                 report.getSilverMedal(),
                 report.getBronzeMedal()
         );
-
-
-        reportRepository.save(report);
     }
 
     @Override
+    @Transactional
     public void upsertReport(ReportPerDateRequestDto dto) {
-        reportPerDateRepository.findByUserUuidAndPlayDate(dto.getUserUuid(), dto.getPlayDate())
+        reportPerDateRepository
+                .findByUser_UserUuidAndPlayDate(dto.getUserUuid(), dto.getPlayDate())
                 .ifPresentOrElse(
-                        existing -> {
-                            existing.update(dto.getKcal(), dto.getPlayTimeDate());
-                            reportPerDateRepository.save(existing);
-                        },
+                        existing -> existing.update(dto.getKcal(), dto.getPlayTimeDate()),
                         () -> {
-                            ReportPerDate newReport = ReportPerDate.builder()
-                                    .userUuid(dto.getUserUuid())
+                            User user = userRepository
+                                    .findByUserUuid(dto.getUserUuid())
+                                    .orElseThrow(() -> new BaseException(BaseResponseStatus.NO_EXIST_USER));
+                            reportPerDateRepository.save(ReportPerDate.builder()
+                                    .user(user)
                                     .playDate(dto.getPlayDate())
                                     .kcal(dto.getKcal())
                                     .playTimeDate(dto.getPlayTimeDate())
-                                    .createdAt(LocalDateTime.now())
-                                    .build();
-                            reportPerDateRepository.save(newReport);
+                                    .build());
                         }
                 );
     }

@@ -1,6 +1,8 @@
 package com.e106.demolition_king.user.entity;
 
 import com.e106.demolition_king.game.entity.Gold;
+import com.e106.demolition_king.game.entity.Report;
+import com.e106.demolition_king.game.entity.ReportPerDate;
 import com.e106.demolition_king.skin.entity.PlayerSkin;
 import jakarta.persistence.*;
 import lombok.*;
@@ -80,5 +82,19 @@ public class User implements UserDetails {
     )
     private List<PlayerSkin> playerSkins = new ArrayList<>();
 
+    @OneToOne(
+            mappedBy      = "user",
+            cascade       = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch         = FetchType.LAZY
+    )
+    private Report report;
+
+    @OneToMany(
+            mappedBy      = "user",
+            cascade       = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<ReportPerDate> reportPerDates = new ArrayList<>();
 
 }

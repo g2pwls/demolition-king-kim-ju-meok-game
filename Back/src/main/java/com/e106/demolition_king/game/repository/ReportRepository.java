@@ -15,10 +15,10 @@ import java.util.Optional;
 public interface ReportRepository extends JpaRepository<Report, Long> {
 
     @Query("SELECT new com.e106.demolition_king.game.dto.ReportDto(" +
-            "r.reportSeq, r.userUuid, r.singleTopBuilding, r.multiTopBuilding, " +
+            "r.reportSeq, r.user.userUuid, r.singleTopBuilding, r.multiTopBuilding, " +
             "r.goldMedal, r.silverMedal, r.bronzeMedal, r.createdAt, r.playCnt, r.playTime) " +
-            "FROM Report r WHERE r.userUuid = :userUuid")
+            "FROM Report r WHERE r.user.userUuid = :userUuid")
     List<ReportDto> findReportDtoByUserUuid(@Param("userUuid") String userUuid);
 
-    Optional<Report> findByUserUuid(String userUuid);
+    Optional<Report> findByUser_UserUuid(String userUuid);
 }
