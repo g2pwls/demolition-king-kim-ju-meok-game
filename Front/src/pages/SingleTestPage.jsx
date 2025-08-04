@@ -1,32 +1,45 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { OpenVidu } from 'openvidu-browser';
-import { FaceDetection } from '@mediapipe/face_detection';
+import { Pose } from '@mediapipe/pose';
+import { POSE_CONNECTIONS } from '@mediapipe/pose';
 import { drawRectangle, drawLandmarks } from '@mediapipe/drawing_utils';
 import { Camera } from '@mediapipe/camera_utils';
+import PixiCanvas from '../components/pixi/PixiCanvas';
+import "../styles/SingleTestPage.css";
 
 const SingleTestPage = () => {
-  const canvasRef = useRef(null); // 얼굴 감지 결과 캔버스
+  const canvasRef = useRef(null);
   const [session, setSession] = useState(null);
   const [publisher, setPublisher] = useState(null);
   const [subscribers, setSubscribers] = useState([]);
+  const [action, setAction] = useState('idle');
+  const [health, setHealth] = useState(100);
   const OV = useRef(null);
-  const localUserRef = useRef(null); // 내 영상 태그
+  const localUserRef = useRef(null);
+  const [buildingIndex, setBuildingIndex] = useState(0);
+  const [isGameOver, setIsGameOver] = useState(false);
 
-  // 토큰 받아오는 함수
+  useEffect(() => {
+    console.log("현재 액션:", action);
+  }, [action]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setHealth(prev => Math.max(prev - 1, 0));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   const getToken = async () => {
     const response = await fetch('http://localhost:5000/api/get-token', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sessionId: 'TestSession' }),
     });
-
     const data = await response.json();
     return data.token;
   };
 
-  // 세션 참가
   const joinSession = async () => {
     OV.current = new OpenVidu();
     const newSession = OV.current.initSession();
@@ -43,7 +56,6 @@ const SingleTestPage = () => {
     });
 
     const token = await getToken();
-
     await newSession.connect(token, { clientData: 'User' });
 
     const newPublisher = OV.current.initPublisher(undefined, {
@@ -52,7 +64,7 @@ const SingleTestPage = () => {
       publishAudio: true,
       publishVideo: true,
       resolution: '640x480',
-      frameRate: 30,
+      frameRate: 60,
       insertMode: 'APPEND',
       mirror: false,
     });
@@ -61,117 +73,171 @@ const SingleTestPage = () => {
     setPublisher(newPublisher);
     setSession(newSession);
 
-    newPublisher.addVideoElement(localUserRef.current); // 내 영상 출력
+    newPublisher.addVideoElement(localUserRef.current);
   };
 
-  // 세션 종료
   const leaveSession = () => {
-    if (session) {
-      session.disconnect();
-    }
+    if (session) session.disconnect();
     setSession(null);
     setPublisher(null);
     setSubscribers([]);
     OV.current = null;
   };
 
-  // MediaPipe 얼굴 감지 연결
-  useEffect(() => {
+    useEffect(() => {
     if (!session || !localUserRef.current || !canvasRef.current) return;
 
     const videoElement = localUserRef.current;
     const canvasElement = canvasRef.current;
     const canvasCtx = canvasElement.getContext('2d');
 
-    const faceDetection = new FaceDetection({
-      locateFile: (file) =>
-        `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${file}`,
+    const pose = new Pose({
+      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`,
     });
 
-    faceDetection.setOptions({
-      modelSelection: 0,
+    pose.setOptions({
+      modelComplexity: 0,
+      smoothLandmarks: true,
+      enableSegmentation: false,
       minDetectionConfidence: 0.5,
+      minTrackingConfidence: 0.5,
     });
 
-    faceDetection.onResults((results) => {
-      canvasCtx.save();
+    let lastRightWrist = null;
+    let motionCooldown = false;
+
+    pose.onResults((results) => {
       canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
 
-      if (results.detections && results.detections.length > 0) {
-        for (const detection of results.detections) {
-          drawRectangle(canvasCtx, detection.boundingBox, {
-            color: 'green',
-            lineWidth: 2,
-          });
-          drawLandmarks(canvasCtx, detection.landmarks, {
-            color: 'red',
-            radius: 3,
-          });
-        }
+      const landmarks = results.poseLandmarks;
+      if (!landmarks) {
+        setAction('idle');
+        return;
       }
 
-      canvasCtx.restore();
+      drawLandmarks(canvasCtx, landmarks, { color: '#FF0000', radius: 3 });
+
+      const rightWrist = landmarks[16];
+      const rightShoulder = landmarks[12];
+
+      if (!rightWrist || !rightShoulder) return;
+
+      if (!lastRightWrist) {
+        lastRightWrist = { ...rightWrist };
+        return;
+      }
+
+      const movedForward = lastRightWrist.x - rightWrist.x > 0.07;
+      const aboveShoulder = rightWrist.y < rightShoulder.y;
+
+      if (movedForward && aboveShoulder && !motionCooldown) {
+        console.log('잽 감지!');
+        setAction('punch');
+        setHealth((prev) => Math.max(prev - 10, 0));
+        motionCooldown = true;
+
+        setTimeout(() => {
+          motionCooldown = false;
+          setAction('idle');
+        }, 1000);
+      }
+
+      lastRightWrist = { ...rightWrist };
     });
 
     const camera = new Camera(videoElement, {
       onFrame: async () => {
-        await faceDetection.send({ image: videoElement });
+        try {
+          await pose.send({ image: videoElement });
+        } catch (err) {
+          console.error('MediaPipe 처리 중 에러', err);
+        }
       },
       width: 640,
       height: 480,
     });
 
     camera.start();
-
     return () => {
       camera.stop();
     };
   }, [session]);
 
-  // 언마운트 시 세션 종료
+
+
   useEffect(() => {
     return () => {
       leaveSession();
     };
+    return () => {
+      if (sessionRef.current) {
+        sessionRef.current.disconnect(); // 이전 세션 정리
+        sessionRef.current = null;
+      }
+    };
   }, []);
+  
+  useEffect(() => {
+    if (health === 0) {
+      setIsGameOver(true);
+      console.log("🛑 Game Over!");
+    }
+  }, [health]);
+
 
   return (
-    <div>
-      <h1>OpenVidu + MediaPipe 얼굴 감지</h1>
-      <button onClick={joinSession}>세션 참가</button>
-      <button onClick={leaveSession}>세션 종료</button>
+    <div className="page-container">
+      {isGameOver && (
+        <div className="game-over-overlay">
+          <h1>GAME OVER</h1>
+          <button onClick={() => window.location.reload()}>다시 시작</button>
+        </div>
+      )}
 
-      {/* 내 영상 + 얼굴 감지 캔버스 */}
-      <div style={{ position: 'relative', width: '640px', height: '480px' }}>
-        <video
-          autoPlay
-          ref={localUserRef}
-          style={{ width: '640px', height: '480px', position: 'absolute' }}
-        ></video>
-        <canvas
-          ref={canvasRef}
-          width={640}
-          height={480}
-          style={{ position: 'absolute', top: 0, left: 0 }}
-        ></canvas>
+      <div className="top-controls">
+        <h1>OpenVidu + MediaPipe 얼굴 감지</h1>
+        <div className="buttons">
+          <button onClick={joinSession}>세션 참가</button>
+          <button onClick={leaveSession}>세션 종료</button>
+        </div>
       </div>
 
-      {/* 상대방들 영상 */}
-      <div>
-        {subscribers.map((sub, index) => {
-          const videoRef = useRef(null);
-          useEffect(() => {
-            sub.addVideoElement(videoRef.current);
-          }, [sub]);
-          return (
-            <video
-              key={index}
-              autoPlay
-              ref={videoRef}
-              style={{ width: '400px', marginTop: '10px' }}
-            ></video>
-          );
-        })}
+      <div className="game-layout">
+        <div className="left-game">
+          <div className="overlay-ui">
+            <div className="progress-bar">
+              <div className="progress-fill" style={{ width: `${health}%` }}></div>
+            </div>
+            <div className="command-sequence">
+              <div className="command-circle red">잽</div>
+              <div className="command-circle green">회피</div>
+              <div className="command-circle black">어퍼</div>
+              <div className="command-circle red">잽</div>
+              <div className="command-circle red">잽</div>
+              <div className="command-circle red">잽</div>
+              <div className="command-circle green">회피</div>
+              <div className="command-circle black">어퍼</div>
+            </div>
+          </div>
+          <PixiCanvas
+            action={action}
+            buildingIndex={buildingIndex}
+            onBuildingDestroyed={() => {
+              setHealth(prev => Math.min(prev + 30, 100));        // 체력 회복
+              setBuildingIndex(prev => (prev + 1) % 3);           // 다음 건물 (3개 순환)
+            }}
+          />
+        </div>
+
+        <div className="right-panel">
+          <div className="kcal-display">1742 KCAL</div>
+          <div className="pixel-character"></div>
+          <button className="quit-button">QUIT</button>
+          <div className="webcam-container">
+            <video ref={localUserRef} autoPlay muted className="webcam-video" />
+            <canvas ref={canvasRef} className="webcam-canvas"></canvas>
+          </div>
+        </div>
       </div>
     </div>
   );
