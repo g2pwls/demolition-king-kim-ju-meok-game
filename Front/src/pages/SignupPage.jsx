@@ -97,7 +97,7 @@ function SignUp() {
 
     try {
       const response = await axios.post(
-        'http://54.180.226.214:8080/api/user/auth/signup',
+        'https://i13e106.p.ssafy.io/api/user/auth/signup',
         null,
         {
           params: {

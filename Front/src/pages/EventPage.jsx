@@ -19,11 +19,12 @@ function EventPage() {
     { id: 4, name: '대전', top: '70px', left: '48.2%' },
     { id: 5, name: '전주', top: '110px', left: '45.2%' },
     { id: 6, name: '부산', top: '130px', left: '54.4%' },
-    { id: 7, name: '경주', top: '90px', left: '53.6%' },
-    { id: 8, name: '포항', top: '80px', left: '55.6%' },
-    { id: 9, name: '제주도', top: '270px', left: '44%' },
-    { id: 10, name: '북한', top: '-100px', left: '44%' },
-    { id: 11, name: '북한1', top: '-200px', left: '46%' },
+    { id: 7, name: '진주', top: '120px', left: '50%' },
+    { id: 8, name: '경주', top: '90px', left: '53.6%' },
+    { id: 9, name: '포항', top: '80px', left: '55.6%' },
+    { id: 10, name: '제주도', top: '270px', left: '44%' },
+    { id: 11, name: '북한', top: '-100px', left: '44%' },
+    { id: 12, name: '북한1', top: '-200px', left: '46%' },
   ];
   const worldpinData = [
     { id: 1, name: '로마', top: '-90px', left: '49%' },

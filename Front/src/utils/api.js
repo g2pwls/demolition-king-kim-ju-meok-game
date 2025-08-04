@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://54.180.226.214:8080/api',
+  baseURL: 'https://i13e106.p.ssafy.io/api',
 });
 
 // 요청마다 최신 토큰 자동 추가
