@@ -35,7 +35,7 @@ function SignUp() {
   // 닉네임 중복검사
   const checkNicknameDuplication = async () => {
   try {
-    const res = await axios.post('http://54.180.226.214:8080/api/user/auth/signup/nickname/check', {
+    const res = await axios.post('https://i13e106.p.ssafy.io/api/user/auth/signup/nickname/check', {
       nickname: userNickname,
     });
 
@@ -54,7 +54,7 @@ function SignUp() {
   // 이메일 인증코드 요청
   const requestAuthCode = async () => {
     try {
-      await axios.post('http://54.180.226.214:8080/api/v1/user/email/signup/send', { email });
+      await axios.post('https://i13e106.p.ssafy.io/api/v1/user/email/signup/send', { email });
 
 // 인증번호 확인
 
@@ -68,7 +68,7 @@ function SignUp() {
   // 인증코드 확인
   const verifyAuthCode = async () => {
     try {
-    const res = await axios.post('http://54.180.226.214:8080/api/v1/user/email/signup/verify', {
+    const res = await axios.post('https://i13e106.p.ssafy.io/api/v1/user/email/signup/verify', {
       email,
       code: authCode,
     });
