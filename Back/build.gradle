@@ -16,6 +16,9 @@ java {
 
 repositories {
 	mavenCentral()
+	flatDir {
+		dirs 'libs'  // ← 이 부분 중요
+	}
 }
 
 dependencies {
@@ -36,6 +39,22 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
+    // LiveKit
+//	implementation 'com.auth0:java-jwt:3.19.2' 		   // LiveKit JWT 생성용
+//	implementation 'com.squareup.okhttp3:okhttp:4.9.1' // LiveKit REST API 호출용
+//	implementation 'io.livekit:livekit-server:0.8.2'   // LiveKit SDK
+//	implementation files('libs/livekit-server-0.8.2')
+//	implementation 'io.livekit:livekit-server:0.10.0'
+//	implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+//	implementation 'com.google.protobuf:protobuf-java:3.21.7'
+//	implementation 'com.google.protobuf:protobuf-java-util:3.21.7'
+//	implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.0'
+//	runtimeOnly 'com.squareup.okhttp3:logging-interceptor:4.12.0'
+//	runtimeOnly 'com.squareup.retrofit2:converter-protobuf:2.9.0'
+//	runtimeOnly 'com.auth0:java-jwt:4.2.1'
+//	runtimeOnly 'javax.annotation:javax.annotation-api:1.3.2'
+
+
 	// Spring Security
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	// Swagger (springdoc-openapi)
@@ -55,6 +74,7 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+
 }
 
 bootJar {

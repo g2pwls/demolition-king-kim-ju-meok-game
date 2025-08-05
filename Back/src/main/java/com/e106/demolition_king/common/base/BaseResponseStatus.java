@@ -52,6 +52,7 @@ public enum BaseResponseStatus {
     DUPLICATED_NICKNAME(HttpStatus.CONFLICT, false, 409, "이미 사용중인 닉네임입니다."),
     SAME_NICKNAME(HttpStatus.CONFLICT, false, 409, "현재 사용중인 닉네임입니다."),
     INVALID_EMAIL_ADDRESS(HttpStatus.BAD_REQUEST, false, 400, "이메일을 다시 확인해주세요."),
+    CANNOT_FIND_PROFILE(HttpStatus.BAD_REQUEST, false, 400, "프로필을 찾을 수 없습니다."),
 
     // Email
     EMAIL_SEND_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, false, 502, "이메일 전송에 실패하였습니다."),

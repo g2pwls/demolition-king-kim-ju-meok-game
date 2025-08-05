@@ -38,7 +38,7 @@ public class User implements UserDetails {
     @Column(name = "google_access", length = 500, unique = true)
     private String googleAccess;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "profile_seq")
     private Profile profile;
 
@@ -67,34 +67,17 @@ public class User implements UserDetails {
     @Override
     public boolean isEnabled() { return true; }
 
-    @OneToOne(
-            mappedBy      = "user",
-            cascade       = CascadeType.ALL,
-            orphanRemoval = true,
-            fetch         = FetchType.LAZY
-    )
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch=FetchType.LAZY)
     private Gold gold;
 
-    @OneToMany(
-            mappedBy      = "user",
-            cascade       = CascadeType.ALL,
-            orphanRemoval = true
-    )
+    @Builder.Default
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PlayerSkin> playerSkins = new ArrayList<>();
 
-    @OneToOne(
-            mappedBy      = "user",
-            cascade       = CascadeType.ALL,
-            orphanRemoval = true,
-            fetch         = FetchType.LAZY
-    )
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Report report;
 
-    @OneToMany(
-            mappedBy      = "user",
-            cascade       = CascadeType.ALL,
-            orphanRemoval = true
-    )
+    @Builder.Default
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ReportPerDate> reportPerDates = new ArrayList<>();
-
 }
