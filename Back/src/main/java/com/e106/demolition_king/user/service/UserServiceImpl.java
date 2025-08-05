@@ -11,6 +11,7 @@ import com.e106.demolition_king.user.entity.Profile;
 import com.e106.demolition_king.user.entity.User;
 import com.e106.demolition_king.user.repository.ProfileRepository;
 import com.e106.demolition_king.user.repository.UserRepository;
+import com.e106.demolition_king.user.vo.in.ChangePasswordRequestVo;
 import com.e106.demolition_king.user.vo.in.LoginRequestVo;
 import com.e106.demolition_king.user.vo.in.ResetPasswordRequestVo;
 import com.e106.demolition_king.user.vo.out.GetUserInfoResponseVo;
@@ -61,8 +62,8 @@ public class UserServiceImpl implements UserService, UserDetailsService {
                 .createdAt(new Timestamp(System.currentTimeMillis()))
                 .updatedAt(new Timestamp(System.currentTimeMillis()))
                 .build();
-        // 2) PlayerSkin 초기화 (1번 선택, 나머지 2~10 잠금/비선택)
-        for (int i = 1; i <= 10; i++) {
+        // 2) PlayerSkin 초기화 (1번 선택, 나머지 2~11 잠금/비선택)
+        for (int i = 1; i <= 11; i++) {
             user.getPlayerSkins().add(
                     PlayerSkin.builder()
                             .user(user)
@@ -147,6 +148,28 @@ public class UserServiceImpl implements UserService, UserDetailsService {
                 .build();
     }
 
+    @Override
+    @Transactional
+    public PasswordResponseVo changePassword(String userUuid, ChangePasswordRequestVo vo) {
+        // 1) 새 비밀번호/확인 일치 여부
+        if (!vo.getNewPassword().equals(vo.getConfirmPassword())) {
+            return PasswordResponseVo.builder()
+                    .available(false)
+                    .message("새 비밀번호와 확인이 일치하지 않습니다.")
+                    .build();
+        }
+        // 2) 사용자 조회
+        User user = userRepository.findByUserUuid(userUuid)
+                .orElseThrow(() -> new BaseException(BaseResponseStatus.NO_EXIST_USER));
+        // 3) 새 비밀번호로 변경
+        user.setPassword(passwordEncoder.encode(vo.getNewPassword()));
+
+        return PasswordResponseVo.builder()
+                .available(true)
+                .message("비밀번호가 성공적으로 변경되었습니다.")
+                .build();
+    }
+
 
 
     /**
@@ -160,20 +183,30 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         if (!passwordEncoder.matches(vo.getPassword(), user.getPassword())) {
             throw new IllegalArgumentException("Invalid password");
         }
-
         // 권한은 USER 하나만 부여
         String accessToken  = jwtUtil.createAccessToken(user.getUserUuid(), List.of("USER"));
         String refreshToken = jwtUtil.createRefreshToken(user.getUserUuid());
 
-        // Redis에 저장 (7일 유효)
+        // Redis에 Refresh Token 저장 (7일 유효)
         redisTemplate.opsForValue().set(
                 "RT:" + user.getUserUuid(), refreshToken, 7, TimeUnit.DAYS
         );
-
+        //온라인 유저 redis에 추가
+        redisTemplate.opsForValue().set(
+                "online:"+ user.getUserUuid(), "true", 7, TimeUnit.DAYS
+        );
         return TokenResponseVo.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .build();
+    }
+    @Override
+    @Transactional
+    public void logout(String userUuid) {
+        // 1) Refresh Token 삭제
+        redisTemplate.delete("RT:" + userUuid);
+        // 2) 온라인 상태 플래그 삭제
+        redisTemplate.delete("online:" + userUuid);
     }
 
     /**

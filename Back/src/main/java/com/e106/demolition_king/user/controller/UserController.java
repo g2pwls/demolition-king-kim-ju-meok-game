@@ -113,15 +113,68 @@ public class UserController {
         return BaseResponse.ok();
     }
 
+    @Operation(
+            summary     = "로그아웃",
+            description = "현재 로그인된 유저의 세션을 종료하고 Redis의 토큰·온라인 상태를 삭제합니다."
+    )
+    @PostMapping("/logout")
+    public BaseResponse<Void> logout(
+            @RequestHeader("Authorization") String authHeader
+    ) {
+        // 1) Authorization 헤더 검증
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return BaseResponse.error(BaseResponseStatus.INVALID_AUTH_HEADER);
+        }
+        String token = authHeader.substring(7);
+        // 2) JWT 유효성 검사
+        if (!jwtUtil.validateToken(token)) {
+            return BaseResponse.error(BaseResponseStatus.WRONG_JWT_TOKEN);
+        }
+        // 3) UUID 추출
+        String userUuid = jwtUtil.getUserUuid(token);
+        // 4) 서비스 호출
+        userService.logout(userUuid);
+        // 5) 응답
+        return BaseResponse.ok();
+    }
+
 
     @Operation(
             summary = "비밀번호 변경",
-            description = "인증 완료된 이메일에 대해 새 비밀번호를 입력받아 변경합니다."
+            description = "비밀번호를 잃어버렸을 때 인증 완료된 이메일에 대해 새 비밀번호를 입력받아 변경합니다."
     )
     @PostMapping("/password/reset")
     public BaseResponse<PasswordResponseVo> resetPassword(
             @RequestBody ResetPasswordRequestVo requestVo) {
         PasswordResponseVo result = userService.resetPassword(requestVo);
+        return BaseResponse.of(result);
+    }
+
+    @Operation(
+            summary     = "마이페이지 비밀번호 변경",
+            description = "로그인된 유저가 현재 비밀번호를 입력하고 새 비밀번호로 변경합니다."
+    )
+    @PutMapping("/password")
+    public BaseResponse<PasswordResponseVo> changePassword(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestBody ChangePasswordRequestVo vo
+    ) {
+        // 1) 헤더/토큰 검사
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            throw new RuntimeException("Authorization 헤더가 잘못되었습니다.");
+        }
+        String token = authorizationHeader.substring(7);
+        if (!jwtUtil.validateToken(token)) {
+            throw new RuntimeException("유효하지 않은 토큰입니다.");
+        }
+
+        // 2) UUID 추출
+        String userUuid = jwtUtil.getUserUuid(token);
+
+        // 3) 변경 로직 위임
+        PasswordResponseVo result = userService.changePassword(userUuid, vo);
+
+        // 4) 응답
         return BaseResponse.of(result);
     }
 
@@ -169,7 +222,6 @@ public class UserController {
         if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
             throw new RuntimeException("Authorization 헤더가 잘못되었습니다.");
         }
-
         String token = authorizationHeader.substring(7); // "Bearer " 제거
 
         // 2. 유효성 검사
