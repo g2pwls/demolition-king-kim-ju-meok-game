@@ -2,6 +2,7 @@ package com.e106.demolition_king.user.service;
 
 
 import com.e106.demolition_king.user.dto.SignupRequestDto;
+import com.e106.demolition_king.user.vo.in.ChangePasswordRequestVo;
 import com.e106.demolition_king.user.vo.in.LoginRequestVo;
 import com.e106.demolition_king.user.vo.in.ResetPasswordRequestVo;
 import com.e106.demolition_king.user.vo.out.GetUserInfoResponseVo;
@@ -11,7 +12,8 @@ import com.e106.demolition_king.user.vo.out.TokenResponseVo;
 
 public interface UserService {
     void signup(SignupRequestDto request);
-    public TokenResponseVo login(LoginRequestVo vo);
+    TokenResponseVo login(LoginRequestVo vo);
+    void logout(String userUuid);
     TokenResponseVo tokenRefresh(String refreshToken);
 
     // 추가
@@ -22,6 +24,8 @@ public interface UserService {
     void updateNickname(String userUuid, String newNickname);
 
     PasswordResponseVo resetPassword(ResetPasswordRequestVo req);
+
+    PasswordResponseVo changePassword(String userUuid, ChangePasswordRequestVo vo);
 
     public GetUserInfoResponseVo getUserByUuid(String userUuid);
 
