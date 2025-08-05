@@ -18,17 +18,18 @@ const SingleTestPage = () => {
   const localUserRef = useRef(null);
   const [buildingIndex, setBuildingIndex] = useState(0);
   const [isGameOver, setIsGameOver] = useState(false);
+  const [kcal, setKcal] = useState(0);  // ✅ 이 줄이 있어야 함
 
-  useEffect(() => {
-    console.log("현재 액션:", action);
-  }, [action]);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setHealth(prev => Math.max(prev - 1, 0));
+      if (action !== 'punch') {
+        setHealth(prev => Math.max(prev - 1, 0));
+      }
     }, 1000);
+
     return () => clearInterval(interval);
-  }, []);
+  }, [action]);
 
   const getToken = async () => {
     const response = await fetch('http://localhost:5000/api/get-token', {
@@ -84,7 +85,7 @@ const SingleTestPage = () => {
     OV.current = null;
   };
 
-    useEffect(() => {
+  useEffect(() => {
     if (!session || !localUserRef.current || !canvasRef.current) return;
 
     const videoElement = localUserRef.current;
@@ -133,7 +134,6 @@ const SingleTestPage = () => {
       if (movedForward && aboveShoulder && !motionCooldown) {
         console.log('잽 감지!');
         setAction('punch');
-        setHealth((prev) => Math.max(prev - 10, 0));
         motionCooldown = true;
 
         setTimeout(() => {
@@ -163,27 +163,18 @@ const SingleTestPage = () => {
     };
   }, [session]);
 
-
-
   useEffect(() => {
     return () => {
       leaveSession();
     };
-    return () => {
-      if (sessionRef.current) {
-        sessionRef.current.disconnect(); // 이전 세션 정리
-        sessionRef.current = null;
-      }
-    };
   }, []);
-  
+
   useEffect(() => {
     if (health === 0) {
       setIsGameOver(true);
       console.log("🛑 Game Over!");
     }
   }, [health]);
-
 
   return (
     <div className="page-container">
@@ -223,14 +214,15 @@ const SingleTestPage = () => {
             action={action}
             buildingIndex={buildingIndex}
             onBuildingDestroyed={() => {
-              setHealth(prev => Math.min(prev + 30, 100));        // 체력 회복
-              setBuildingIndex(prev => (prev + 1) % 3);           // 다음 건물 (3개 순환)
+              setHealth(prev => Math.min(prev + 30, 100)); // 체력 회복
+              setBuildingIndex(prev => (prev + 1) % 3);    // 다음 건물 (3개 순환)
             }}
+            setKcal={setKcal}
           />
         </div>
 
         <div className="right-panel">
-          <div className="kcal-display">1742 KCAL</div>
+          <div className="kcal-display">{kcal} KCAL</div>
           <div className="pixel-character"></div>
           <button className="quit-button">QUIT</button>
           <div className="webcam-container">
