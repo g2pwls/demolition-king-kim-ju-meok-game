@@ -2,8 +2,13 @@ package com.e106.demolition_king.user.service;
 
 import com.e106.demolition_king.common.base.BaseResponseStatus;
 import com.e106.demolition_king.common.exception.BaseException;
+import com.e106.demolition_king.game.entity.Gold;
+import com.e106.demolition_king.game.entity.Report;
+import com.e106.demolition_king.skin.entity.PlayerSkin;
 import com.e106.demolition_king.user.dto.SignupRequestDto;
+import com.e106.demolition_king.user.entity.Profile;
 import com.e106.demolition_king.user.entity.User;
+import com.e106.demolition_king.user.repository.ProfileRepository;
 import com.e106.demolition_king.user.repository.UserRepository;
 import com.e106.demolition_king.user.vo.in.LoginRequestVo;
 import com.e106.demolition_king.user.vo.in.ResetPasswordRequestVo;
@@ -21,6 +26,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.UUID;
@@ -30,6 +36,7 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService, UserDetailsService {
     private final UserRepository userRepository;         // JPA 레포지토리
+    private final ProfileRepository profileRepository;
     private final PasswordEncoder passwordEncoder;       // SecurityConfig에서 주입된 BCrypt 인코더
     private final JwtUtil jwtUtil;                       // 토큰 생성·검증 유틸
     private final RedisTemplate<String, String> redisTemplate; // 토큰 저장요 레디스 템플릿
@@ -40,16 +47,49 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     @Override
     @Transactional
     public void signup(SignupRequestDto dto) {
+        Profile profile = profileRepository.findById(dto.getProfileSeq())
+                .orElseThrow(() -> new BaseException(BaseResponseStatus.CANNOT_FIND_PROFILE));
         // ✂️ UUID 생성
         User user = User.builder()
                 .userUuid(UUID.randomUUID().toString())
                 .userEmail(dto.getEmail())
                 .password(passwordEncoder.encode(dto.getPassword()))
                 .userNickname(dto.getUserNickname())
+                .profile(profile)
                 .createdAt(new Timestamp(System.currentTimeMillis()))
                 .updatedAt(new Timestamp(System.currentTimeMillis()))
                 .build();
-
+        // 2) PlayerSkin 초기화 (1번 선택, 나머지 2~9 잠금/비선택)
+        for (int i = 1; i <= 9; i++) {
+            user.getPlayerSkins().add(
+                    PlayerSkin.builder()
+                            .user(user)
+                            .playerSkinItemSeq(i)
+                            .isUnlock(i == 1 ? 1 : 0)
+                            .isSelect(i == 1 ? 1 : 0)
+                            .build()
+            );
+        }
+        // 3) Gold 초기화 (0골드)
+        user.setGold(
+                Gold.builder()
+                        .user(user)
+                        .goldCnt(0)
+                        .build()
+        );
+        // 4) Report 초기화 (모든 값 0)
+        user.setReport(
+                Report.builder()
+                        .user(user)
+                        .singleTopBuilding(0)
+                        .multiTopBuilding(0)
+                        .playCnt(0)
+                        .playTime(BigDecimal.ZERO)
+                        .goldMedal(0)
+                        .silverMedal(0)
+                        .bronzeMedal(0)
+                        .build()
+        );
         userRepository.save(user);
     }
 
