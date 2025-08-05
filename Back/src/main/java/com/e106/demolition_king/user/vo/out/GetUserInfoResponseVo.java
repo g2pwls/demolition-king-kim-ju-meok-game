@@ -1,5 +1,6 @@
 package com.e106.demolition_king.user.vo.out;
 
+import com.e106.demolition_king.user.dto.ProfileDto;
 import com.e106.demolition_king.user.entity.Profile;
 import jakarta.persistence.*;
 import lombok.*;
@@ -20,7 +21,7 @@ public class GetUserInfoResponseVo {
     private String userNickname;
     private String kakaoAccessToken;
     private String googleAccess;
-    private Profile profile;
+    private ProfileDto profile;
     private Timestamp createdAt;
     private Timestamp updatedAt;
 }
