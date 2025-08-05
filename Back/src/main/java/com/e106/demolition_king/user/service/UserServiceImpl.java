@@ -42,6 +42,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     private final JwtUtil jwtUtil;                       // 토큰 생성·검증 유틸
     private final RedisTemplate<String, String> redisTemplate; // 토큰 저장요 레디스 템플릿
 
+
     /**
      * 회원가입 처리
      */
@@ -254,6 +255,17 @@ public class UserServiceImpl implements UserService, UserDetailsService {
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .build();
+    }
+    @Override
+    @Transactional
+    public void updateProfile(String userUuid, Integer profileSeq){
+        User user = userRepository.findByUserUuid(userUuid)
+                .orElseThrow(() -> new BaseException(BaseResponseStatus.NO_EXIST_USER));
+        // 2) Profile 로드
+        Profile profile = profileRepository.findById(profileSeq)
+                .orElseThrow(() -> new BaseException(BaseResponseStatus.CANNOT_FIND_PROFILE));
+        // 3) User 에 프로필 설정
+        user.setProfile(profile);
     }
 
 }

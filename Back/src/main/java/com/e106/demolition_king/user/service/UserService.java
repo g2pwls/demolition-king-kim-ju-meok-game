@@ -27,5 +27,7 @@ public interface UserService {
 
     boolean isCurrentPasswordValid(String userUuid, String currentPassword);
 
+    void updateProfile(String userUuid, Integer profileSeq);
+
     }
 

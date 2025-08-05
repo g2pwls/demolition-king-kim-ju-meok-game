@@ -2,6 +2,7 @@ package com.e106.demolition_king.game.controller;
 
 
 import com.e106.demolition_king.common.base.BaseResponse;
+import com.e106.demolition_king.common.base.BaseResponseStatus;
 import com.e106.demolition_king.friend.service.FriendService;
 import com.e106.demolition_king.friend.vo.out.FriendResponseVo;
 import com.e106.demolition_king.game.service.GameService;
@@ -11,7 +12,9 @@ import com.e106.demolition_king.game.vo.in.ReportPerDateUpdateRequestVo;
 import com.e106.demolition_king.game.vo.in.ReportUpdateRequestVo;
 import com.e106.demolition_king.game.vo.out.ReportResponseVo;
 import com.e106.demolition_king.game.vo.out.ReportUpdateResponseVo;
+import com.e106.demolition_king.user.service.UserServiceImpl;
 import com.e106.demolition_king.user.vo.in.EmailVerificationReRequestVo;
+import com.e106.demolition_king.user.vo.in.ProfileUpdateRequestVo;
 import com.e106.demolition_king.user.vo.out.EmailVerificationReResponseVo;
 import com.e106.demolition_king.util.JwtUtil;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,7 +34,34 @@ import java.util.stream.Collectors;
 public class GameController {
 
     private final GameServiceImpl gameService;
+    private final UserServiceImpl userService;
     private final JwtUtil jwtUtil;
+
+
+    @Operation(
+            summary     = "프로필 변경",
+            description = "로그인한 사용자의 프로필을 다른 것으로 변경합니다."
+    )
+    @PatchMapping("/profile")
+    public BaseResponse<Void> updateProfile(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody ProfileUpdateRequestVo vo
+    ) {
+        // 1) 헤더 및 토큰 검증
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return BaseResponse.error(BaseResponseStatus.INVALID_AUTH_HEADER);
+        }
+        String token = authHeader.substring(7);
+        if (!jwtUtil.validateToken(token)) {
+            return BaseResponse.error(BaseResponseStatus.WRONG_JWT_TOKEN);
+        }
+        // 2) UUID 추출
+        String userUuid = jwtUtil.getUserUuid(token);
+        // 3) 서비스 호출
+        userService.updateProfile(userUuid, vo.getProfileSeq());
+        // 4) 응답
+        return BaseResponse.ok();
+    }
 
     @Operation(summary = "사용자 리포트 조회", description = "특정 사용자의 리포트 정보를 반환합니다.")
     @GetMapping("/{userUuid}/reports")
@@ -66,12 +96,10 @@ public class GameController {
         }
 
         String token = authorizationHeader.substring(7); // "Bearer " 제거
-
         // 2. 유효성 검사
         if (!jwtUtil.validateToken(token)) {
             throw new RuntimeException("유효하지 않은 토큰입니다.");
         }
-
         // 3. UUID 추출
         String userUuid = jwtUtil.getUserUuid(token);
 
