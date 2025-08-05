@@ -942,3 +942,23 @@
   color: #fff600;
   text-shadow: 1px 1px 2px black;
 }
+
+.nickname-check-error, .nickname-check-success{
+  color:#000;
+}
+
+.friend-request-badge {
+  position: absolute;
+  top: -7px;
+  right: 45px;
+  background-color: red;
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 999px;
+  min-width: 20px;
+  text-align: center;
+  line-height: 1;
+  box-shadow: 0 0 2px rgba(0,0,0,0.4);
+}

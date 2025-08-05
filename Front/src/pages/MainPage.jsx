@@ -31,7 +31,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-
+import ConfirmModal from '../components/BuyConfirmModal';
 // 베이직 건물 이미지 import
 import building1 from '../assets/images/building/building1.png';
 import building2 from '../assets/images/building/building2.png';
@@ -112,17 +112,6 @@ import eventw14 from '../assets/images/building/eventw14.png';
 import eventw15 from '../assets/images/building/eventw15.png';
 import eventw16 from '../assets/images/building/eventw16.png';
 
-import character1 from "../assets/images/character/maincharacter.png";
-import character2 from "../assets/images/character/army.png";
-import character3 from "../assets/images/character/student.png";
-import character4 from "../assets/images/character/worker.png";
-import character5 from "../assets/images/character/police.png";
-import character6 from "../assets/images/character/jennie.png";
-import character7 from "../assets/images/character/karina.png";
-import character8 from "../assets/images/character/winter.png";
-import character9 from "../assets/images/character/son.png";
-import character10 from "../assets/images/character/ufc.png";
-
 import arrowLeft from "../assets/images/main/left.png";
 import arrowRight from "../assets/images/main/right.png";
 import selectButton from "../assets/images/main/select.png";
@@ -130,47 +119,39 @@ import buyButton from '../assets/images/main/buy.png';
 
 import coinIcon from '../assets/images/main/coin.png';
 
-import girl1 from '../assets/images/character/girl1.png';
-import girl2 from '../assets/images/character/girl2.png';
-import girl3 from '../assets/images/character/girl3.png';
-import boy1 from '../assets/images/character/boy1.png';
-import boy2 from '../assets/images/character/boy2.png';
-import boy3 from '../assets/images/character/boy3.png';
-
-const profileImages = [girl1, boy1, girl2, boy2, girl3, boy3]; // 순서대로 profileSeq: 1~6
-
 function MainPage() {
+
+  // 메인 창 로그인 못하면 못 보게
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+      alert('로그인이 필요합니다.');
+      navigate('/login');
+    }
+  }, []);
+  // 세션 만료되면 다시 로그인하게
+  axios.interceptors.response.use(
+    response => response,
+    error => {
+      if (error.response?.status === 401) {
+        alert('세션이 만료되었습니다. 다시 로그인해주세요.');
+        localStorage.clear();
+        window.location.href = '/login';
+      }
+      return Promise.reject(error);
+    }
+  );
+
+
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-    const [userNickname, setUserNickname] = useState('');
-//     const [friendRequests, setFriendRequests] = useState([
-//     { id: 1, nickname: '유재석' },
-//     { id: 2, nickname: '복싱보이' },
-//     { id: 3, nickname: '다죽었음' },
-
-//   ]);
-// const acceptFriend = (requestId) => {
-//   const accepted = friendRequests.find(req => req.id === requestId);
-
-//   console.log('✅ 수락 요청된 ID:', requestId);
-//   console.log('✅ 수락할 친구:', accepted);
-//   if (accepted) {
-//     setFriends(prev => [...prev, { id: accepted.id, nickname: accepted.nickname, online: false }]);
-//     console.log('✅ 업데이트된 친구 목록:', updated);
-//     setFriendRequests(prev => prev.filter(req => req.id !== requestId));
-//   }
-// };
-
-// const rejectFriend = (requestId) => {
-//   setFriendRequests(prev => prev.filter(req => req.id !== requestId));
-// };
-
-  // const characterList = [character1, character2, character3, character4, character5, character6, character7, character8, character9, character10];
+  const [userNickname, setUserNickname] = useState('');
   const [animationDirection, setAnimationDirection] = useState(null);
   const [nickname, setNickname] = useState("");
   const [skins, setSkins] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState(null);
-    // ✅ API로 스킨 가져오기
+    
+  // API로 스킨 가져오기
   const fetchSkins = async () => {
     try {
       const res = await api.get("/skins/getUserSkin");
@@ -191,12 +172,12 @@ function MainPage() {
     }
   };
 
-  // ✅ 최초 한 번 실행
+  // 최초 한 번 실행
   useEffect(() => {
     fetchSkins();
   }, []);
 
-  // ✅ 좌우 버튼
+  // 스킨 좌우 버튼
   const handleLeft = () => {
     setAnimationDirection("left");
     setCurrentIndex((prev) => (prev - 1 + skins.length) % skins.length);
@@ -207,7 +188,7 @@ function MainPage() {
     setCurrentIndex((prev) => (prev + 1) % skins.length);
   };
 
-  // ✅ 캐릭터 선택 API
+  // 캐릭터 선택 API
   const handleSelect = async () => {
   const selectedSkin = skins[currentIndex];
 
@@ -217,7 +198,7 @@ function MainPage() {
   }
 
   const token = localStorage.getItem('accessToken');
-
+  // 캐릭터 선택
   try {
     await api.get('/skins/selectSkin', {
       params: {
@@ -242,55 +223,42 @@ function MainPage() {
   }
 };
 
+// 모달 상태 추가
+const [showBuyModal, setShowBuyModal] = useState(false);
+const [pendingSkin, setPendingSkin] = useState(null);
 
-  // ✅ 현재 캐릭터
+// 구매 버튼 클릭 시
+const handleBuyClick = () => {
   const currentSkin = skins[currentIndex];
-
-const handleBuy = async () => {
-  const skin = skins[currentIndex];
-  const confirmBuy = window.confirm(`"${skin.name}" 캐릭터를 ${skin.price}G에 구매하시겠습니까?`);
+  setPendingSkin(currentSkin);
+  setShowBuyModal(true);
+};
+console.log('✅ 현재 스킨:', skins[currentIndex]);
+// 실제 구매 처리
+const confirmBuy = async () => {
   const token = localStorage.getItem('accessToken');
-console.log('currentIndex:', currentIndex);
-console.log('skins:', skins);
-console.log('현재 스킨:', skins[currentIndex]);
-  if (!confirmBuy) return;
-
   try {
-    const res = await api.patch('/skins/unLockUserSkin', {}, {
+    await api.patch('/skins/unLockUserSkin', {}, {
       params: {
         userUuid: userInfo.userUuid,
-        skinId: skin.skinId, // 또는 skin.playerSkinItemSeq
+        playerSkinItemSeq: pendingSkin.playerSkinItemSeq,
       },
       headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        Authorization: `Bearer ${token}`,
+      },
     });
 
-    // 성공하면 다시 스킨 리스트 불러오기
     await fetchSkins();
-    await fetchGold(); // 골드도 다시 반영
-
-    alert(`"${skin.name}" 캐릭터를 구매했습니다!`);
+    await fetchGold();
+    alert(`"${pendingSkin.name}" 캐릭터를 구매했습니다!`);
   } catch (err) {
-    console.error('❌ 캐릭터 구매 실패:', err);
-    alert('구매에 실패했습니다. 다시 시도해주세요.');
+    alert('구매 실패');
+  } finally {
+    setShowBuyModal(false);
+    setPendingSkin(null);
   }
 };
 
-
-  // const friends = [
-  //   { id: 1, nickname: 'GO성현', online: true},
-  //   { id: 2, nickname: 'zl존예리', online: true},
-  //   { id: 3, nickname: '조은사람조은', online: true},
-  //   { id: 4, nickname: 'ID혜지니', online: true},
-  //   { id: 5, nickname: '킹왕짱창현', online: false},
-  //   { id: 6, nickname: '박민준민준', online: true},
-  //   { id: 7, nickname: '지훈남', online: false},
-  //   { id: 8, nickname: 'Ao준혁oA', online: true},
-  //   { id: 9, nickname: 'U빈', online: true},
-
-
-  // ];
 const buildingImages = [
   { src: building1, filename: 'building1.png' },
   { src: building2, filename: 'building2.png' },
@@ -320,7 +288,6 @@ const buildingImages = [
   { src: building26, filename: 'building26.png' },
 ];
 
-
 const rareImages = [
   { src: rare1, filename: 'rare1.png' },
   { src: rare2, filename: 'rare2.png' },
@@ -345,7 +312,6 @@ const legendaryImages = [
   { src: legendary3, filename: 'legendary3.png' },
   { src: legendary4, filename: 'legendary4.png' },
 ];
-
 
 const eventImages = [
   { src: eventk1, filename: 'eventk1.png' },
@@ -385,28 +351,28 @@ const eventImages = [
 
   const [userInfo, setUserInfo] = useState(null);
 
-useEffect(() => {
-  const fetchUserInfo = async () => {
-    try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
-        console.error('⛔️ 토큰이 없습니다. 로그인 먼저 필요합니다.');
-        return;
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+          console.error('⛔️ 토큰이 없습니다. 로그인 먼저 필요합니다.');
+          return;
+        }
+
+        const res = await api.get('/user/auth/getUserInfo');
+
+        console.log("✅ 받은 유저 정보:", res.data.result);
+        if (res.data.result) {
+          setUserInfo(res.data.result);
+        }
+      } catch (err) {
+        console.error('유저 정보 가져오기 실패:', err);
       }
+    };
 
-      const res = await api.get('/user/auth/getUserInfo');
-
-      console.log("✅ 받은 유저 정보:", res.data.result);
-      if (res.data.result) {
-        setUserInfo(res.data.result);
-      }
-    } catch (err) {
-      console.error('유저 정보 가져오기 실패:', err);
-    }
-  };
-
-  fetchUserInfo();
-}, []);
+    fetchUserInfo();
+  }, []);
 
 
 // userInfo 바뀌면 nickname, email 같이 업데이트
@@ -417,8 +383,6 @@ useEffect(() => {
     setUserNickname(userInfo.nickname);  // 캐릭터 아래 닉네임 표기용
   }
 }, [userInfo]);
-
-
 
 
   const [isEditing, setIsEditing] = useState(false);           // 수정 모드 진입 여부
@@ -620,38 +584,103 @@ useEffect(() => {
     }
   }, [userInfo]);
 
-  const [unlockedBuildings, setUnlockedBuildings] = useState([]); // 해금된 건물 ID
-  
+  // 해금된 건물 ID
+  const [unlockedBuildings, setUnlockedBuildings] = useState([]);
+  // 해금된 건물 가져오기
   useEffect(() => {
-  const fetchUnlockedBuildings = async () => {
+    const fetchUnlockedBuildings = async () => {
+      try {
+        const token = localStorage.getItem('accessToken');
+        const res = await api.get('/constructures/getConstructure', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const result = res.data.result || [];
+
+        // open 이 false인 건물만 수집
+        const unlocked = result
+          .filter(b => b.open === true)
+          .map(b => b.imageUrl?.split('/').pop()); // 'rare10.png'처럼 추출
+
+        setUnlockedBuildings(unlocked);
+        console.log("✅ 해금된 건물 파일명 목록:", unlocked);
+      } catch (err) {
+        console.error('❌ 건물 조회 실패:', err);
+      }
+    };
+
+    if (userInfo?.userUuid) {
+      fetchUnlockedBuildings();
+    }
+  }, [userInfo]);
+
+  // 닉네임 변경
+  const [nicknameCheckResult, setNicknameCheckResult] = useState(null);
+  const [checkedNickname, setCheckedNickname] = useState('');
+
+  useEffect(() => {
+    setNicknameCheckResult('');
+    setCheckedNickname('');
+  }, [editNickname]);
+
+  const handleCheckNickname = async () => {
+    if (!editNickname || editNickname.trim() === '') {
+      alert('닉네임을 입력해주세요.');
+      return;
+    }
+
     try {
-      const token = localStorage.getItem('accessToken');
-      const res = await api.get('/constructures/getConstructure', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const res = await api.post('/user/auth/signup/nickname/check', {
+        nickname: editNickname,
       });
+      console.log('✅ 닉네임 중복확인 응답:', res.data);
 
-      const result = res.data.result || [];
-
-      // 🔥 lock이 false인 건물만 수집
-      const unlocked = result
-        .filter(b => b.lock === false)
-        .map(b => b.imageUrl?.split('/').pop()); // 'rare10.png'처럼 추출
-
-      setUnlockedBuildings(unlocked);
-      console.log("✅ 해금된 건물 파일명 목록:", unlocked);
+      if (res.data.result.available === true) {
+        setNicknameCheckResult('available');
+        setCheckedNickname(editNickname);
+        alert('✅ 사용 가능한 닉네임입니다.');
+      } else {
+        setNicknameCheckResult('duplicate');
+        alert('❌ 이미 사용 중인 닉네임입니다.');
+      }
     } catch (err) {
-      console.error('❌ 건물 조회 실패:', err);
+      console.error('닉네임 중복확인 실패:', err);
+      alert('중복 확인 중 오류가 발생했습니다.');
     }
   };
 
-  if (userInfo?.userUuid) {
-    fetchUnlockedBuildings();
-  }
-}, [userInfo]);
+  const handleSaveNickname = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
 
+      await api.put('/user/auth/nickname',
+        { nickname: editNickname }, // 👈 여기 data로 바꿈
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json', // 👈 필수
+          },
+        }
+      );
 
+      alert('닉네임이 성공적으로 변경되었습니다!');
+      setUserInfo(prev => ({
+        ...prev,
+        nickname: editNickname,
+        userNickname: editNickname,
+      }));
+      setUserNickname(editNickname);
+      setIsEditingNickname(false);
+      setNicknameCheckResult('');
+    } catch (error) {
+      console.error('❌ 닉네임 변경 실패:', error);
+      alert('닉네임 변경에 실패했습니다.');
+    }
+  };
+
+  
 
   return (
     <div className="main-page-background">
@@ -686,7 +715,7 @@ useEffect(() => {
       </div>
 
       <div className="character-section">
-  <div className="nickname-text">{userNickname}</div>
+  <div className="nickname-text">{userInfo?.userNickname}</div>
   <div className={`character-selector animate-${animationDirection}`}>
     <img src={arrowLeft} alt="왼쪽" className="arrow-button large" onClick={handleLeft} />
     {skins.length > 0 && (
@@ -715,10 +744,17 @@ useEffect(() => {
       src={buyButton}
       alt="구매 버튼"
       className="select-button"
-      onClick={handleBuy}
+      onClick={handleBuyClick}
     />
   )}
 </div>
+{showBuyModal && (
+  <ConfirmModal
+    message={`"${pendingSkin?.name}" 캐릭터를 ${pendingSkin?.price}G에 구매하시겠습니까?`}
+    onConfirm={confirmBuy}
+    onCancel={() => setShowBuyModal(false)}
+  />
+)}
 
 
 </div>
@@ -737,11 +773,8 @@ useEffect(() => {
                 <div className="mypage-overlay">
                   {/* 왼쪽: 프로필 영역 */}
                   <div className="mypage-left">
-                    <img
-                      className="mypage-avatar"
-                      src={userInfo?.avatarUrl || profileImages[(userInfo?.profileSeq || 1) - 1]}
-                      alt="프로필"
-                    />
+                    <img className="mypage-avatar" src={userInfo?.profile?.image} alt="프로필" />
+
                     <div className="mypage-name">{userInfo?.userNickname}</div>
                     <div className="mypage-email">{userInfo?.userEmail}</div>
                     <button
@@ -898,14 +931,14 @@ useEffect(() => {
                         <div className="profile-view">
                           <div className="info-row">
                             <label>닉네임:</label>
-                            <div className="info-me">{editNickname}</div>
+                            <div className="info-me">{userInfo?.userNickname}</div>
                             <button className="edit-icon-btn" onClick={() => setIsEditingNickname(true)}>
                               <img src={pencilIcon} alt="수정" className="edit-icon" />
                             </button>
                           </div>
                           <div className="info-row">
                             <label>이메일:</label>
-                            <div className="info-me">{editEmail}</div>
+                            <div className="info-me">{userInfo?.userEmail}</div>
                           </div>
                           <div className="info-row password-row">
                             <button className="change-password-btn">비밀번호 변경</button>
@@ -938,8 +971,16 @@ useEffect(() => {
                           onChange={(e) => setEditNickname(e.target.value)}
                           className="nickname-input"
                         />
+                        {/* 중복 확인 메시지 */}
+                        {nicknameCheckResult === 'available' && (
+                          <div className="nickname-check-success">✅ 사용 가능한 닉네임입니다.</div>
+                        )}
+                        {nicknameCheckResult === 'duplicate' && (
+                          <div className="nickname-check-error">❌ 이미 사용 중인 닉네임입니다.</div>
+                        )}
                         <div className="nickname-edit-buttons">
-                          <button className="check-btn">중복확인</button>
+                          <button className="check-btn" onClick={handleCheckNickname}>중복확인</button>
+                          
                           <button
                             className="cancel-btn"
                             onClick={() => {
@@ -949,12 +990,14 @@ useEffect(() => {
                           >
                             취소
                           </button>
+
                           <button
                             className="save-btn"
-                            onClick={() => {
-                              // 저장 로직은 여기에
-                              setIsEditingNickname(false);
-                            }}
+                            onClick={handleSaveNickname}
+                            disabled={
+                              nicknameCheckResult !== 'available' ||  // 중복확인 결과가 사용 가능이 아니면 비활성화
+                              editNickname !== checkedNickname       // 중복확인 후 닉네임이 바뀌었으면 비활성화
+                            }
                           >
                             저장
                           </button>
@@ -1056,6 +1099,13 @@ useEffect(() => {
           disabled={!!modalType}
         >
           <img src={fbottom} alt="플로팅 버튼" />
+
+          {/* ✅ 친구 요청 배지 표시 */}
+          {friendRequests.length > 0 && (
+            <div className="friend-request-badge">
+              {friendRequests.length}
+            </div>
+          )}
         </button>
       </div>
 
@@ -1072,10 +1122,7 @@ useEffect(() => {
             <div className="friend-popup-content">
               {/* 내 정보 */}
               <div className="my-profile">
-                <img
-                  src={profileImages[(userInfo?.profileSeq || 1) - 1]}
-                  className="friend-avatar"
-                />
+                <img className="friend-avatar" src={userInfo?.profile?.image} alt="프로필" />
 
                 <div className="friend-nickname">{userInfo.userNickname} (나)</div>
               </div>
@@ -1115,7 +1162,7 @@ useEffect(() => {
                   <div key={friend.id} className="friend-item">
                     <div
                     className="friend-status-dot"
-                    style={{ backgroundColor: friend.online ? '#00ff5f' : '#ffffff' }}
+                    style={{backgroundColor: friend.status === 'online' ? '#00ff5f' : '#ffffff', border: '1px solid gray',}}
                   ></div>
                     <div className="friend-nickname">{friend.friendNickname}</div>
                   </div>

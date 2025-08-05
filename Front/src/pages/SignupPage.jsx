@@ -9,8 +9,11 @@ import girl3 from '../assets/images/character/girl3.png';
 import boy1 from '../assets/images/character/boy1.png';
 import boy2 from '../assets/images/character/boy2.png';
 import boy3 from '../assets/images/character/boy3.png';
+import { useNavigate } from 'react-router-dom';
 
 function SignUp() {
+  const navigate = useNavigate();
+
   const profileList = [
   { image: girl1 },
   { image: boy1 },
@@ -108,10 +111,10 @@ function SignUp() {
           },
         }
       );
-
+      
       console.log('회원가입 성공:', response.data);
       alert('회원가입 성공!');
-      // TODO: 로그인 페이지로 이동
+      navigate('/login');
     } catch (err) {
       console.error('회원가입 실패:', err);
       alert('회원가입에 실패했습니다.');
