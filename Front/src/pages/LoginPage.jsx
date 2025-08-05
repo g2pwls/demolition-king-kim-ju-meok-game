@@ -38,7 +38,7 @@ const handleLogin = async (e) => {
 
   try {
     const response = await axios.post(
-      'http://54.180.226.214:8080/api/user/auth/login',
+      'https://i13e106.p.ssafy.io/api/user/auth/login',
       null,
       {
         params: { email, password },
@@ -68,7 +68,7 @@ const handleLogin = async (e) => {
     localStorage.setItem('accessToken', accessToken);
     localStorage.setItem('refreshToken', refreshToken);
     localStorage.setItem('userUuid', userUuid);
-
+    localStorage.setItem('userEmail', email);
     // getUserInfo API 호출
     const userInfo = await api.get(`/user/auth/getUserInfo?userUuid=${userUuid}`);
     const nickname = userInfo.data.result.userNickname;

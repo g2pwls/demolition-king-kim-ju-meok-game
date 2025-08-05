@@ -31,7 +31,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-
+import ConfirmModal from '../components/BuyConfirmModal';
 // 베이직 건물 이미지 import
 import building1 from '../assets/images/building/building1.png';
 import building2 from '../assets/images/building/building2.png';
@@ -77,141 +77,273 @@ import rare12 from '../assets/images/building/rare12.png';
 import rare13 from '../assets/images/building/rare13.png';
 import rare14 from '../assets/images/building/rare14.png';
 import rare15 from '../assets/images/building/rare15.png';
-import rare16 from '../assets/images/building/rare16.png';
-import rare17 from '../assets/images/building/rare17.png';
-import rare18 from '../assets/images/building/rare18.png';
-import rare19 from '../assets/images/building/rare19.png';
-import rare20 from '../assets/images/building/rare20.png';
-import rare21 from '../assets/images/building/rare21.png';
-import rare22 from '../assets/images/building/rare22.png';
-import rare23 from '../assets/images/building/rare23.png';
-import rare24 from '../assets/images/building/rare24.png';
-import rare25 from '../assets/images/building/rare25.png';
-import rare26 from '../assets/images/building/rare26.png';
-import rare27 from '../assets/images/building/rare27.png';
-import rare28 from '../assets/images/building/rare28.png';
-import rare29 from '../assets/images/building/rare29.png';
-import rare30 from '../assets/images/building/rare30.png';
-import rare31 from '../assets/images/building/rare31.png';
-import rare32 from '../assets/images/building/rare32.png';
-import rare33 from '../assets/images/building/rare33.png';
-import rare34 from '../assets/images/building/rare34.png';
-import rare35 from '../assets/images/building/rare35.png';
-import rare36 from '../assets/images/building/rare36.png';
-import rare37 from '../assets/images/building/rare37.png';
-import rare38 from '../assets/images/building/rare38.png';
-import rare39 from '../assets/images/building/rare39.png';
-import rare40 from '../assets/images/building/rare40.png';
-import rare41 from '../assets/images/building/rare41.png';
-import rare42 from '../assets/images/building/rare42.png';
-import rare43 from '../assets/images/building/rare43.png';
-import rare44 from '../assets/images/building/rare44.png';
-import rare45 from '../assets/images/building/rare45.png';
-import rare46 from '../assets/images/building/rare46.png';
-import rare47 from '../assets/images/building/rare47.png';
-import rare48 from '../assets/images/building/rare48.png';
 
-import character1 from "../assets/images/main/character1.png";
-import character2 from "../assets/images/main/character2.png";
-import character3 from "../assets/images/main/character3.png";
+import legendary1 from '../assets/images/building/legendary1.png';
+import legendary2 from '../assets/images/building/legendary2.png';
+import legendary3 from '../assets/images/building/legendary3.png';
+import legendary4 from '../assets/images/building/legendary4.png';
+
+import eventk1 from '../assets/images/building/eventk1.png';
+import eventk2 from '../assets/images/building/eventk2.png';
+import eventk3 from '../assets/images/building/eventk3.png';
+import eventk4 from '../assets/images/building/eventk4.png';
+import eventk5 from '../assets/images/building/eventk5.png';
+import eventk6 from '../assets/images/building/eventk6.png';
+import eventk7 from '../assets/images/building/eventk7.png';
+import eventk8 from '../assets/images/building/eventk8.png';
+import eventk9 from '../assets/images/building/eventk9.png';
+import eventk10 from '../assets/images/building/eventk10.png';
+import eventk11 from '../assets/images/building/eventk11.png';
+import eventk12 from '../assets/images/building/eventk12.png';
+import eventw1 from '../assets/images/building/eventw1.png';
+import eventw2 from '../assets/images/building/eventw2.png';
+import eventw3 from '../assets/images/building/eventw3.png';
+import eventw4 from '../assets/images/building/eventw4.png';
+import eventw5 from '../assets/images/building/eventw5.png';
+import eventw6 from '../assets/images/building/eventw6.png';
+import eventw7 from '../assets/images/building/eventw7.png';
+import eventw8 from '../assets/images/building/eventw8.png';
+import eventw9 from '../assets/images/building/eventw9.png';
+import eventw10 from '../assets/images/building/eventw10.png';
+import eventw11 from '../assets/images/building/eventw11.png';
+import eventw12 from '../assets/images/building/eventw12.png';
+import eventw13 from '../assets/images/building/eventw13.png';
+import eventw14 from '../assets/images/building/eventw14.png';
+import eventw15 from '../assets/images/building/eventw15.png';
+import eventw16 from '../assets/images/building/eventw16.png';
+
 import arrowLeft from "../assets/images/main/left.png";
 import arrowRight from "../assets/images/main/right.png";
 import selectButton from "../assets/images/main/select.png";
+import buyButton from '../assets/images/main/buy.png';
 
-import girl1 from '../assets/images/character/girl1.png';
-import girl2 from '../assets/images/character/girl2.png';
-import girl3 from '../assets/images/character/girl3.png';
-import boy1 from '../assets/images/character/boy1.png';
-import boy2 from '../assets/images/character/boy2.png';
-import boy3 from '../assets/images/character/boy3.png';
-
-const profileImages = [girl1, boy1, girl2, boy2, girl3, boy3]; // 순서대로 profileSeq: 1~6
+import coinIcon from '../assets/images/main/coin.png';
 
 function MainPage() {
-    const [userNickname, setUserNickname] = useState('');
-    const [friendRequests, setFriendRequests] = useState([
-    { id: 1, nickname: '유재석' },
-    { id: 2, nickname: '복싱보이' },
-    { id: 3, nickname: '다죽었음' },
 
-  ]);
-const acceptFriend = (requestId) => {
-  const accepted = friendRequests.find(req => req.id === requestId);
-
-  console.log('✅ 수락 요청된 ID:', requestId);
-  console.log('✅ 수락할 친구:', accepted);
-  if (accepted) {
-    setFriends(prev => [...prev, { id: accepted.id, nickname: accepted.nickname, online: false }]);
-    console.log('✅ 업데이트된 친구 목록:', updated);
-    setFriendRequests(prev => prev.filter(req => req.id !== requestId));
-  }
-};
-
-const rejectFriend = (requestId) => {
-  setFriendRequests(prev => prev.filter(req => req.id !== requestId));
-};
-
-  const characterList = [character1, character2, character3];
-  const [animationDirection, setAnimationDirection] = useState(null);
-  const [nickname, setNickname] = useState("");
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [selectedIndex, setSelectedIndex] = useState(null);
+  // 메인 창 로그인 못하면 못 보게
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (user?.nickname) setNickname(user.nickname);
-
-    const savedIndex = localStorage.getItem("selectedCharacter");
-    if (savedIndex !== null) {
-      setCurrentIndex(parseInt(savedIndex));
-      setSelectedIndex(parseInt(savedIndex));
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+      alert('로그인이 필요합니다.');
+      navigate('/login');
     }
   }, []);
+  // 세션 만료되면 다시 로그인하게
+  axios.interceptors.response.use(
+    response => response,
+    error => {
+      if (error.response?.status === 401) {
+        alert('세션이 만료되었습니다. 다시 로그인해주세요.');
+        localStorage.clear();
+        window.location.href = '/login';
+      }
+      return Promise.reject(error);
+    }
+  );
 
+
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [userNickname, setUserNickname] = useState('');
+  const [animationDirection, setAnimationDirection] = useState(null);
+  const [nickname, setNickname] = useState("");
+  const [skins, setSkins] = useState([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [selectedIndex, setSelectedIndex] = useState(null);
+    
+  // API로 스킨 가져오기
+  const fetchSkins = async () => {
+    try {
+      const res = await api.get("/skins/getUserSkin");
+      const skinData = res.data.result || [];
+
+      setSkins(skinData);
+
+      const selectedIndex = skinData.findIndex((skin) => skin.isSelect === 1);
+      if (selectedIndex !== -1) {
+        setCurrentIndex(selectedIndex);
+        setSelectedIndex(selectedIndex);
+      } else {
+        setCurrentIndex(0); // 기본값
+        setSelectedIndex(null); 
+      }
+    } catch (error) {
+      console.error('캐릭터 스킨 불러오기 실패:', error);
+    }
+  };
+
+  // 최초 한 번 실행
+  useEffect(() => {
+    fetchSkins();
+  }, []);
+
+  // 스킨 좌우 버튼
   const handleLeft = () => {
     setAnimationDirection("left");
-    setCurrentIndex(
-      (prev) => (prev - 1 + characterList.length) % characterList.length
-    );
+    setCurrentIndex((prev) => (prev - 1 + skins.length) % skins.length);
   };
 
   const handleRight = () => {
     setAnimationDirection("right");
-    setCurrentIndex((prev) => (prev + 1) % characterList.length);
+    setCurrentIndex((prev) => (prev + 1) % skins.length);
   };
 
-  const handleSelect = () => {
-    localStorage.setItem("selectedCharacter", currentIndex);
-    setSelectedIndex(currentIndex);
-  };
+  // 캐릭터 선택 API
+  const handleSelect = async () => {
+  const selectedSkin = skins[currentIndex];
 
-  const friends = [
-    { id: 1, nickname: 'GO성현', online: true},
-    { id: 2, nickname: 'zl존예리', online: true},
-    { id: 3, nickname: '조은사람조은', online: true},
-    { id: 4, nickname: 'ID혜지니', online: true},
-    { id: 5, nickname: '킹왕짱창현', online: false},
-    { id: 6, nickname: '박민준민준', online: true},
-    { id: 7, nickname: '지훈남', online: false},
-    { id: 8, nickname: 'Ao준혁oA', online: true},
-    { id: 9, nickname: 'U빈', online: true},
+  if (!selectedSkin?.playerSkinItemSeq || !userInfo?.userUuid) {
+    console.error('❗ playerSkinItemSeq 또는 userUuid가 없습니다.');
+    return;
+  }
 
+  const token = localStorage.getItem('accessToken');
+  // 캐릭터 선택
+  try {
+    await api.get('/skins/selectSkin', {
+      params: {
+        userUuid: userInfo.userUuid,
+        playerSkinItemSeq: selectedSkin.playerSkinItemSeq, // ✅ 필드명 주의!
+      },
+      headers: {
+        Authorization: `Bearer ${token}`, // ✅ 헤더에 토큰 포함
+      },
+    });
 
-  ];
-  const buildingImages = [
-    building1, building2, building3, building4, building5, building6,
-    building7, building8, building9, building10, building11, building12,
-    building13, building14, building15, building16, building17, building18,
-    building19, building20, building21, building22, building23, building24,
-    building25, building26, 
-  ];
+    // 다시 불러오기
+    const refreshed = await api.get('/skins/getUserSkin');
+    const result = refreshed.data.result;
 
-  const rareImages = [
-    rare1, rare2, rare3, rare4, rare5, rare6, rare7, rare8, rare9, rare10,
-    rare11, rare12, rare13, rare14, rare15, rare16, rare17, rare18, rare19, rare20,
-    rare21, rare22, rare23, rare24, rare25, rare26, rare27, rare28, rare29, rare30,
-    rare31, rare32, rare33, rare34, rare35, rare36, rare37, rare38, rare39, rare40,
-    rare41, rare42, rare43, rare44, rare45, rare46, rare47, rare48,
-  ];
+    setSkins(result);
+    const selectedIndex = result.findIndex((skin) => skin.isSelect === 1);
+    setSelectedIndex(selectedIndex);
+    setCurrentIndex(selectedIndex !== -1 ? selectedIndex : 0);
+  } catch (error) {
+    console.error('❌ 캐릭터 선택 실패:', error);
+  }
+};
+
+// 모달 상태 추가
+const [showBuyModal, setShowBuyModal] = useState(false);
+const [pendingSkin, setPendingSkin] = useState(null);
+
+// 구매 버튼 클릭 시
+const handleBuyClick = () => {
+  const currentSkin = skins[currentIndex];
+  setPendingSkin(currentSkin);
+  setShowBuyModal(true);
+};
+console.log('✅ 현재 스킨:', skins[currentIndex]);
+// 실제 구매 처리
+const confirmBuy = async () => {
+  const token = localStorage.getItem('accessToken');
+  try {
+    await api.patch('/skins/unLockUserSkin', {}, {
+      params: {
+        userUuid: userInfo.userUuid,
+        playerSkinItemSeq: pendingSkin.playerSkinItemSeq,
+      },
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    await fetchSkins();
+    await fetchGold();
+    alert(`"${pendingSkin.name}" 캐릭터를 구매했습니다!`);
+  } catch (err) {
+    alert('구매 실패');
+  } finally {
+    setShowBuyModal(false);
+    setPendingSkin(null);
+  }
+};
+
+const buildingImages = [
+  { src: building1, filename: 'building1.png' },
+  { src: building2, filename: 'building2.png' },
+  { src: building3, filename: 'building3.png' },
+  { src: building4, filename: 'building4.png' },
+  { src: building5, filename: 'building5.png' },
+  { src: building6, filename: 'building6.png' },
+  { src: building7, filename: 'building7.png' },
+  { src: building8, filename: 'building8.png' },
+  { src: building9, filename: 'building9.png' },
+  { src: building10, filename: 'building10.png' },
+  { src: building11, filename: 'building11.png' },
+  { src: building12, filename: 'building12.png' },
+  { src: building13, filename: 'building13.png' },
+  { src: building14, filename: 'building14.png' },
+  { src: building15, filename: 'building15.png' },
+  { src: building16, filename: 'building16.png' },
+  { src: building17, filename: 'building17.png' },
+  { src: building18, filename: 'building18.png' },
+  { src: building19, filename: 'building19.png' },
+  { src: building20, filename: 'building20.png' },
+  { src: building21, filename: 'building21.png' },
+  { src: building22, filename: 'building22.png' },
+  { src: building23, filename: 'building23.png' },
+  { src: building24, filename: 'building24.png' },
+  { src: building25, filename: 'building25.png' },
+  { src: building26, filename: 'building26.png' },
+];
+
+const rareImages = [
+  { src: rare1, filename: 'rare1.png' },
+  { src: rare2, filename: 'rare2.png' },
+  { src: rare3, filename: 'rare3.png' },
+  { src: rare4, filename: 'rare4.png' },
+  { src: rare5, filename: 'rare5.png' },
+  { src: rare6, filename: 'rare6.png' },
+  { src: rare7, filename: 'rare7.png' },
+  { src: rare8, filename: 'rare8.png' },
+  { src: rare9, filename: 'rare9.png' },
+  { src: rare10, filename: 'rare10.png' },
+  { src: rare11, filename: 'rare11.png' },
+  { src: rare12, filename: 'rare12.png' },
+  { src: rare13, filename: 'rare13.png' },
+  { src: rare14, filename: 'rare14.png' },
+  { src: rare15, filename: 'rare15.png' },
+];
+
+const legendaryImages = [
+  { src: legendary1, filename: 'legendary1.png' },
+  { src: legendary2, filename: 'legendary2.png' },
+  { src: legendary3, filename: 'legendary3.png' },
+  { src: legendary4, filename: 'legendary4.png' },
+];
+
+const eventImages = [
+  { src: eventk1, filename: 'eventk1.png' },
+  { src: eventk2, filename: 'eventk2.png' },
+  { src: eventk3, filename: 'eventk3.png' },
+  { src: eventk4, filename: 'eventk4.png' },
+  { src: eventk5, filename: 'eventk5.png' },
+  { src: eventk6, filename: 'eventk6.png' },
+  { src: eventk7, filename: 'eventk7.png' },
+  { src: eventk8, filename: 'eventk8.png' },
+  { src: eventk9, filename: 'eventk9.png' },
+  { src: eventk10, filename: 'eventk10.png' },
+  { src: eventk11, filename: 'eventk11.png' },
+  { src: eventk12, filename: 'eventk12.png' },
+  { src: eventw1, filename: 'eventw1.png' },
+  { src: eventw2, filename: 'eventw2.png' },
+  { src: eventw3, filename: 'eventw3.png' },
+  { src: eventw4, filename: 'eventw4.png' },
+  { src: eventw5, filename: 'eventw5.png' },
+  { src: eventw6, filename: 'eventw6.png' },
+  { src: eventw7, filename: 'eventw7.png' },
+  { src: eventw8, filename: 'eventw8.png' },
+  { src: eventw9, filename: 'eventw9.png' },
+  { src: eventw10, filename: 'eventw10.png' },
+  { src: eventw11, filename: 'eventw11.png' },
+  { src: eventw12, filename: 'eventw12.png' },
+  { src: eventw13, filename: 'eventw13.png' },
+  { src: eventw14, filename: 'eventw14.png' },
+  { src: eventw15, filename: 'eventw15.png' },
+  { src: eventw16, filename: 'eventw16.png' },
+];
+
   const navigate = useNavigate();
   const [modalType, setModalType] = useState(null); // 'tutorial' 또는 'mypage' 또는 null
   const [isFriendPopupOpen, setIsFriendPopupOpen] = useState(false); // ✅ 반드시 함수 컴포넌트 내부에
@@ -219,28 +351,28 @@ const rejectFriend = (requestId) => {
 
   const [userInfo, setUserInfo] = useState(null);
 
-useEffect(() => {
-  const fetchUserInfo = async () => {
-    try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
-        console.error('⛔️ 토큰이 없습니다. 로그인 먼저 필요합니다.');
-        return;
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+          console.error('⛔️ 토큰이 없습니다. 로그인 먼저 필요합니다.');
+          return;
+        }
+
+        const res = await api.get('/user/auth/getUserInfo');
+
+        console.log("✅ 받은 유저 정보:", res.data.result);
+        if (res.data.result) {
+          setUserInfo(res.data.result);
+        }
+      } catch (err) {
+        console.error('유저 정보 가져오기 실패:', err);
       }
+    };
 
-      const res = await api.get('/user/auth/getUserInfo');
-
-      console.log("✅ 받은 유저 정보:", res.data.result);
-      if (res.data.result) {
-        setUserInfo(res.data.result);
-      }
-    } catch (err) {
-      console.error('유저 정보 가져오기 실패:', err);
-    }
-  };
-
-  fetchUserInfo();
-}, []);
+    fetchUserInfo();
+  }, []);
 
 
 // userInfo 바뀌면 nickname, email 같이 업데이트
@@ -251,8 +383,6 @@ useEffect(() => {
     setUserNickname(userInfo.nickname);  // 캐릭터 아래 닉네임 표기용
   }
 }, [userInfo]);
-
-
 
 
   const [isEditing, setIsEditing] = useState(false);           // 수정 모드 진입 여부
@@ -284,21 +414,6 @@ useEffect(() => {
   console.log('🔐 로그인한 유저 닉네임:', userNickname);
 }, []);
 
-//   useEffect(() => {
-//   api.post('/user/auth/login', null, {
-//     params: {
-//       email: 'yhjyhw1004@naver.com',
-//       password: '1234',
-//     }
-//   })
-//     .then((res) => {
-//       console.log('✅ 로그인 테스트 성공:', res.data);
-//     })
-//     .catch((err) => {
-//       console.error('❌ 로그인 테스트 실패:', err);
-//     });
-// }, []);
-
     useEffect(() => {
   if (dateRange[0] && dateRange[1]) {
     const start = new Date(dateRange[0]);
@@ -327,6 +442,246 @@ useEffect(() => {
       return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
     };
 
+  // 유저 골드 조회
+  const [gold, setGold] = useState(0);
+  const fetchGold = async () => {
+    try {
+      if (!userInfo?.userUuid) return;
+
+      const res = await api.get(`/users/games/${userInfo.userUuid}/getGoldByUuid`);
+      setGold(res.data.result);
+      console.log('💰 유저 골드:', res.data.result);
+    } catch (error) {
+      console.error('❌ 골드 조회 실패:', error);
+    }
+  };
+  useEffect(() => {
+    if (userInfo?.userUuid) {
+      fetchGold();
+    }
+  }, [userInfo]);
+
+  // 친구 요청
+  const [friends, setFriends] = useState([]);
+  const [friendRequests, setFriendRequests] = useState([]);
+
+  // 친구 요청 목록 불러오기
+  useEffect(() => {
+    const fetchFriendRequests = async () => {
+      try {
+        const res = await api.get('/users/friends/requests');
+        const requestList = res.data.result || [];
+
+        console.log('✅ 친구 요청 목록:', requestList);
+        requestList.forEach((req, i) => {
+          console.log(`👉 요청자 ${i + 1}:`, req);
+        });
+
+        setFriendRequests(requestList);
+      } catch (error) {
+        console.error('❌ 친구 요청 목록 불러오기 실패:', error);
+      }
+    };
+
+    fetchFriendRequests();
+  }, []);
+
+  // 친구 수락
+  const acceptFriend = async (requestId) => {
+    const accepted = friendRequests.find(req => req.id === requestId);
+    if (!accepted) return;
+
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        alert('로그인이 필요합니다.');
+        return;
+      }
+
+      await api.patch('/users/friends/accept', null, {
+        params: {
+          friendUuid: accepted.userUuid,
+        },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setFriends(prev => [
+        ...prev,
+        {
+          id: accepted.id,
+          nickname: accepted.friendNickname,
+          online: false,
+        },
+      ]);
+
+      setFriendRequests(prev => prev.filter(req => req.id !== requestId));
+      console.log('✅ 친구 요청 수락 성공');
+    } catch (error) {
+      console.error('❌ 친구 수락 실패:', error);
+      alert('친구 수락에 실패했습니다.');
+    }
+  };
+
+  // 친구 거절
+  const rejectFriend = async (requestId) => {
+    const rejected = friendRequests.find(req => req.id === requestId);
+    if (!rejected) return;
+
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        alert('로그인이 필요합니다.');
+        return;
+      }
+
+      await api.delete('/users/friends/reject', {
+        params: {
+          friendUuid: rejected.userUuid,
+        },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setFriendRequests(prev => prev.filter(req => req.id !== requestId));
+      console.log('✅ 친구 요청 거절 성공');
+    } catch (error) {
+      console.error('❌ 친구 거절 실패:', error);
+      alert('친구 거절에 실패했습니다.');
+    }
+  };
+
+  // 친구 목록 불러오기
+  useEffect(() => {
+    const fetchFriendStatus = async () => {
+      try {
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+          console.warn('⛔️ 액세스 토큰 없음');
+          return;
+        }
+
+        const res = await api.get('/users/friends/status', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const friendList = res.data.result || [];
+        console.log('✅ 친구 목록 불러오기 성공:', friendList);
+
+        // friends 상태 업데이트
+        setFriends(friendList);
+      } catch (error) {
+        console.error('❌ 친구 목록 불러오기 실패:', error);
+      }
+    };
+
+    if (userInfo?.userUuid) {
+      fetchFriendStatus(); // userInfo 세팅 이후 실행
+    }
+  }, [userInfo]);
+
+  // 해금된 건물 ID
+  const [unlockedBuildings, setUnlockedBuildings] = useState([]);
+  // 해금된 건물 가져오기
+  useEffect(() => {
+    const fetchUnlockedBuildings = async () => {
+      try {
+        const token = localStorage.getItem('accessToken');
+        const res = await api.get('/constructures/getConstructure', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const result = res.data.result || [];
+
+        // open 이 false인 건물만 수집
+        const unlocked = result
+          .filter(b => b.open === true)
+          .map(b => b.imageUrl?.split('/').pop()); // 'rare10.png'처럼 추출
+
+        setUnlockedBuildings(unlocked);
+        console.log("✅ 해금된 건물 파일명 목록:", unlocked);
+      } catch (err) {
+        console.error('❌ 건물 조회 실패:', err);
+      }
+    };
+
+    if (userInfo?.userUuid) {
+      fetchUnlockedBuildings();
+    }
+  }, [userInfo]);
+
+  // 닉네임 변경
+  const [nicknameCheckResult, setNicknameCheckResult] = useState(null);
+  const [checkedNickname, setCheckedNickname] = useState('');
+
+  useEffect(() => {
+    setNicknameCheckResult('');
+    setCheckedNickname('');
+  }, [editNickname]);
+
+  const handleCheckNickname = async () => {
+    if (!editNickname || editNickname.trim() === '') {
+      alert('닉네임을 입력해주세요.');
+      return;
+    }
+
+    try {
+      const res = await api.post('/user/auth/signup/nickname/check', {
+        nickname: editNickname,
+      });
+      console.log('✅ 닉네임 중복확인 응답:', res.data);
+
+      if (res.data.result.available === true) {
+        setNicknameCheckResult('available');
+        setCheckedNickname(editNickname);
+        alert('✅ 사용 가능한 닉네임입니다.');
+      } else {
+        setNicknameCheckResult('duplicate');
+        alert('❌ 이미 사용 중인 닉네임입니다.');
+      }
+    } catch (err) {
+      console.error('닉네임 중복확인 실패:', err);
+      alert('중복 확인 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleSaveNickname = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+
+      await api.put('/user/auth/nickname',
+        { nickname: editNickname }, // 👈 여기 data로 바꿈
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json', // 👈 필수
+          },
+        }
+      );
+
+      alert('닉네임이 성공적으로 변경되었습니다!');
+      setUserInfo(prev => ({
+        ...prev,
+        nickname: editNickname,
+        userNickname: editNickname,
+      }));
+      setUserNickname(editNickname);
+      setIsEditingNickname(false);
+      setNicknameCheckResult('');
+    } catch (error) {
+      console.error('❌ 닉네임 변경 실패:', error);
+      alert('닉네임 변경에 실패했습니다.');
+    }
+  };
+
+  
+
   return (
     <div className="main-page-background">
       <div className="main-fixed-wrapper">
@@ -341,6 +696,11 @@ useEffect(() => {
           <img src={myPageIcon} alt="마이페이지" />
         </button>
       </div>
+      <div className="gold-display">
+        <img src={coinIcon} alt="코인" className="coin-icon" />
+        <span className="gold-amount">{gold.toLocaleString()} G</span>
+      </div>
+
 
       <div className="bottom-right-buttons">
         <button className="bottom-icon-button" onClick={() => navigate('/event')}>
@@ -355,16 +715,50 @@ useEffect(() => {
       </div>
 
       <div className="character-section">
-          <div className="nickname-text">{userNickname}</div>
-          <div className={`character-selector animate-${animationDirection}`}>
-            <img src={arrowLeft} alt="왼쪽" className="arrow-button large" onClick={handleLeft} />
-            <img src={characterList[currentIndex]} alt="캐릭터" className="main-character large" onAnimationEnd={() => setAnimationDirection(null)} />
-            <img src={arrowRight} alt="오른쪽" className="arrow-button large" onClick={handleRight} />
-          </div>
-          <div className="select-button-wrapper">
-            <img src={selectButton} alt="선택 버튼" className={`select-button ${selectedIndex === currentIndex ? 'selected' : ''}`} onClick={handleSelect} />
-          </div>
-      </div>
+  <div className="nickname-text">{userInfo?.userNickname}</div>
+  <div className={`character-selector animate-${animationDirection}`}>
+    <img src={arrowLeft} alt="왼쪽" className="arrow-button large" onClick={handleLeft} />
+    {skins.length > 0 && (
+      <img
+        src={skins[currentIndex]?.image}
+        alt="캐릭터"
+        className="main-character large"
+        onAnimationEnd={() => setAnimationDirection(null)}
+      />
+    )}
+    <img src={arrowRight} alt="오른쪽" className="arrow-button large" onClick={handleRight} />
+  </div>
+
+  <div className="select-button-wrapper">
+  {skins[currentIndex]?.isUnlock === 1 ? (
+    selectedIndex !== currentIndex ? (
+      <img
+        src={selectButton}
+        alt="선택 버튼"
+        className="select-button"
+        onClick={handleSelect}
+      />
+    ) : null // ✅ 이미 선택된 캐릭터는 아무 버튼도 안 보이게 함
+  ) : (
+    <img
+      src={buyButton}
+      alt="구매 버튼"
+      className="select-button"
+      onClick={handleBuyClick}
+    />
+  )}
+</div>
+{showBuyModal && (
+  <ConfirmModal
+    message={`"${pendingSkin?.name}" 캐릭터를 ${pendingSkin?.price}G에 구매하시겠습니까?`}
+    onConfirm={confirmBuy}
+    onCancel={() => setShowBuyModal(false)}
+  />
+)}
+
+
+</div>
+
 
       {modalType && (
         <div className="modal-overlay" onClick={() => {setModalType(null);setActiveTab('통계'); setIsEditing(false); setIsEditingNickname(false); setEditNickname(userInfo?.nickname);}}>
@@ -379,11 +773,8 @@ useEffect(() => {
                 <div className="mypage-overlay">
                   {/* 왼쪽: 프로필 영역 */}
                   <div className="mypage-left">
-                    <img
-  className="mypage-avatar"
-  src={userInfo?.avatarUrl || profileImages[(userInfo?.profileSeq || 1) - 1]}
-  alt="프로필"
-/>
+                    <img className="mypage-avatar" src={userInfo?.profile?.image} alt="프로필" />
+
                     <div className="mypage-name">{userInfo?.userNickname}</div>
                     <div className="mypage-email">{userInfo?.userEmail}</div>
                     <button
@@ -391,20 +782,32 @@ useEffect(() => {
                       onClick={() => setIsEditing(!isEditing)}>정보수정
                     </button>
                     <button
-  className="mypage-logout-btn"
-  onClick={() => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('user'); // 로그인 시 저장한 사용자 정보도 제거
-    localStorage.removeItem('userNickname');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('selectedCharacter');
-    navigate('/login'); // 로그인 페이지로 이동 (라우트 이름은 실제 프로젝트에 맞게 수정)
-  }}
->
-  로그아웃
-</button>
+                      className="mypage-logout-btn"
+                      onClick={() => setShowLogoutModal(true)}>
+                      로그아웃
+                    </button>
 
                   </div>
+                  {showLogoutModal && (
+                    <div className="modal-overlay">
+                      <div className="modal">
+                        <p>정말 로그아웃 하시겠습니까?</p>
+                        <div className="modal-buttons">
+                          <button
+                            onClick={() => {
+                              localStorage.clear();
+                              setShowLogoutModal(false);
+                              navigate('/login'); // 로그인 페이지 경로
+                            }}
+                          >
+                            네, 로그아웃
+                          </button>
+                          <button onClick={() => setShowLogoutModal(false)}>아니요</button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   
                   <div className="mypage-right">
                     {/* 탭 버튼 */}
@@ -528,14 +931,14 @@ useEffect(() => {
                         <div className="profile-view">
                           <div className="info-row">
                             <label>닉네임:</label>
-                            <div className="info-me">{editNickname}</div>
+                            <div className="info-me">{userInfo?.userNickname}</div>
                             <button className="edit-icon-btn" onClick={() => setIsEditingNickname(true)}>
                               <img src={pencilIcon} alt="수정" className="edit-icon" />
                             </button>
                           </div>
                           <div className="info-row">
                             <label>이메일:</label>
-                            <div className="info-me">{editEmail}</div>
+                            <div className="info-me">{userInfo?.userEmail}</div>
                           </div>
                           <div className="info-row password-row">
                             <button className="change-password-btn">비밀번호 변경</button>
@@ -568,8 +971,16 @@ useEffect(() => {
                           onChange={(e) => setEditNickname(e.target.value)}
                           className="nickname-input"
                         />
+                        {/* 중복 확인 메시지 */}
+                        {nicknameCheckResult === 'available' && (
+                          <div className="nickname-check-success">✅ 사용 가능한 닉네임입니다.</div>
+                        )}
+                        {nicknameCheckResult === 'duplicate' && (
+                          <div className="nickname-check-error">❌ 이미 사용 중인 닉네임입니다.</div>
+                        )}
                         <div className="nickname-edit-buttons">
-                          <button className="check-btn">중복확인</button>
+                          <button className="check-btn" onClick={handleCheckNickname}>중복확인</button>
+                          
                           <button
                             className="cancel-btn"
                             onClick={() => {
@@ -579,12 +990,14 @@ useEffect(() => {
                           >
                             취소
                           </button>
+
                           <button
                             className="save-btn"
-                            onClick={() => {
-                              // 저장 로직은 여기에
-                              setIsEditingNickname(false);
-                            }}
+                            onClick={handleSaveNickname}
+                            disabled={
+                              nicknameCheckResult !== 'available' ||  // 중복확인 결과가 사용 가능이 아니면 비활성화
+                              editNickname !== checkedNickname       // 중복확인 후 닉네임이 바뀌었으면 비활성화
+                            }
                           >
                             저장
                           </button>
@@ -596,22 +1009,69 @@ useEffect(() => {
                     {/* ✅ 도감 탭 내용 */}
                     {activeTab === '도감' && (
                       <div className="collection-section">
-                        <div className="buildingname">BASIC</div>
+                        <div className="buildingname">COMMON</div>
                         <div className="building-grid">
-                          {buildingImages.map((src, i) => (
-                            <div key={i} className="building-item">
-                              <img src={src} alt={`베이직 건물 ${i + 1}`} className="building-image" />
-                            </div>
-                          ))}
+                          {buildingImages.map(({ src, filename }, i) => {
+                            const isUnlocked = unlockedBuildings.includes(filename);
+                            return (
+                              <div key={i} className="building-item">
+                                <img
+                                  src={src}
+                                  alt={`건물 ${filename}`}
+                                  className={`building-image ${isUnlocked ? 'unlocked' : ''}`}
+                                />
+                              </div>
+                            );
+                          })}
                         </div>
+
 
                         <div className="buildingname1">RARE</div>
                         <div className="building-grid">
-                          {rareImages.map((src, i) => (
-                            <div key={i} className="building-item">
-                              <img src={src} alt={`레어 건물 ${i + 1}`} className="building-image" />
-                            </div>
-                          ))}
+                          {rareImages.map(({ src, filename }, i) => {
+                            const isUnlocked = unlockedBuildings.includes(filename);
+                            return (
+                              <div key={i} className="building-item">
+                                <img
+                                  src={src}
+                                  alt={`건물 ${filename}`}
+                                  className={`building-image ${isUnlocked ? 'unlocked' : ''}`}
+                                />
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        <div className="buildingname1">LEGENDARY</div>
+                        <div className="building-grid">
+                          {legendaryImages.map(({ src, filename }, i) => {
+                            const isUnlocked = unlockedBuildings.includes(filename);
+                            return (
+                              <div key={i} className="building-item">
+                                <img
+                                  src={src}
+                                  alt={`건물 ${filename}`}
+                                  className={`building-image ${isUnlocked ? 'unlocked' : ''}`}
+                                />
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        <div className="buildingname1">EVENT</div>
+                        <div className="building-grid">
+                          {eventImages.map(({ src, filename }, i) => {
+                            const isUnlocked = unlockedBuildings.includes(filename);
+                            return (
+                              <div key={i} className="building-item">
+                                <img
+                                  src={src}
+                                  alt={`건물 ${filename}`}
+                                  className={`building-image ${isUnlocked ? 'unlocked' : ''}`}
+                                />
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -639,6 +1099,13 @@ useEffect(() => {
           disabled={!!modalType}
         >
           <img src={fbottom} alt="플로팅 버튼" />
+
+          {/* ✅ 친구 요청 배지 표시 */}
+          {friendRequests.length > 0 && (
+            <div className="friend-request-badge">
+              {friendRequests.length}
+            </div>
+          )}
         </button>
       </div>
 
@@ -655,10 +1122,7 @@ useEffect(() => {
             <div className="friend-popup-content">
               {/* 내 정보 */}
               <div className="my-profile">
-                <img
-  src={profileImages[(userInfo?.profileSeq || 1) - 1]}
-  className="friend-avatar"
-/>
+                <img className="friend-avatar" src={userInfo?.profile?.image} alt="프로필" />
 
                 <div className="friend-nickname">{userInfo.userNickname} (나)</div>
               </div>
@@ -668,16 +1132,39 @@ useEffect(() => {
 
               {/* 친구 리스트 */}
               <div className="friend-title">친구목록
-                <img src={newIcon} alt="새로고침" className="new-button" />
+                <img
+                  src={newIcon}
+                  alt="새로고침"
+                  className="new-button"
+                  onClick={async () => {
+                    try {
+                      const token = localStorage.getItem('accessToken');
+                      const [friendRes, requestRes] = await Promise.all([
+                        api.get('/users/friends/status', {
+                          headers: { Authorization: `Bearer ${token}` },
+                        }),
+                        api.get('/users/friends/requests'),
+                      ]);
+
+                      setFriends(friendRes.data.result || []);
+                      setFriendRequests(requestRes.data.result || []);
+                      console.log('🔄 친구 목록 & 요청 새로고침 완료');
+                    } catch (err) {
+                      console.error('❌ 친구 새로고침 실패:', err);
+                    }
+                  }}
+                />
+
+
               </div>
               <div className="friend-list">
                 {friends.map(friend => (
                   <div key={friend.id} className="friend-item">
                     <div
                     className="friend-status-dot"
-                    style={{ backgroundColor: friend.online ? '#00ff5f' : '#ffffff' }}
+                    style={{backgroundColor: friend.status === 'online' ? '#00ff5f' : '#ffffff', border: '1px solid gray',}}
                   ></div>
-                    <div className="friend-nickname">{friend.nickname}</div>
+                    <div className="friend-nickname">{friend.friendNickname}</div>
                   </div>
                 ))}
               </div>
@@ -689,7 +1176,7 @@ useEffect(() => {
                     <div className="friend-request-section">
                       {friendRequests.map((req) => (
                         <div key={req.id} className="friend-request-item">
-                          <div className="friend-nickname">{req.nickname}</div>
+                          <div className="friend-nickname">{req.friendNickname}</div>
                           <div className="friend-request-buttons">
                             <button onClick={() => acceptFriend(req.id)}>✅</button>
                             <button onClick={() => rejectFriend(req.id)}>❌</button>
