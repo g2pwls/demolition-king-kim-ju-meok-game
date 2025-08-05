@@ -5,6 +5,7 @@ import com.e106.demolition_king.common.exception.BaseException;
 import com.e106.demolition_king.game.entity.Gold;
 import com.e106.demolition_king.game.entity.Report;
 import com.e106.demolition_king.skin.entity.PlayerSkin;
+import com.e106.demolition_king.user.dto.ProfileDto;
 import com.e106.demolition_king.user.dto.SignupRequestDto;
 import com.e106.demolition_king.user.entity.Profile;
 import com.e106.demolition_king.user.entity.User;
@@ -249,7 +250,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
                 .userNickname(user.getUserNickname())
                 .kakaoAccessToken(user.getKakaoAccessToken())
                 .googleAccess(user.getGoogleAccess())
-                .profile(user.getProfile())
+                .profile(ProfileDto.from(user.getProfile()))
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .build();
