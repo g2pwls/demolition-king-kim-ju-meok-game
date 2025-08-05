@@ -60,8 +60,8 @@ public class UserServiceImpl implements UserService, UserDetailsService {
                 .createdAt(new Timestamp(System.currentTimeMillis()))
                 .updatedAt(new Timestamp(System.currentTimeMillis()))
                 .build();
-        // 2) PlayerSkin 초기화 (1번 선택, 나머지 2~9 잠금/비선택)
-        for (int i = 1; i <= 9; i++) {
+        // 2) PlayerSkin 초기화 (1번 선택, 나머지 2~10 잠금/비선택)
+        for (int i = 1; i <= 10; i++) {
             user.getPlayerSkins().add(
                     PlayerSkin.builder()
                             .user(user)

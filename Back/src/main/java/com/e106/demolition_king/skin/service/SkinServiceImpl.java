@@ -83,10 +83,10 @@ public class SkinServiceImpl implements SkinService {
         List<PlayerSkin> skins = playerSkinRepository.findAllByUser_UserUuid(userUuid);
         return skins.stream()
                 .map(skin -> {
-                    String image = playerSkinItemRepository.findById(skin.getPlayerSkinItemSeq())
-                            .map(PlayerSkinItem::getImage)
+                    PlayerSkinItem item = playerSkinItemRepository
+                            .findById(skin.getPlayerSkinItemSeq())
                             .orElse(null);
-                    return getSkinResponseVo.from(skin, image);
+                    return getSkinResponseVo.from(skin, item);
                 })
                 .collect(Collectors.toList());
     }
