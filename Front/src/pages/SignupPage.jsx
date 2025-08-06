@@ -2,43 +2,43 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import '../styles/SignupPage.css';
 import loginBack from '../assets/images/login/loginbackf.png';
+import { useNavigate } from 'react-router-dom';
 
 function SignUp() {
+  const navigate = useNavigate();
+
   const [email, setEmail] = useState('');
   const [authCode, setAuthCode] = useState('');
   const [isVerified, setIsVerified] = useState(false);
-
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [userNickname, setUserNickname] = useState('');
-  const [profileSeq, setProfileSeq] = useState(1); // 기본 캐릭터 번호
 
   // 닉네임 중복검사
   const checkNicknameDuplication = async () => {
-  try {
-    const res = await axios.post('http://54.180.226.214:8080/api/user/auth/signup/nickname/check', {
-      nickname: userNickname,
-    });
+    try {
+      const res = await axios.post(
+        'https://i13e106.p.ssafy.io/api/user/auth/signup/nickname/check',
+        { nickname: userNickname }
+      );
 
-    if (res.data.result.available) {
-      alert('사용 가능한 닉네임입니다.');
-    } else {
-      alert('이미 사용 중인 닉네임입니다.');
+      if (res.data.result.available) {
+        alert('사용 가능한 닉네임입니다.');
+      } else {
+        alert('이미 사용 중인 닉네임입니다.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('닉네임 중복 확인 실패');
     }
-  } catch (err) {
-    console.error(err);
-    alert('닉네임 중복 확인 실패');
-  }
-};
+  };
 
-
-  // 이메일 인증코드 요청
+  // 이메일 인증요청
   const requestAuthCode = async () => {
     try {
-      await axios.post('http://54.180.226.214:8080/api/v1/user/email/signup/send', { email });
-
-// 인증번호 확인
-
+      await axios.post('https://i13e106.p.ssafy.io/api/v1/user/email/signup/send', {
+        email,
+      });
       alert('인증번호가 이메일로 전송되었습니다.');
     } catch (err) {
       console.error(err);
@@ -49,23 +49,24 @@ function SignUp() {
   // 인증코드 확인
   const verifyAuthCode = async () => {
     try {
-    const res = await axios.post('http://54.180.226.214:8080/api/v1/user/email/signup/verify', {
-      email,
-      code: authCode,
-    });
+      const res = await axios.post('https://i13e106.p.ssafy.io/api/v1/user/email/signup/verify', {
+        email,
+        code: authCode,
+      });
 
-    if (res.data.result.available === true) {
-      alert('이메일 인증 성공!');
-      setIsVerified(true);
-    } else {
-      alert('인증번호가 올바르지 않습니다.');
-    }
+      if (res.data.result.available === true) {
+        alert('이메일 인증 성공!');
+        setIsVerified(true);
+      } else {
+        alert('인증번호가 올바르지 않습니다.');
+      }
     } catch (err) {
       console.error(err);
       alert('인증 확인 실패');
     }
   };
 
+  // 회원가입 처리
   const handleSignup = async (e) => {
     e.preventDefault();
 
@@ -81,21 +82,21 @@ function SignUp() {
 
     try {
       const response = await axios.post(
-        'http://54.180.226.214:8080/api/user/auth/signup',
+        'https://i13e106.p.ssafy.io/api/user/auth/signup',
         null,
         {
           params: {
             email,
             password,
             userNickname,
-            profileSeq,
+            profileSeq: 1, // 기본값
           },
         }
       );
 
       console.log('회원가입 성공:', response.data);
       alert('회원가입 성공!');
-      // TODO: 로그인 페이지로 이동
+      navigate('/login');
     } catch (err) {
       console.error('회원가입 실패:', err);
       alert('회원가입에 실패했습니다.');
@@ -105,11 +106,6 @@ function SignUp() {
   return (
     <div className="signup-page" style={{ backgroundImage: `url(${loginBack})` }}>
       <div className="signup-box">
-        
-        <div className="character-select-box">
-          {/* 추후 캐릭터 선택 UI 구현 */}
-        </div>
-
         <form className="signup-form" onSubmit={handleSignup}>
           {/* 닉네임 */}
           <div className="form-row2 with-button">
@@ -122,7 +118,6 @@ function SignUp() {
             <button type="button" onClick={checkNicknameDuplication}>
               중복확인
             </button>
-
           </div>
 
           {/* 이메일 + 인증요청 버튼 */}
@@ -173,9 +168,11 @@ function SignUp() {
             />
           </div>
 
-          {/* 회원가입 */}
+          {/* 회원가입 버튼 */}
           <div className="form-row2 button-row">
-            <button type="submit" className="signup-button">회원가입 하기</button>
+            <button type="submit" className="signup-button">
+              회원가입 하기
+            </button>
           </div>
         </form>
       </div>

@@ -21,6 +21,7 @@ import ResetPasswordPage from "./pages/ResetPasswordPage";
 import SingleTestPage from "./pages/SingleTestPage";
 import MultiLobbyPage from "./pages/MultiLobbyPage"; // ✅ 새로 추가
 import AppLayout from "./components/AppLayout";
+import MultiModeEntryPage from "./pages/MultiModeEntryPage"; // ✅ 추가
 
 function AppRoutes() {
   const location = useLocation();
@@ -93,6 +94,14 @@ function AppRoutes() {
             </AppLayout>
           }
         />
+        <Route
+        path="/multimode"
+        element={
+          <AppLayout>
+            <MultiModeEntryPage />
+          </AppLayout>
+        }
+      />
         <Route path="/singletest" element={<SingleTestPage />} />
         <Route
           path="/multilobby"
