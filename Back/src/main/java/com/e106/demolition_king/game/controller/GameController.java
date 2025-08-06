@@ -10,8 +10,10 @@ import com.e106.demolition_king.game.service.GameServiceImpl;
 import com.e106.demolition_king.game.vo.in.GoldUpdateRequestVo;
 import com.e106.demolition_king.game.vo.in.ReportPerDateUpdateRequestVo;
 import com.e106.demolition_king.game.vo.in.ReportUpdateRequestVo;
+import com.e106.demolition_king.game.vo.out.PlayTimeResponseVo;
 import com.e106.demolition_king.game.vo.out.ReportResponseVo;
 import com.e106.demolition_king.game.vo.out.ReportUpdateResponseVo;
+import com.e106.demolition_king.game.vo.out.WeeklyReportVo;
 import com.e106.demolition_king.user.service.UserServiceImpl;
 import com.e106.demolition_king.user.vo.in.EmailVerificationReRequestVo;
 import com.e106.demolition_king.user.vo.in.ProfileUpdateRequestVo;
@@ -24,6 +26,7 @@ import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -84,6 +87,55 @@ public class GameController {
                 .stream()
                 .map(ReportResponseVo::fromDto)
                 .collect(Collectors.toList());
+    }
+    @Operation(
+            summary = "오늘자 플레이 시간 조회",
+            description = "로그인된 유저의 오늘자 플레이 시간을 반환합니다 (yyyyMMdd 기준)."
+    )
+    @GetMapping("/today/playtime")
+    public BaseResponse<PlayTimeResponseVo> getTodayPlayTime(
+            @RequestHeader("Authorization") String authHeader
+    ) {
+        // 1) 토큰에서 UUID 추출
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new RuntimeException("Authorization 헤더가 잘못되었습니다.");
+        }
+        String token = authHeader.substring(7);
+        if (!jwtUtil.validateToken(token)) {
+            throw new RuntimeException("유효하지 않은 토큰입니다.");
+        }
+        String userUuid = jwtUtil.getUserUuid(token);
+
+        // 2) 서비스 호출
+        BigDecimal playTime = gameService.getTodayPlayTimeDate(userUuid);
+
+        // 3) 응답 DTO 생성 후 반환
+        PlayTimeResponseVo vo = new PlayTimeResponseVo(playTime);
+        return BaseResponse.of(vo);
+    }
+
+    @Operation(
+            summary     = "이번주 플레이 시간 조회",
+            description = "로그인된 유저의 이번주 플레이 정보를 반환합니다."
+    )
+    @GetMapping("/weekly")
+    public ResponseEntity<List<WeeklyReportVo>> getWeeklyReports(
+            @RequestHeader("Authorization") String authHeader) {
+
+        // 1) 토큰에서 UUID 추출
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new RuntimeException("Authorization 헤더가 잘못되었습니다.");
+        }
+        String token = authHeader.substring(7);
+        if (!jwtUtil.validateToken(token)) {
+            throw new RuntimeException("유효하지 않은 토큰입니다.");
+        }
+        String userUuid = jwtUtil.getUserUuid(token);
+
+        // 2) 서비스 호출
+        List<WeeklyReportVo> weekly = gameService.getWeeklyReports(userUuid);
+
+        return ResponseEntity.ok(weekly);
     }
 
     @Operation(summary = "사용자 리포트 정보 갱신", description = "특정 사용자의 리포트 정보를 갱신합니다.")

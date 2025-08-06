@@ -12,6 +12,7 @@ import com.e106.demolition_king.game.repository.GoldRepository;
 import com.e106.demolition_king.game.repository.ReportPerDateRepository;
 import com.e106.demolition_king.game.repository.ReportRepository;
 import com.e106.demolition_king.game.vo.out.ReportUpdateResponseVo;
+import com.e106.demolition_king.game.vo.out.WeeklyReportVo;
 import com.e106.demolition_king.user.dto.SignupRequestDto;
 import com.e106.demolition_king.user.entity.User;
 import com.e106.demolition_king.user.repository.UserRepository;
@@ -30,14 +31,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.Timestamp;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAdjusters;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -49,6 +55,7 @@ public class GameServiceImpl implements GameService {
     private final ReportPerDateRepository reportPerDateRepository;
     private final GoldRepository goldRepository;
     private final UserRepository userRepository;
+    private static final DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
 
     @Override
     @Transactional
@@ -103,6 +110,39 @@ public class GameServiceImpl implements GameService {
                 report.getSilverMedal(),
                 report.getBronzeMedal()
         );
+    }
+    @Override
+    @Transactional(readOnly = true)
+    public BigDecimal getTodayPlayTimeDate(String userUuid) {
+        String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        return reportPerDateRepository.findByUser_UserUuidAndPlayDate(userUuid, today)
+                .map(ReportPerDate::getPlayTimeDate)
+                .orElse(BigDecimal.ZERO);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<WeeklyReportVo> getWeeklyReports(String userUuid) {
+        // 1) 오늘 날짜
+        LocalDate today = LocalDate.now();
+        // 2) ISO 기준으로 이번 주 월요일
+        LocalDate monday = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+        // 3) 포맷팅
+        String start = monday.format(FORMAT);
+        String end   = today.format(FORMAT);
+
+        // 4) DB 조회
+        List<ReportPerDate> reports = reportPerDateRepository
+                .findAllByUser_UserUuidAndPlayDateBetweenOrderByPlayDateAsc(userUuid, start, end);
+
+        // 5) Entity → VO 변환
+        return reports.stream()
+                .map(r -> new WeeklyReportVo(
+                        r.getPlayDate(),
+                        r.getPlayTimeDate(),
+                        r.getKcal()
+                ))
+                .collect(Collectors.toList());
     }
 
     @Override
