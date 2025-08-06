@@ -4,12 +4,14 @@ package com.e106.demolition_king.game.service;
 import com.e106.demolition_king.game.dto.GoldDto;
 import com.e106.demolition_king.game.dto.ReportDto;
 import com.e106.demolition_king.game.dto.ReportPerDateRequestDto;
+import com.e106.demolition_king.game.vo.out.WeeklyReportVo;
 import com.e106.demolition_king.user.dto.SignupRequestDto;
 import com.e106.demolition_king.user.vo.in.LoginRequestVo;
 import com.e106.demolition_king.user.vo.out.TokenResponseVo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 
@@ -20,9 +22,13 @@ public interface GameService {
 
     void upsertReport(ReportPerDateRequestDto dto);
 
+    BigDecimal getTodayPlayTimeDate(String userUuid);
+
     public void updateGold(GoldDto dto);
 
     public int getGold(String userUuid);
 
     public String payGold(String userUuid, Integer spendGold);
+
+    List<WeeklyReportVo> getWeeklyReports(String userUuid);
 }
