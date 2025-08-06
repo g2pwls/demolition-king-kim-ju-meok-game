@@ -14,10 +14,7 @@ import com.e106.demolition_king.user.repository.UserRepository;
 import com.e106.demolition_king.user.vo.in.ChangePasswordRequestVo;
 import com.e106.demolition_king.user.vo.in.LoginRequestVo;
 import com.e106.demolition_king.user.vo.in.ResetPasswordRequestVo;
-import com.e106.demolition_king.user.vo.out.GetUserInfoResponseVo;
-import com.e106.demolition_king.user.vo.out.NicknameCheckResponseVo;
-import com.e106.demolition_king.user.vo.out.PasswordResponseVo;
-import com.e106.demolition_king.user.vo.out.TokenResponseVo;
+import com.e106.demolition_king.user.vo.out.*;
 import com.e106.demolition_king.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -117,6 +114,17 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         User user = userRepository.findByUserUuid(userUuid)
                 .orElseThrow(() -> new BaseException(BaseResponseStatus.NO_EXIST_USER));
         user.setUserNickname(newNickname);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserSearchResponseVo findByNickname(String userNickname) {
+        User user = userRepository.findByUserNickname(userNickname)
+                .orElseThrow(() -> new BaseException(BaseResponseStatus.NO_EXIST_USER));
+        return new UserSearchResponseVo(
+                user.getUserUuid(),
+                user.getUserNickname()
+        );
     }
 
     @Override
