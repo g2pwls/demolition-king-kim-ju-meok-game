@@ -33,15 +33,18 @@ public class Controller {
 	@PostMapping(value = "/token")
 	public ResponseEntity<Map<String, String>> createToken(@RequestBody Map<String, String> params) {
 		String roomName = params.get("roomName");
-		String participantName = params.get("participantName");
+		String nickName = params.get("nickName");
+		String userUuid = params.get("userUuid");
 
-		if (roomName == null || participantName == null) {
+		if (roomName == null || userUuid == null) {
 			return ResponseEntity.badRequest().body(Map.of("errorMessage", "roomName and participantName are required"));
 		}
 
 		AccessToken token = new AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET);
-		token.setName(participantName);
-		token.setIdentity(participantName);
+		token.setName(nickName);
+		token.setIdentity(userUuid);
+
+
 		token.addGrants(new RoomJoin(true), new RoomName(roomName));
 
 		return ResponseEntity.ok(Map.of("token", token.toJwt()));
@@ -56,6 +59,7 @@ public class Controller {
 		} catch (Exception e) {
 			System.err.println("Error validating webhook event: " + e.getMessage());
 		}
+
 		return ResponseEntity.ok("ok");
 	}
 
