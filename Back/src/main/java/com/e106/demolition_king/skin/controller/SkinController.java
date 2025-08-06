@@ -73,6 +73,12 @@ public class SkinController {
         return BaseResponse.of(skinService.getSelectedSkinImageUrl(userUuid));
     }
 
+    @Operation(summary = "uuid로 선택된 스킨 url 조회", description = "uuid로 회원의 선택된 스킨 url을 가져옵니다.")
+    @GetMapping("/getSkinByUuid")
+    public BaseResponse<String> getSkinByUserUuid(@RequestParam String userUuid) {
+        return BaseResponse.of(skinService.getSelectedSkinImageUrl(userUuid));
+    }
+
 //    uuid로 조회하여 전체 스킨정보 조회 여기다 짜줘
     @Operation(summary = "전체 스킨정보 조회", description = "uuid로 조회하여 전체 스킨정보를 조회합니다.")
     @GetMapping("/getUserSkin")
