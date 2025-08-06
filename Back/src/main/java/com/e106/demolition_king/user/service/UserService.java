@@ -5,10 +5,7 @@ import com.e106.demolition_king.user.dto.SignupRequestDto;
 import com.e106.demolition_king.user.vo.in.ChangePasswordRequestVo;
 import com.e106.demolition_king.user.vo.in.LoginRequestVo;
 import com.e106.demolition_king.user.vo.in.ResetPasswordRequestVo;
-import com.e106.demolition_king.user.vo.out.GetUserInfoResponseVo;
-import com.e106.demolition_king.user.vo.out.NicknameCheckResponseVo;
-import com.e106.demolition_king.user.vo.out.PasswordResponseVo;
-import com.e106.demolition_king.user.vo.out.TokenResponseVo;
+import com.e106.demolition_king.user.vo.out.*;
 
 public interface UserService {
     void signup(SignupRequestDto request);
@@ -22,6 +19,8 @@ public interface UserService {
     NicknameCheckResponseVo checkNickname(String nickname);
 
     void updateNickname(String userUuid, String newNickname);
+
+    UserSearchResponseVo findByNickname(String userNickname);
 
     PasswordResponseVo resetPassword(ResetPasswordRequestVo req);
 

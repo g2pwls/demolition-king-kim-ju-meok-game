@@ -6,6 +6,9 @@ import com.e106.demolition_king.friend.dto.FriendRequestDto;
 import com.e106.demolition_king.friend.service.FriendService;
 import com.e106.demolition_king.friend.vo.out.FriendResponseVo;
 import com.e106.demolition_king.friend.vo.out.FriendStatusVo;
+import com.e106.demolition_king.user.service.UserService;
+import com.e106.demolition_king.user.service.UserServiceImpl;
+import com.e106.demolition_king.user.vo.out.UserSearchResponseVo;
 import com.e106.demolition_king.util.JwtUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -21,7 +24,20 @@ import java.util.List;
 public class FriendController {
 
     private final FriendService friendService;
+    private final UserService userService;
     private final JwtUtil jwtUtil;
+
+    @Operation(
+            summary = "닉네임으로 유저 조회",
+            description = "친구 추가를 위해, 유저 닉네임으로 해당 유저 정보를 가져옵니다."
+    )
+    @GetMapping("/search")
+    public BaseResponse<UserSearchResponseVo> searchByNickname(
+            @RequestParam("nickname") String nickname
+    ) {
+        UserSearchResponseVo vo = userService.findByNickname(nickname);
+        return BaseResponse.of(vo);
+    }
 
     @Operation(summary = "초대 가능한 친구 목록 조회", description = "FRIEND 상태이며 현재 온라인 중인 친구만 반환")
     @GetMapping("/invite-targets")
