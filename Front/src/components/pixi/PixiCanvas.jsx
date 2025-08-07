@@ -343,17 +343,17 @@ const PixiCanvas = ({ action, buildingIndex, onBuildingDestroyed, kcal, setKcal 
 
 
 
-    useEffect(() => {
-      if (kcalTextRef.current) {
-        kcalTextRef.current.text = ${kcal} kcal;
-      }
-      if (coinTextRef.current) {
-        coinTextRef.current.text = COINS: ${coinCount};
-      }
-      if (destroyedTextRef.current) {
-        destroyedTextRef.current.text = 부순 건물 ${destroyedCount};
-    }
-  }, [buildingIndex]);
+    // useEffect(() => {
+    //   if (kcalTextRef.current) {
+    //     kcalTextRef.current.text = ${kcal} kcal;
+    //   }
+    //   if (coinTextRef.current) {
+    //     coinTextRef.current.text = COINS: ${coinCount};
+    //   }
+    //   if (destroyedTextRef.current) {
+    //     destroyedTextRef.current.text = 부순 건물 ${destroyedCount};
+    //   }
+    // }, [buildingIndex]);
 
 
   return (
