@@ -1,49 +1,36 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { OpenVidu } from 'openvidu-browser';
 import { Pose } from '@mediapipe/pose';
-import { drawConnectors, drawLandmarks } from '@mediapipe/drawing_utils';
 import { POSE_CONNECTIONS } from '@mediapipe/pose';
+import { drawRectangle, drawLandmarks } from '@mediapipe/drawing_utils';
 import { Camera } from '@mediapipe/camera_utils';
-import '../styles/SingleTestPage.css';
-import ComboSequence from '../components/ui/ComboSequence';
-import comboBg from '../assets/images/singlemode/combob.png';
-import characterImg from '../assets/images/character/character.png';
-import buildingImg from '../assets/images/building/building1.png';
-import PixiGame from '../components/PixiGame';
+import PixiCanvas from '../components/pixi/PixiCanvas';
+import "../styles/SingleTestPage.css";
 
-const poseList = ['잽', '회피', '어퍼'];
-
-// const ComboSequence = ({ comboList, matched }) => {
-//   const getColor = (index) => {
-//     if (index < matched) return 'matched';
-//     if (index === matched) return 'current';
-//     return 'remaining';
-//   };
-
-//   return (
-//     <div className="combo-sequence">
-//       {comboList.map((pose, i) => (
-//         <div key={i} className={`combo-circle ${getColor(i)}`}>{pose}</div>
-//       ))}
-//     </div>
-//   );
-// };
-
-const BoxingGame = () => {
-  const pixiRef = useRef();
+const SingleTestPage = () => {
   const canvasRef = useRef(null);
-  const localUserRef = useRef(null);
-  const OV = useRef(null);
-
   const [session, setSession] = useState(null);
   const [publisher, setPublisher] = useState(null);
-  const [comboIndex, setComboIndex] = useState(0);
-  const [motion, setMotion] = useState('');
-  const [calories, setCalories] = useState(0);
-  const [comboList, setComboList] = useState(() => {
-    return Array.from({ length: 8 }, () => poseList[Math.floor(Math.random() * 3)]);
-  });
-  
+  const [subscribers, setSubscribers] = useState([]);
+  const [action, setAction] = useState('idle');
+  const [health, setHealth] = useState(100);
+  const OV = useRef(null);
+  const localUserRef = useRef(null);
+  const [buildingIndex, setBuildingIndex] = useState(0);
+  const [isGameOver, setIsGameOver] = useState(false);
+  const [kcal, setKcal] = useState(0);  // ✅ 이 줄이 있어야 함
+  const audioRef = useRef(null);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (action !== 'punch') {
+        setHealth(prev => Math.max(prev - 1, 0));
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [action]);
+
   const getToken = async () => {
     const response = await fetch('http://localhost:5000/api/get-token', {
       method: 'POST',
@@ -58,7 +45,6 @@ const BoxingGame = () => {
     OV.current = new OpenVidu();
     const newSession = OV.current.initSession();
     const token = await getToken();
-
     await newSession.connect(token, { clientData: 'User' });
 
     const newPublisher = OV.current.initPublisher(undefined, {
@@ -67,7 +53,7 @@ const BoxingGame = () => {
       publishAudio: true,
       publishVideo: true,
       resolution: '640x480',
-      frameRate: 30,
+      frameRate: 60,
       insertMode: 'APPEND',
       mirror: false,
     });
@@ -75,7 +61,16 @@ const BoxingGame = () => {
     newSession.publish(newPublisher);
     setPublisher(newPublisher);
     setSession(newSession);
+
     newPublisher.addVideoElement(localUserRef.current);
+  };
+
+  const leaveSession = () => {
+    if (session) session.disconnect();
+    setSession(null);
+    setPublisher(null);
+    setSubscribers([]);
+    OV.current = null;
   };
 
   useEffect(() => {
@@ -99,142 +94,158 @@ const BoxingGame = () => {
     });
 
     pose.setOptions({
-      modelComplexity: 1,
+      modelComplexity: 0,
       smoothLandmarks: true,
       enableSegmentation: false,
       minDetectionConfidence: 0.5,
       minTrackingConfidence: 0.5,
     });
 
-    let lastRightHand = null;
-    let lastLeftHand = null;
-    let lastNose = null;
+    let lastRightWrist = null;
     let motionCooldown = false;
 
     pose.onResults((results) => {
       canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-      const poseLms = results.poseLandmarks;
-      if (!poseLms) return;
 
-      const mirroredLms = poseLms.map((lm) => ({ ...lm, x: 1 - lm.x }));
-      drawConnectors(canvasCtx, mirroredLms, POSE_CONNECTIONS, { color: '#00FF00', lineWidth: 2 });
-      drawLandmarks(canvasCtx, mirroredLms, { color: '#FF0000', radius: 2 });
-
-      const [rWrist, rShoulder, lWrist, lShoulder, nose] = [
-        mirroredLms[16], mirroredLms[12], mirroredLms[15], mirroredLms[11], mirroredLms[0]
-      ];
-
-      if (!lastRightHand || !lastLeftHand || !lastNose || motionCooldown) {
-        lastRightHand = { ...rWrist };
-        lastLeftHand = { ...lWrist };
-        lastNose = { ...nose };
+      const landmarks = results.poseLandmarks;
+      if (!landmarks) {
+        setAction('idle');
         return;
       }
 
-      const punchRight = rWrist.x < rShoulder.x - 0.05 && Math.abs(rWrist.x - lastRightHand.x) > 0.05;
-      const punchLeft = lWrist.x > lShoulder.x + 0.05 && Math.abs(lWrist.x - lastLeftHand.x) > 0.05;
-      const uppercutRight = lastRightHand.y - rWrist.y > 0.07;
-      const uppercutLeft = lastLeftHand.y - lWrist.y > 0.07;
-      const dodgeRight = lastNose.x - nose.x > 0.05;
-      const dodgeLeft = nose.x - lastNose.x > 0.05;
+      drawLandmarks(canvasCtx, landmarks, { color: '#FF0000', radius: 3 });
 
-      let detectedPose = null;
-      if (punchRight || punchLeft) detectedPose = '잽';
-      else if (uppercutRight || uppercutLeft) detectedPose = '어퍼';
-      else if (dodgeLeft || dodgeRight) detectedPose = '회피';
+      const rightWrist = landmarks[16];
+      const rightShoulder = landmarks[12];
 
-      const expectedPose = comboList[comboIndex];
+      if (!rightWrist || !rightShoulder) return;
 
-      if (detectedPose && detectedPose === expectedPose) {
-        setMotion(detectedPose);
-        setCalories((prev) => prev + 10);
-        setComboIndex((prev) => prev + 1);
+      if (!lastRightWrist) {
+        lastRightWrist = { ...rightWrist };
+        return;
+      }
 
-        if (detectedPose === '잽') {
-    pixiRef.current?.punch(); // ✅ 캐릭터 애니메이션 트리거
-  }
+      const movedForward = lastRightWrist.x - rightWrist.x > 0.07;
+      const aboveShoulder = rightWrist.y < rightShoulder.y;
 
-        if (detectedPose && detectedPose === expectedPose) {
-  setMotion(detectedPose);
-  setCalories((prev) => prev + 10);
-
-  // 상태 업데이트 이전의 comboIndex 값을 이용해 조건 체크
-  const nextIndex = comboIndex + 1;
-
-  if (detectedPose === '잽') {
-    pixiRef.current?.punch();
-  }
-
-  if (nextIndex >= comboList.length) {
-    pixiRef.current?.destroyBuilding();
-
-    setTimeout(() => {
-      setComboIndex(0);
-      setComboList(Array.from({ length: 8 }, () => poseList[Math.floor(Math.random() * 3)]));
-    }, 1000);
-  } else {
-    setComboIndex(nextIndex);
-  }
-
-  motionCooldown = true;
-  setTimeout(() => {
-    motionCooldown = false;
-    setMotion('');
-  }, 1000);
-}
-
-
+      if (movedForward && aboveShoulder && !motionCooldown) {
+        console.log('잽 감지!');
+        setAction('punch');
         motionCooldown = true;
+
         setTimeout(() => {
           motionCooldown = false;
-          setMotion('');
+          setAction('idle');
         }, 1000);
       }
 
-      lastRightHand = { ...rWrist };
-      lastLeftHand = { ...lWrist };
-      lastNose = { ...nose };
+      lastRightWrist = { ...rightWrist };
     });
 
     const camera = new Camera(videoElement, {
-      onFrame: async () => await pose.send({ image: videoElement }),
+      onFrame: async () => {
+        try {
+          await pose.send({ image: videoElement });
+        } catch (err) {
+          console.error('MediaPipe 처리 중 에러', err);
+        }
+      },
       width: 640,
       height: 480,
     });
 
     camera.start();
-    return () => camera.stop();
-  }, [comboIndex]);
+    return () => {
+      camera.stop();
+    };
+  }, [session]);
 
+  useEffect(() => {
+    return () => {
+      leaveSession();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (health === 0) {
+      setIsGameOver(true);
+      console.log("🛑 Game Over!");
+    }
+  }, [health]);
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = 0.5; // 볼륨 설정 (0.0 ~ 1.0)
+      audioRef.current.loop = true; // 반복재생
+      audioRef.current.play().catch((err) => {
+        console.warn("자동재생 차단됨. 유저 상호작용 후 재생 필요", err);
+      });
+    }
+  }, []);
+  
   return (
-    <div className="container">
-      <div className="left-game-area">
-        {/* <PixiGame ref={pixiRef} /> */}
-        <div className="combo-wrapper">
-          <img src={comboBg} alt="콤보백" className="combo-background"/>
-          <div className="combo-overlay">
-            <ComboSequence comboList={comboList} matched={comboIndex} />
-          </div>
+    <div className="page-container">
+      {/* 🔊 오디오 태그 추가 */}
+      <audio ref={audioRef} src="/sounds/bgm.mp3" />
+      {isGameOver && (
+        <div className="game-over-overlay">
+          <h1>GAME OVER</h1>
+          <button onClick={() => window.location.reload()}>다시 시작</button>
         </div>
-        <div className="character-building">
-          <img src={characterImg} alt="캐릭터" className="character-img" />
-          <img src={buildingImg} alt="건물" className="building-img" />
+      )}
+
+      <div className="top-controls">
+        <h1>OpenVidu + MediaPipe 얼굴 감지</h1>
+        <div className="buttons">
+          <button onClick={joinSession}>세션 참가</button>
+          <button onClick={leaveSession}>세션 종료</button>
         </div>
       </div>
 
-      <div className="right-ui">
-        <div className="top-ui">
-          <div className="calories">{calories} KCAL</div>
-          <button className="quit-button">QUIT</button>
+      <div className="game-layout">
+        <div className="left-game">
+          <div className="overlay-ui">
+            <div className="progress-bar">
+              <div className="progress-fill" style={{ width: `${health}%` }}></div>
+            </div>
+            <div className="command-sequence">
+              <div className="command-circle red">잽</div>
+              <div className="command-circle green">회피</div>
+              <div className="command-circle black">어퍼</div>
+              <div className="command-circle red">잽</div>
+              <div className="command-circle red">잽</div>
+              <div className="command-circle red">잽</div>
+              <div className="command-circle green">회피</div>
+              <div className="command-circle black">어퍼</div>
+            </div>
+          </div>
+          <PixiCanvas
+            action={action}
+            buildingIndex={buildingIndex}
+            onBuildingDestroyed={() => {
+              setHealth(prev => Math.min(prev + 30, 100)); // 체력 회복
+              setBuildingIndex(prev => (prev + 1) % 3);    // 다음 건물 (3개 순환)
+            }}
+            setKcal={setKcal}
+          />
         </div>
-        <div className="camera-container">
-          <video ref={localUserRef} autoPlay className="video-feed" />
-          <canvas ref={canvasRef} width={640} height={480} className="pose-canvas" />
-          <div className="motion-indicator">{motion}</div>
+
+        <div className="right-panel">
+          <div className="kcal-display">{kcal} KCAL</div>
+
+          {/* 🔽 여기 추가 🔽 */}
+          <div className="building-status">🏢 부순 건물: {buildingIndex}</div>
+          <div className="coin-status">💰 코인: {buildingIndex * 1}</div> {/* 예: 건물당 5코인 가정 */}
+
+          <div className="pixel-character"></div>
+          <button className="quit-button">QUIT</button>
+          <div className="webcam-container">
+            <video ref={localUserRef} autoPlay muted className="webcam-video" />
+            <canvas ref={canvasRef} className="webcam-canvas"></canvas>
+          </div>
         </div>
       </div>
     </div>
   );
 };
 
-export default BoxingGame;
+export default SingleTestPage;
