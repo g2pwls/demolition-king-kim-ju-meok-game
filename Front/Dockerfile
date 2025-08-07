@@ -1,5 +1,5 @@
 # 1단계: Node.js 기반 빌드 이미지
-FROM node:18-alpine as build
+FROM node:18 as build
 
 # 작업 디렉토리 설정
 WORKDIR /app
