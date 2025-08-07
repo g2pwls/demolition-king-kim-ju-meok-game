@@ -9,7 +9,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # 캐시 삭제 + 안정적인 설치
-RUN rm -rf node_modules && npm ci
+RUN rm -rf node_modules package-lock.json && npm install
 
 # 전체 소스 복사
 COPY . .
