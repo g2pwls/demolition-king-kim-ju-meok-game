@@ -1,10 +1,3 @@
-
-
-
-
-
-
-나의 말:
 import React, { useEffect, useRef, useState } from 'react';
 import * as PIXI from 'pixi.js';
 
