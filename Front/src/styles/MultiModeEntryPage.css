@@ -1,0 +1,44 @@
+.multi-mode-entry {
+  width: 100vw;
+  height: 100vh;
+  background: url("/images/bg_construction_site.png") no-repeat center center;
+  background-size: cover;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: "DungGeunMo", sans-serif;
+}
+
+.multi-mode-entry h1 {
+  font-size: 48px;
+  color: white;
+  margin-bottom: 40px;
+  text-shadow: 2px 2px 0px #000;
+}
+
+.button-wrapper {
+  display: flex;
+  gap: 40px;
+}
+
+.button-wrapper button {
+  background: url("/images/pixel_button_gray.png") no-repeat center center;
+  background-size: contain;
+  width: 200px;
+  height: 100px;
+  border: none;
+  font-size: 24px;
+  color: white;
+  font-family: "DungGeunMo", sans-serif;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.button-wrapper button:hover {
+  transform: scale(1.05);
+}
+
+.button-wrapper button:active {
+  transform: scale(0.95);
+}
