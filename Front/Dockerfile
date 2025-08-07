@@ -1,29 +1,31 @@
-# 1단계: Node.js 기반 빌드 이미지
+# 1단계: Node.js 기반 빌드 환경
 FROM node:18 as build
 
 # 작업 디렉토리 설정
 WORKDIR /app
 
-# package.json과 lock 파일 복사 후 의존성 설치
+# 의존성 설치를 위해 package 파일 복사
 COPY package*.json ./
-RUN npm install
-# 1
+
+# 캐시 제거 및 안정적인 설치를 위해 npm ci 사용
+RUN rm -rf node_modules && npm ci
+
 # 전체 앱 소스 복사
 COPY . .
 
-# Vite 권한 문제 해결: .bin 디렉토리 실행 권한 부여
+# Vite 권한 문제 해결
 RUN chmod -R +x node_modules/.bin
 
-# --unsafe-perm: 루트 권한에서 npm 스크립트 제한 해제
+# 앱 빌드
 RUN npm run build --unsafe-perm
 
-# 2단계: 빌드된 정적 파일을 Nginx로 서빙
+# 2단계: Nginx 경량 이미지로 정적 파일 서빙
 FROM nginx:alpine
 
-# 빌드된 결과물을 Nginx html 루트로 복사
+# 빌드된 정적 파일 복사
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# 컨테이너 실행 시 사용할 포트
+# 포트 노출
 EXPOSE 80
 
 # Nginx 실행
