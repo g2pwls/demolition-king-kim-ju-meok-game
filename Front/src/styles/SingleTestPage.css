@@ -5,7 +5,6 @@
   font-family: 'Press Start 2P', sans-serif;
   overflow-x: hidden;
   display: flex;
-  flex-direction: column;
   align-items: center;
 }
 
@@ -198,4 +197,48 @@
   align-items: center;
   justify-content: center;
   font-size: 48px;
+}
+
+.pose-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.motion-indicator {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  padding: 6px;
+  border-radius: 8px;
+}
+
+.pose-icon {
+  width: 60px;
+  height: 60px;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.pose-icon.inactive {
+  opacity: 0.3;
+}
+
+.combo-background {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 650px; /* 필요에 따라 조절 */
+  z-index: 1;
+  pointer-events: none; /* 마우스 이벤트 방지 */
+}
+
+.combo-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
 }

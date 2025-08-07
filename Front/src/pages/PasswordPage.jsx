@@ -14,7 +14,7 @@ export default function PasswordPage() {
   // 인증번호 발송
   const handleSendCode = async () => {
     try {
-      await axios.post('http://54.180.226.214:8080/api/v1/user/email/reset/send', {
+      await axios.post('https://i13e106.p.ssafy.io/api/v1/user/email/reset/send', {
         email,
       });
       alert('인증번호가 전송되었습니다.');
@@ -27,7 +27,7 @@ export default function PasswordPage() {
   // 인증번호 확인
   const handleVerifyCode = async () => {
     try {
-      const res = await axios.post('http://54.180.226.214:8080/api/v1/user/email/reset/verify', {
+      const res = await axios.post('https://i13e106.p.ssafy.io/api/v1/user/email/reset/verify', {
         email,
         code: authCode,
       });

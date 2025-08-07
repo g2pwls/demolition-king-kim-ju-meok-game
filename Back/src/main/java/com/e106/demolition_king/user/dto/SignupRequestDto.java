@@ -10,5 +10,4 @@ public class SignupRequestDto {
     private String password;
     private String userNickname;
     private Integer profileSeq;
-
 }

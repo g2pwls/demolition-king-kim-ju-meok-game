@@ -44,18 +44,6 @@ const SingleTestPage = () => {
   const joinSession = async () => {
     OV.current = new OpenVidu();
     const newSession = OV.current.initSession();
-
-    newSession.on('streamCreated', (event) => {
-      const subscriber = newSession.subscribe(event.stream, undefined);
-      setSubscribers((prev) => [...prev, subscriber]);
-    });
-
-    newSession.on('streamDestroyed', (event) => {
-      setSubscribers((prev) =>
-        prev.filter((sub) => sub !== event.stream.streamManager)
-      );
-    });
-
     const token = await getToken();
     await newSession.connect(token, { clientData: 'User' });
 
@@ -86,8 +74,17 @@ const SingleTestPage = () => {
   };
 
   useEffect(() => {
-    if (!session || !localUserRef.current || !canvasRef.current) return;
+    joinSession();
 
+    return () => {
+      if (session) session.disconnect();
+      setSession(null);
+      setPublisher(null);
+      OV.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
     const videoElement = localUserRef.current;
     const canvasElement = canvasRef.current;
     const canvasCtx = canvasElement.getContext('2d');

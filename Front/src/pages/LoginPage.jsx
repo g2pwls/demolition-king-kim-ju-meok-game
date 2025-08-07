@@ -1,41 +1,75 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import { useNavigate, Link } from 'react-router-dom';
+import api from '../utils/api'; // ✅ axios 인스턴스 기반
 import '../styles/LoginPage.css';
 import googleIcon from '../assets/images/login/google.png';
 import kakaoIcon from '../assets/images/login/kakao.png';
 import loginBack from '../assets/images/login/loginbackf.png';
 import backIcon from '../assets/images/back.png';
-import { Link } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
+
+function parseJwt(token) {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    console.error('❌ JWT 파싱 실패:', e);
+    return null;
+  }
+}
+
 function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
+
   const handleLogin = async (e) => {
     e.preventDefault();
 
     try {
-      const response = await axios.post(
-        'http://54.180.226.214:8080/api/user/auth/login',
-        null, // POST body 없음
-        {
-          params: {
-            email,
-            password,
-          },
-        }
-      );
+      // ✅ 로그인 요청 (axios 대신 api 사용)
+      const response = await api.post('/user/auth/login', null, {
+        params: { email, password },
+      });
 
-      console.log('로그인 성공:', response.data);
-      alert('로그인 성공!');
-      // 예: 토큰 저장 후 이동
-      localStorage.setItem('accessToken', response.data.result.accessToken);
-      localStorage.setItem('refreshToken', response.data.result.refreshToken);
-      navigate('/main'); // 로그인 성공 후 메인 페이지로 이동 
+      const result = response?.data?.result;
+      const accessToken = result?.accessToken;
+      const refreshToken = result?.refreshToken;
 
+      // ✅ 토큰에서 userUuid 추출
+      const decoded = parseJwt(accessToken);
+      const userUuid = decoded?.sub || decoded?.userUuid || decoded?.id;
+
+      if (!userUuid) {
+        alert('userUuid를 토큰에서 추출하지 못했습니다.');
+        return;
+      }
+
+      // ✅ localStorage 저장
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('userUuid', userUuid);
+      localStorage.setItem('userEmail', email);
+
+      // ✅ 유저 정보 조회
+      const userInfo = await api.get(`/user/auth/getUserInfo?userUuid=${userUuid}`);
+      const nickname = userInfo.data.result.userNickname;
+
+      localStorage.setItem('userNickname', nickname);
+      localStorage.setItem('user', JSON.stringify(userInfo.data.result));
+
+      // ✅ 이동
+      navigate('/story');
     } catch (error) {
-      console.error('로그인 실패:', error);
-      alert('아이디 또는 비밀번호가 잘못되었습니다.');
+      const message =
+        error.response?.data?.message || '아이디 또는 비밀번호가 잘못되었습니다.';
+      alert(`❌ 로그인 실패: ${message}`);
     }
   };
 
@@ -44,14 +78,6 @@ function LoginPage() {
       className="login-page-background"
       style={{ backgroundImage: `url(${loginBack})` }}
     >
-      {/* 왼쪽 상단 뒤로가기 버튼 */}
-      <button
-        className="back-button"
-        onClick={() => navigate(-1)}
-      >
-        <img src={backIcon} alt="뒤로가기" />
-      </button>
-
       <div className="login-box">
         <form className="login-form" onSubmit={handleLogin}>
           <div className="form-row1 with-button">
@@ -62,6 +88,7 @@ function LoginPage() {
                   type="text"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  required
                 />
               </div>
               <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -70,15 +97,17 @@ function LoginPage() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  required
                 />
               </div>
             </div>
             <button type="submit" className="login-button">로그인</button>
           </div>
 
+          {/* ⚠️ 자동로그인은 현재 기능 미연결 상태 */}
           <div className="login-options">
             <label>
-              <input type="checkbox" /> 자동로그인
+              <input type="checkbox" disabled /> 자동로그인 (준비 중)
             </label>
           </div>
 

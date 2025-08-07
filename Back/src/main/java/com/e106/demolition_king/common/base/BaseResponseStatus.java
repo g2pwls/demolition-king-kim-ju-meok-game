@@ -40,7 +40,7 @@ public enum BaseResponseStatus {
 
     // token
     TOKEN_NOT_VALID(HttpStatus.UNAUTHORIZED, false, 403, "토큰이 유효하지 않습니다."),
-
+    INVALID_AUTH_HEADER(HttpStatus.UNAUTHORIZED, false, 403, "헤더가 유효하지 않습니다."),
     // Users
     DUPLICATED_USER(HttpStatus.CONFLICT, false, 409, "이미 가입된 멤버입니다."),
     FAILED_TO_LOGIN(HttpStatus.UNAUTHORIZED, false, 400, "아이디 또는 패스워드를 다시 확인하세요."),
@@ -52,6 +52,7 @@ public enum BaseResponseStatus {
     DUPLICATED_NICKNAME(HttpStatus.CONFLICT, false, 409, "이미 사용중인 닉네임입니다."),
     SAME_NICKNAME(HttpStatus.CONFLICT, false, 409, "현재 사용중인 닉네임입니다."),
     INVALID_EMAIL_ADDRESS(HttpStatus.BAD_REQUEST, false, 400, "이메일을 다시 확인해주세요."),
+    CANNOT_FIND_PROFILE(HttpStatus.BAD_REQUEST, false, 400, "프로필을 찾을 수 없습니다."),
 
     // Email
     EMAIL_SEND_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, false, 502, "이메일 전송에 실패하였습니다."),
@@ -62,7 +63,22 @@ public enum BaseResponseStatus {
     NO_EXIST_NOTIFICATION_SETTING(HttpStatus.NOT_FOUND, false, 404, "유저의 알림 설정이 존재하지 않습니다."),
     EXIST_NOTIFICATION_SETTING(HttpStatus.BAD_REQUEST, false, 409, "유저의 알림 설정이 이미 존재합니다."),
     NO_EXIST_NOTIFICATION(HttpStatus.NOT_FOUND, false, 410, "존재하지 않는 알림입니다."),
-    CANNOT_SHARE(HttpStatus.BAD_REQUEST, false, 451, "공유할 수 없는 유저입니다.");
+    CANNOT_SHARE(HttpStatus.BAD_REQUEST, false, 451, "공유할 수 없는 유저입니다."),
+
+    // 여기에 친구 관련 상태 추가
+    FRIEND_REQUEST_SENT(HttpStatus.OK, true, 200, "친구 요청을 전송했습니다."),
+    FRIEND_REQUEST_ALREADY_SENT(HttpStatus.BAD_REQUEST, false, 400, "이미 친구 요청을 보냈습니다."),
+    FRIEND_ALREADY_EXISTS(HttpStatus.CONFLICT, false, 409, "이미 친구 상태입니다."),
+    FRIEND_REQUEST_ACCEPTED(HttpStatus.OK, true, 200, "친구 요청을 수락했습니다."),
+    FRIEND_REQUEST_REJECTED(HttpStatus.OK, true, 200, "친구 요청을 거절했습니다."),
+    FRIEND_REMOVED(HttpStatus.OK, true, 200, "친구를 삭제했습니다."),
+    FRIEND_NOT_FOUND(HttpStatus.NOT_FOUND, false, 404, "해당 친구 관계를 찾을 수 없습니다."),
+    FRIEND_ONLINE(HttpStatus.OK, true, 200, "친구가 온라인입니다."),
+    FRIEND_OFFLINE(HttpStatus.OK, true, 200, "친구가 오프라인입니다."),
+    FRIEND_STATUS_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, false, 500, "친구 온라인 상태를 조회하는 도중 오류가 발생했습니다."),
+
+    //스킨 관련 상태
+    SKIN_LOCKED(HttpStatus.BAD_REQUEST, false, 400, "스킨이 해금되지 않았습니다.");
 
     private final HttpStatusCode httpStatusCode;
     private final boolean isSuccess;

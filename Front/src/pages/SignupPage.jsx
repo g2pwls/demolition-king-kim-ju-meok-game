@@ -9,13 +9,16 @@ import girl3 from '../assets/images/character/girl3.png';
 import boy1 from '../assets/images/character/boy1.png';
 import boy2 from '../assets/images/character/boy2.png';
 import boy3 from '../assets/images/character/boy3.png';
+import { useNavigate } from 'react-router-dom';
 
 function SignUp() {
+  const navigate = useNavigate();
+
   const profileList = [
   { image: girl1 },
   { image: boy1 },
   { image: girl2 },
-  { image: boy3 },
+  { image: boy2 },
   { image: girl3 },
   { image: boy3 }
 ];
@@ -32,7 +35,7 @@ function SignUp() {
   // 닉네임 중복검사
   const checkNicknameDuplication = async () => {
   try {
-    const res = await axios.post('http://54.180.226.214:8080/api/user/auth/signup/nickname/check', {
+    const res = await axios.post('https://i13e106.p.ssafy.io/api/user/auth/signup/nickname/check', {
       nickname: userNickname,
     });
 
@@ -51,7 +54,7 @@ function SignUp() {
   // 이메일 인증코드 요청
   const requestAuthCode = async () => {
     try {
-      await axios.post('http://54.180.226.214:8080/api/v1/user/email/signup/send', { email });
+      await axios.post('https://i13e106.p.ssafy.io/api/v1/user/email/signup/send', { email });
 
 // 인증번호 확인
 
@@ -65,7 +68,7 @@ function SignUp() {
   // 인증코드 확인
   const verifyAuthCode = async () => {
     try {
-    const res = await axios.post('http://54.180.226.214:8080/api/v1/user/email/signup/verify', {
+    const res = await axios.post('https://i13e106.p.ssafy.io/api/v1/user/email/signup/verify', {
       email,
       code: authCode,
     });
@@ -97,7 +100,7 @@ function SignUp() {
 
     try {
       const response = await axios.post(
-        'http://54.180.226.214:8080/api/user/auth/signup',
+        'https://i13e106.p.ssafy.io/api/user/auth/signup',
         null,
         {
           params: {
@@ -108,10 +111,10 @@ function SignUp() {
           },
         }
       );
-
+      
       console.log('회원가입 성공:', response.data);
       alert('회원가입 성공!');
-      // TODO: 로그인 페이지로 이동
+      navigate('/login');
     } catch (err) {
       console.error('회원가입 실패:', err);
       alert('회원가입에 실패했습니다.');
@@ -127,12 +130,17 @@ function SignUp() {
           style={{ backgroundImage: `url(${profileBack})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
         >
           <div className="character-grid">
-            {profileList.map((profile, index) => (
-              <div key={index} className="character-item">
-                <img src={profile.image} alt={`Character ${index + 1}`} />
-              </div>
-            ))}
-          </div>
+  {profileList.map((profile, index) => (
+    <div
+      key={index}
+      className={`character-item ${profileSeq === index + 1 ? 'selected' : ''}`}
+      onClick={() => setProfileSeq(index + 1)}
+    >
+      <img src={profile.image} alt={`Character ${index + 1}`} />
+    </div>
+  ))}
+</div>
+
         </div>
 
         <form className="signup-form" onSubmit={handleSignup}>
