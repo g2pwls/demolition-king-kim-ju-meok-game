@@ -26,9 +26,11 @@ function SignUp() {
   const [email, setEmail] = useState('');
   const [authCode, setAuthCode] = useState('');
   const [isVerified, setIsVerified] = useState(false);
+
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [userNickname, setUserNickname] = useState('');
+  const [profileSeq, setProfileSeq] = useState(1); // 기본 캐릭터 번호
 
   // 닉네임 중복검사
   const checkNicknameDuplication = async () => {
@@ -37,18 +39,19 @@ function SignUp() {
       nickname: userNickname,
     });
 
-      if (res.data.result.available) {
-        alert('사용 가능한 닉네임입니다.');
-      } else {
-        alert('이미 사용 중인 닉네임입니다.');
-      }
-    } catch (err) {
-      console.error(err);
-      alert('닉네임 중복 확인 실패');
+    if (res.data.result.available) {
+      alert('사용 가능한 닉네임입니다.');
+    } else {
+      alert('이미 사용 중인 닉네임입니다.');
     }
-  };
+  } catch (err) {
+    console.error(err);
+    alert('닉네임 중복 확인 실패');
+  }
+};
 
-  // 이메일 인증요청
+
+  // 이메일 인증코드 요청
   const requestAuthCode = async () => {
     try {
       await axios.post('https://i13e106.p.ssafy.io/api/v1/user/email/signup/send', { email });
@@ -70,19 +73,18 @@ function SignUp() {
       code: authCode,
     });
 
-      if (res.data.result.available === true) {
-        alert('이메일 인증 성공!');
-        setIsVerified(true);
-      } else {
-        alert('인증번호가 올바르지 않습니다.');
-      }
+    if (res.data.result.available === true) {
+      alert('이메일 인증 성공!');
+      setIsVerified(true);
+    } else {
+      alert('인증번호가 올바르지 않습니다.');
+    }
     } catch (err) {
       console.error(err);
       alert('인증 확인 실패');
     }
   };
 
-  // 회원가입 처리
   const handleSignup = async (e) => {
     e.preventDefault();
 
@@ -105,7 +107,7 @@ function SignUp() {
             email,
             password,
             userNickname,
-            profileSeq: 1, // 기본값
+            profileSeq,
           },
         }
       );
@@ -153,6 +155,7 @@ function SignUp() {
             <button type="button" onClick={checkNicknameDuplication}>
               중복확인
             </button>
+
           </div>
 
           {/* 이메일 + 인증요청 버튼 */}
@@ -203,11 +206,9 @@ function SignUp() {
             />
           </div>
 
-          {/* 회원가입 버튼 */}
+          {/* 회원가입 */}
           <div className="form-row2 button-row">
-            <button type="submit" className="signup-button">
-              회원가입 하기
-            </button>
+            <button type="submit" className="signup-button">회원가입 하기</button>
           </div>
         </form>
       </div>

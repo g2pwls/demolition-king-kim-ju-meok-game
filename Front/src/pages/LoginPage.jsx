@@ -32,24 +32,6 @@ function LoginPage() {
   const handleLogin = async (e) => {
     e.preventDefault();
 
-const handleLogin = async (e) => {
-  e.preventDefault();
-
-  try {
-    const response = await axios.post(
-      'https://i13e106.p.ssafy.io/api/user/auth/login',
-      null,
-      {
-        params: { email, password },
-      }
-    );
-
-    const result = response?.data?.result;
-    const accessToken = result?.accessToken;
-    const refreshToken = result?.refreshToken;
-
-    // accessToken으로부터 userUuid 추출
-    let userUuid = null;
     try {
       // ✅ 로그인 요청 (axios 대신 api 사용)
       const response = await api.post('/user/auth/login', null, {
@@ -89,32 +71,7 @@ const handleLogin = async (e) => {
         error.response?.data?.message || '아이디 또는 비밀번호가 잘못되었습니다.';
       alert(`❌ 로그인 실패: ${message}`);
     }
-
-    if (!userUuid) {
-      alert('userUuid를 토큰에서 추출하지 못했습니다.');
-      return;
-    }
-
-    // 로컬스토리지 저장
-    localStorage.setItem('accessToken', accessToken);
-    localStorage.setItem('refreshToken', refreshToken);
-    localStorage.setItem('userUuid', userUuid);
-    localStorage.setItem('userEmail', email);
-    // getUserInfo API 호출
-    const userInfo = await api.get(`/user/auth/getUserInfo?userUuid=${userUuid}`);
-    const nickname = userInfo.data.result.userNickname;
-
-    localStorage.setItem('userNickname', nickname);
-    localStorage.setItem('user', JSON.stringify(userInfo.data.result));
-
-    console.log('✅ 로그인 후 최종 유저 정보:', userInfo.data.result);
-    navigate('/story');
-  } catch (error) {
-    console.error('로그인 실패:', error);
-    alert('아이디 또는 비밀번호가 잘못되었습니다.');
-  }
-};
-
+  };
 
   return (
     <div
