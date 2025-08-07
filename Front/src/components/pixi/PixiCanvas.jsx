@@ -1,3 +1,10 @@
+
+
+
+
+
+
+나의 말:
 import React, { useEffect, useRef, useState } from 'react';
 import * as PIXI from 'pixi.js';
 
@@ -8,10 +15,14 @@ import singleBack from '../../assets/images/singlemode/singleback.png';
 import buildingDust1 from '../../assets/images/effects/building_dust_1.png';
 import buildingDust2 from '../../assets/images/effects/building_dust_2.png';
 import buildingDust3 from '../../assets/images/effects/building_dust_3.png';
-import karina1 from '../../assets/images/karina/karina_1.png';
-import karina3 from '../../assets/images/karina/karina_3.png';
+import crackTexture from '../../assets/images/effects/building_break.png';
+import karina_final_anim_01 from '../../assets/images/karina/karina_final_anim_01.png';
+import karina_final_anim_02 from '../../assets/images/karina/karina_final_anim_02.png';
+import karina_final_anim_03 from '../../assets/images/karina/karina_final_anim_03.png';
+import karina_final_anim_04 from '../../assets/images/karina/karina_final_anim_04.png';
+import karina_final_anim_05 from '../../assets/images/karina/karina_final_anim_05.png';
 
-const karinaFrames = [karina1, karina3, karina1];
+const karinaFrames = [karina_final_anim_01,karina_final_anim_03, karina_final_anim_05,karina_final_anim_05,karina_final_anim_03,karina_final_anim_01];
 const buildingImages = [building1, building2, building3];
 const dustFrames = [buildingDust1, buildingDust2, buildingDust3, buildingDust2, buildingDust1];
 
@@ -32,7 +43,7 @@ const PixiCanvas = ({ action, buildingIndex, onBuildingDestroyed, kcal, setKcal 
   const boxerHeight = 250;
   const coinTextRef = useRef(null);  // 🔥 이 줄을 추가해줘!
   const destroyedTextRef = useRef(null);
-
+  const crackSpritesRef = useRef([]);
 
   useEffect(() => {
     if (!pixiRef.current) return;
@@ -81,7 +92,7 @@ const PixiCanvas = ({ action, buildingIndex, onBuildingDestroyed, kcal, setKcal 
     background.y = containerHeight / 2 - 100;
     app.stage.addChild(background);
 
-    const boxer = new PIXI.Sprite(PIXI.Texture.from(karina1));
+    const boxer = new PIXI.Sprite(PIXI.Texture.from(karina_final_anim_01));
     boxer.anchor.set(0.5);
     boxer.width = boxerWidth;
     boxer.height = boxerHeight;
@@ -125,47 +136,66 @@ const PixiCanvas = ({ action, buildingIndex, onBuildingDestroyed, kcal, setKcal 
     healthBarRef.current = hpFill;
     app.stage.addChild(hpFill);
 
+    // loadAssets 함수 내부에 추가
+    const crackSprites = [];
+
+    for (let i = 0; i < 3; i++) {
+      const crack = new PIXI.Sprite(PIXI.Texture.from(crackTexture));
+      crack.alpha = 0.6;
+      crack.anchor.set(0.5);
+      crack.scale.set(0.4 + Math.random() * 0.3); // 크기 랜덤
+      crack.x = building.x + (Math.random() * 100 - 50); // 건물 주변 랜덤 위치
+      crack.y = building.y + (Math.random() * 100 - 50);
+      crack.visible = false;
+      crack.zIndex = 3;
+      crackSprites.push(crack);
+      app.stage.addChild(crack);
+    }
+
+    crackSpritesRef.current = crackSprites;
+
+
 // KCAL 텍스트 (기존 유지)
-    // const kcalText = new PIXI.Text(`${kcal} kcal`, {
-    //   fontFamily: 'Arial',
-    //   fontSize: 24,
-    //   fill: 'white',
-    //   fontWeight: 'bold',
-    // });
-    // kcalText.x = containerWidth - 140;
-    // kcalText.y = 30;
-    // kcalText.zIndex = 5;
-    // kcalTextRef.current = kcalText;
-    // app.stage.addChild(kcalText);
+  //   const kcalText = new PIXI.Text(${kcal} kcal, {
+  //     fontFamily: 'Arial',
+  //     fontSize: 24,
+  //     fill: 'white',
+  //     fontWeight: 'bold',
+  //   });
+  //   kcalText.x = containerWidth - 140;
+  //   kcalText.y = 30;
+  //   kcalText.zIndex = 5;
+  //   kcalTextRef.current = kcalText;
+  //   app.stage.addChild(kcalText);
 
-  // DESTROYED 텍스트 (KCAL 아래)
-    // const destroyedText = new PIXI.Text(`DESTROYED: ${buildingIndex}`, {
-    //   fontFamily: 'Arial',
-    //   fontSize: 20,
-    //   fill: 'white',
-    //   fontWeight: 'bold',
-    // });
-    // destroyedText.anchor.set(1, 0); // 우측 정렬
-    // destroyedText.x = containerWidth - rightMargin;
-    // destroyedText.y = kcalText.y + kcalText.height + 10;
-    // destroyedText.zIndex = 5;
-    // destroyedTextRef.current = destroyedText;
-    // app.stage.addChild(destroyedText);
+  // // DESTROYED 텍스트 (KCAL 아래)
+  //   const destroyedText = new PIXI.Text(DESTROYED: ${destroyedCount}, {
+  //     fontFamily: 'Arial',
+  //     fontSize: 20,
+  //     fill: 'white',
+  //     fontWeight: 'bold',
+  //   });
+  //   destroyedText.anchor.set(1, 0); // 우측 정렬
+  //   destroyedText.x = containerWidth - rightMargin;
+  //   destroyedText.y = kcalText.y + kcalText.height + 10;
+  //   destroyedText.zIndex = 5;
+  //   destroyedTextRef.current = destroyedText;
+  //   app.stage.addChild(destroyedText);
 
-    // // COINS 텍스트 (DESTROYED 아래)
-    // // topY += 35;
-    // const coinText = new PIXI.Text(`COINS: ${buildingIndex}`, {
-    //   fontFamily: 'Arial',
-    //   fontSize: 20,
-    //   fill: 'yellow',
-    //   fontWeight: 'bold',
-    // });
-    // coinText.anchor.set(1, 0); // 우측 정렬
-    // coinText.x = containerWidth - rightMargin;
-    // coinText.y = destroyedText.y + destroyedText.height + 5;
-    // coinText.zIndex = 5;
-    // coinTextRef.current = coinText;
-    // app.stage.addChild(coinText);
+  //   // COINS 텍스트 (DESTROYED 아래)
+  //   // topY += 35;
+  //   const coinText = new PIXI.Text(COINS: ${coinCount}, {
+  //     fontFamily: 'Arial',
+  //     fontSize: 20,
+  //     fill: 'yellow',
+  //     fontWeight: 'bold',
+  //   });
+  //   coinText.anchor.set(1, 0); // 우측 정렬
+  //   coinText.x = containerWidth - rightMargin;
+  //   coinText.y = destroyedText.y + destroyedText.height + 5;
+  //   coinText.zIndex = 5;
+  //   coinTextRef.current = coinText;
+  //   app.stage.addChild(coinText);
   };
 
   useEffect(() => {
@@ -189,23 +219,44 @@ const PixiCanvas = ({ action, buildingIndex, onBuildingDestroyed, kcal, setKcal 
     prevActionRef.current = action;
   }, [action]);
 
+  // 건물 이미지 업데이트
   useEffect(() => {
     if (buildingRef.current) {
       buildingRef.current.texture = PIXI.Texture.from(buildingImages[buildingIndex]);
     }
   }, [buildingIndex]);
 
+  // 체력 변화에 따라 체력바 및 균열 상태 업데이트
   useEffect(() => {
+    // 체력바 너비 조절
     if (healthBarRef.current) {
       const newWidth = (buildingHP / 100) * 200;
       healthBarRef.current.clear();
       healthBarRef.current.beginFill(0xff3333).drawRect(0, 0, newWidth, 15).endFill();
     }
 
+    // 균열 표시 조건 (HP 상태 및 건물 전환 시 재적용)
+    if (crackSpritesRef.current) {
+      crackSpritesRef.current.forEach((sprite, index) => {
+        if (buildingHP <= 25 && index <= 2) {
+          sprite.visible = true;
+        } else if (buildingHP <= 50 && index <= 1) {
+          sprite.visible = true;
+        } else if (buildingHP <= 75 && index === 0) {
+          sprite.visible = true;
+        } else {
+          sprite.visible = false;
+        }
+      });
+    }
+
+    // 건물 붕괴 상태 트리거
     if (buildingHP <= 0 && !isBuildingFalling) {
+      crackSpritesRef.current?.forEach(sprite => (sprite.visible = false)); // 죽으면 균열 제거
       setIsBuildingFalling(true);
     }
-  }, [buildingHP]);
+  }, [buildingHP, buildingIndex]); // ✅ buildingIndex 의존성 포함
+
 
   useEffect(() => {
     const app = appRef.current;
@@ -253,11 +304,39 @@ const PixiCanvas = ({ action, buildingIndex, onBuildingDestroyed, kcal, setKcal 
       building.visible = true;
       setBuildingHP(100);
 
+      // 기존 균열 제거
+      if (crackSpritesRef.current) {
+        crackSpritesRef.current.forEach((sprite) => {
+          app.stage.removeChild(sprite);
+        });
+      }
+
+      // 새 균열 생성 (위치 임시)
+      const newCracks = [];
+      for (let i = 0; i < 3; i++) {
+        const crack = new PIXI.Sprite(PIXI.Texture.from(crackTexture));
+        crack.alpha = 0.85;
+        crack.anchor.set(0.5);
+        crack.scale.set(0.4 + Math.random() * 0.3);
+        crack.visible = false;
+        crack.zIndex = 3;
+        app.stage.addChild(crack);
+        newCracks.push(crack);
+      }
+      crackSpritesRef.current = newCracks;
+
+      // 건물 낙하 애니메이션
       ticker = (delta) => {
         building.y += 15 * delta;
         if (building.y >= app.renderer.height * 0.63) {
           building.y = app.renderer.height * 0.63;
           setIsNewBuildingDropping(false);
+
+          // ✅ 균열 위치 재조정 (건물이 도착한 이후!)
+          crackSpritesRef.current.forEach((crack) => {
+            crack.x = building.x + (Math.random() * 100 - 50);
+            crack.y = building.y + (Math.random() * 100 - 50);
+          });
         }
       };
 
@@ -270,17 +349,18 @@ const PixiCanvas = ({ action, buildingIndex, onBuildingDestroyed, kcal, setKcal 
   }, [isNewBuildingDropping, buildingIndex]);
 
 
-  useEffect(() => {
-  if (kcalTextRef.current) {
-    kcalTextRef.current.text = `${kcal} kcal`;
-  }
-  if (coinTextRef.current) {
-    coinTextRef.current.text = `COINS: ${buildingIndex}`;
-  }
-  if (destroyedTextRef.current) {
-    destroyedTextRef.current.text = `부순 건물 ${buildingIndex}`;
-  }
-}, [buildingIndex]);
+
+    useEffect(() => {
+      if (kcalTextRef.current) {
+        kcalTextRef.current.text = ${kcal} kcal;
+      }
+      if (coinTextRef.current) {
+        coinTextRef.current.text = COINS: ${coinCount};
+      }
+      if (destroyedTextRef.current) {
+        destroyedTextRef.current.text = 부순 건물 ${destroyedCount};
+    }
+  }, [buildingIndex]);
 
 
   return (
