@@ -143,6 +143,26 @@ function MainPage() {
     }
   );
 
+  // 로그아웃
+  const handleLogout = async () => {
+  const token = localStorage.getItem('accessToken');
+
+  try {
+      await api.post('/user/auth/logout', null, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log("✅ 로그아웃 성공");
+    } catch (err) {
+      console.error("❌ 로그아웃 API 실패:", err);
+    } finally {
+      localStorage.clear();
+      setShowLogoutModal(false);
+      navigate('/login');
+    }
+  };
+
 
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [userNickname, setUserNickname] = useState('');
@@ -260,6 +280,7 @@ const confirmBuy = async () => {
   }
 };
 
+// 건물 이미지
 const buildingImages = [
   { src: building1, filename: 'building1.png' },
   { src: building2, filename: 'building2.png' },
@@ -382,8 +403,76 @@ useEffect(() => {
     setEditNickname(userInfo.nickname);
     setEditEmail(userInfo.email);
     setUserNickname(userInfo.nickname);  // 캐릭터 아래 닉네임 표기용
+    fetchTodayPlayTime();
+    fetchWeeklyPlayTime();
   }
 }, [userInfo]);
+
+  // 오늘 플레이 시간
+  const fetchTodayPlayTime = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+
+      const res = await api.get('/users/games/today/playtime', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      // ✅ playTimeDate가 곧 플레이 시간 (분)
+      const todayMinutes = res.data.result?.playTimeDate ?? 0;
+
+      setPlayStats(prev => ({
+        ...prev,
+        todayPlayTime: todayMinutes,
+      }));
+
+      console.log("🎮 오늘 플레이 시간:", todayMinutes, "분");
+    } catch (err) {
+      console.error('❌ 오늘의 플레이 시간 조회 실패:', err);
+    }
+  };
+
+  const fetchWeeklyPlayTime = async () => {
+  try {
+    const token = localStorage.getItem('accessToken');
+    const res = await api.get('/users/games/weekly', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const rawData = res.data ?? [];
+
+    // [일, 월, 화, 수, 목, 금, 토] → 기본값 0으로 초기화
+    const weeklyPlay = Array(7).fill(0);
+
+    // 📌 날짜 문자열(ex. 20250805)을 요일 인덱스로 변환하는 함수
+    const getDayIndex = (dateStr) => {
+      const year = parseInt(dateStr.slice(0, 4));
+      const month = parseInt(dateStr.slice(4, 6)) - 1; // JS는 0월부터 시작
+      const day = parseInt(dateStr.slice(6, 8));
+      const dateObj = new Date(year, month, day);
+      return dateObj.getDay(); // 일(0) ~ 토(6)
+    };
+
+    // 📌 데이터를 요일별로 매핑
+    rawData.forEach((item) => {
+      const dayIndex = getDayIndex(item.playDate); // 0~6
+      weeklyPlay[dayIndex] = item.playTimeDate ?? 0; // null 대비
+    });
+
+    setPlayStats(prev => ({
+      ...prev,
+      weeklyPlayTime: weeklyPlay,
+    }));
+
+    console.log("📊 이번 주 요일별 플레이 시간:", weeklyPlay);
+  } catch (err) {
+    console.error('❌ 주간 플레이 시간 조회 실패:', err);
+  }
+};
+
 
 
   const [isEditing, setIsEditing] = useState(false);           // 수정 모드 진입 여부
@@ -392,7 +481,6 @@ useEffect(() => {
   const [isEditingNickname, setIsEditingNickname] = useState(false);
   const [playStats, setPlayStats] = useState({
     totalPlayTime: 157,       // 누적 (분 단위)
-    todayPlayTime: 67,       // 오늘 (분 단위)
     weeklyPlayTime: [110, 220, 50, 60, 300, 270, 60], // 일~토, 분 단위
   });
   const [dateRange, setDateRange] = useState([null, null]);
@@ -749,44 +837,67 @@ useEffect(() => {
     }
   };
 
+  // 친구 검색, 있는 친구 요청 친구 구분
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchNickname, setSearchNickname] = useState('');
   const [searchResult, setSearchResult] = useState(null);
   const [hasSearched, setHasSearched] = useState(false);
   const [isAlreadyFriend, setIsAlreadyFriend] = useState(false);
+  const [hasReceivedRequest, setHasReceivedRequest] = useState(false);
+  const [hasSentRequest, setHasSentRequest] = useState(false);
 
-
+  // 친구 검색
   const handleSearchFriend = async () => {
-  setHasSearched(true);
-  setIsAlreadyFriend(false); // 초기화
+    setHasSearched(true);
+    setIsAlreadyFriend(false);
+    setHasReceivedRequest(false);
+    try {
+      const res = await api.get(`/users/friends/search`, {
+        params: { nickname: searchNickname },
+      });
 
-  try {
-    const res = await api.get(`/users/friends/search`, {
-      params: { nickname: searchNickname },
-    });
+      const result = res.data.result;
+      setSearchResult(result);
 
-    const result = res.data.result;
-    setSearchResult(result);
+      const token = localStorage.getItem('accessToken');
 
-    // ✅ 현재 친구인지 확인
-    const token = localStorage.getItem('accessToken');
-    const statusRes = await api.get('/users/friends/status', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+      // 현재 친구인지 확인
+      const statusRes = await api.get('/users/friends/status', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-    const myFriendList = statusRes.data.result || [];
+      const myFriendList = statusRes.data.result || [];
+      const isFriend = myFriendList.some(friend => friend.friendUuid === result.userUuid);
+      if (isFriend) {
+        setIsAlreadyFriend(true);
+        // alert('✅ 이미 친구인 사용자입니다.');
+        return;
+      }
 
-    const isFriend = myFriendList.some(friend => friend.friendUuid === result.userUuid);
-    setIsAlreadyFriend(isFriend);  // 상태 업데이트
+      // 받은 친구 요청 확인
+      const receivedRes = await api.get('/users/friends/requests', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-  } catch (err) {
-    console.error('❌ 친구 검색 실패:', err);
-    setSearchResult(null);
-  }
-};
+      const receivedRequests = receivedRes.data.result || [];
+      const hasReceivedRequest = receivedRequests.some(
+        (req) => req.userUuid === result.userUuid
+      );
 
+      if (hasReceivedRequest) {
+        setHasReceivedRequest(true);
+        return;
+      }
+
+      // 여기까지 걸리지 않으면 친구 아님 + 친구 요청도 없음 → 요청 가능
+
+    } catch (err) {
+      console.error('❌ 친구 검색 실패:', err);
+      setSearchResult(null);
+    }
+  };
+
+  // 친구 요청
   const handleSendFriendRequest = async (friendUuid) => {
   const token = localStorage.getItem('accessToken');
 
@@ -805,7 +916,7 @@ useEffect(() => {
 
 
     if (isAlreadyFriend) {
-      alert('⚠️ 이미 친구인 사용자입니다.');
+      // alert('⚠️ 이미 친구인 사용자입니다.');
       return;
     }
 
@@ -819,94 +930,114 @@ useEffect(() => {
       },
     });
 
-    alert('✅ 친구 요청을 보냈습니다!');
-  } catch (err) {
-    const errorMsg = err.response?.data?.message || '서버 오류가 발생했습니다.';
-    alert(`❌ 친구 요청 실패: ${errorMsg}`);
-    console.error('❌ 친구 요청 실패:', err.response || err);
-  }
-};
+      // ✅ 요청 성공 시 상태 업데이트
+      setHasSentRequest(true);
+    } catch (err) {
+      const errorMsg = err.response?.data?.message || '서버 오류가 발생했습니다.';
+      alert(`❌ 친구 요청 실패: ${errorMsg}`);
+      console.error('❌ 친구 요청 실패:', err.response || err);
+    }
+  };
 
+  // 친구 삭제
+  const handleDeleteFriend = async (friendUuid) => {
+  const token = localStorage.getItem('accessToken');
+  if (!token) {
+    alert('로그인이 필요합니다.');
+    return;
+  }
+
+  const confirmDelete = window.confirm('정말 이 친구를 삭제하시겠습니까?');
+    if (!confirmDelete) return;
+
+    try {
+      await api.delete('/users/friends', {
+        params: { friendUuid },
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setFriends(prev => prev.filter(friend => friend.friendUuid !== friendUuid));
+      alert('✅ 친구가 삭제되었습니다.');
+    } catch (error) {
+      console.error('❌ 친구 삭제 실패:', error);
+      alert('❌ 친구 삭제에 실패했습니다.');
+    }
+  };
 
 
 
   return (
     <div className="main-page-background">
       <div className="main-fixed-wrapper">
-      <div className="top-right-buttons">
-        <button className="top-icon-button" onClick={() => setModalType('lank')}>
-          <img src={lankingIcon} alt="랭킹" />
-        </button>
-        <button className="top-icon-button" onClick={() => setModalType('tutorial')}>
-          <img src={tutorialIcon} alt="튜토리얼" />
-        </button>
-        <button className="top-icon-button" onClick={() => setModalType('mypage')}>
-          <img src={myPageIcon} alt="마이페이지" />
-        </button>
-      </div>
-      <div className="gold-display">
-        <img src={coinIcon} alt="코인" className="coin-icon" />
-        <span className="gold-amount">{gold.toLocaleString()} G</span>
-      </div>
+        <div className="top-right-buttons">
+          <button className="top-icon-button" onClick={() => setModalType('lank')}>
+            <img src={lankingIcon} alt="랭킹" />
+          </button>
+          <button className="top-icon-button" onClick={() => setModalType('tutorial')}>
+            <img src={tutorialIcon} alt="튜토리얼" />
+          </button>
+          <button className="top-icon-button" onClick={() => setModalType('mypage')}>
+            <img src={myPageIcon} alt="마이페이지" />
+          </button>
+        </div>
+        <div className="gold-display">
+          <img src={coinIcon} alt="코인" className="coin-icon" />
+          <span className="gold-amount">{gold.toLocaleString()} G</span>
+        </div>
 
+        <div className="bottom-right-buttons">
+          <button className="bottom-icon-button" onClick={() => navigate('/event')}>
+            <img src={modeEvent} alt="이벤트 모드" />
+          </button>
+          <button className="bottom-icon-button" onClick={() => navigate('/singletest')}>
+            <img src={modeSingle} alt="싱글 모드" />
+          </button>
+          <button className="bottom-icon-button" onClick={() => setModalType('multi')}>
+            <img src={modeMulti} alt="멀티 모드" />
+          </button>
+        </div>
 
-      <div className="bottom-right-buttons">
-        <button className="bottom-icon-button" onClick={() => navigate('/event')}>
-          <img src={modeEvent} alt="이벤트 모드" />
-        </button>
-        <button className="bottom-icon-button" onClick={() => navigate('/singletest')}>
-          <img src={modeSingle} alt="싱글 모드" />
-        </button>
-        <button className="bottom-icon-button" onClick={() => setModalType('multi')}>
-          <img src={modeMulti} alt="멀티 모드" />
-        </button>
-      </div>
+        <div className="character-section">
+          <div className="nickname-text">{userInfo?.userNickname}</div>
+          <div className={`character-selector animate-${animationDirection}`}>
+            <img src={arrowLeft} alt="왼쪽" className="arrow-button large" onClick={handleLeft} />
+            {skins.length > 0 && (
+              <img
+                src={skins[currentIndex]?.image}
+                alt="캐릭터"
+                className="main-character large"
+                onAnimationEnd={() => setAnimationDirection(null)}/>
+            )}
+            <img src={arrowRight} alt="오른쪽" className="arrow-button large" onClick={handleRight} />
+          </div>
 
-      <div className="character-section">
-  <div className="nickname-text">{userInfo?.userNickname}</div>
-  <div className={`character-selector animate-${animationDirection}`}>
-    <img src={arrowLeft} alt="왼쪽" className="arrow-button large" onClick={handleLeft} />
-    {skins.length > 0 && (
-      <img
-        src={skins[currentIndex]?.image}
-        alt="캐릭터"
-        className="main-character large"
-        onAnimationEnd={() => setAnimationDirection(null)}
-      />
-    )}
-    <img src={arrowRight} alt="오른쪽" className="arrow-button large" onClick={handleRight} />
-  </div>
-
-  <div className="select-button-wrapper">
-  {skins[currentIndex]?.isUnlock === 1 ? (
-    selectedIndex !== currentIndex ? (
-      <img
-        src={selectButton}
-        alt="선택 버튼"
-        className="select-button"
-        onClick={handleSelect}
-      />
-    ) : null // ✅ 이미 선택된 캐릭터는 아무 버튼도 안 보이게 함
-  ) : (
-    <img
-      src={buyButton}
-      alt="구매 버튼"
-      className="select-button"
-      onClick={handleBuyClick}
-    />
-  )}
-</div>
-{showBuyModal && (
-  <ConfirmModal
-    message={`"${pendingSkin?.name}" 캐릭터를 ${pendingSkin?.price}G에 구매하시겠습니까?`}
-    onConfirm={confirmBuy}
-    onCancel={() => setShowBuyModal(false)}
-  />
-)}
-
-
-</div>
-
+          <div className="select-button-wrapper">
+            {skins[currentIndex]?.isUnlock === 1 ? (
+              selectedIndex !== currentIndex ? (
+                <img
+                  src={selectButton}
+                  alt="선택 버튼"
+                  className="select-button"
+                  onClick={handleSelect}
+                />
+              ) : null // ✅ 이미 선택된 캐릭터는 아무 버튼도 안 보이게 함
+            ) : (
+              <img
+                src={buyButton}
+                alt="구매 버튼"
+                className="select-button"
+                onClick={handleBuyClick}
+              />
+            )}
+          </div>
+          {showBuyModal && (
+            <ConfirmModal
+              message={`"${pendingSkin?.name}" 캐릭터를 ${pendingSkin?.price}G에 구매하시겠습니까?`}
+              onConfirm={confirmBuy}
+              onCancel={() => setShowBuyModal(false)}
+            />
+          )}
+        </div>
 
       {modalType && (
         <div className="modal-overlay" onClick={() => {setModalType(null);setActiveTab('통계'); setIsEditing(false); setIsEditingNickname(false); setEditNickname(userInfo?.nickname);}}>
@@ -941,15 +1072,7 @@ useEffect(() => {
                       <div className="modal">
                         <p>정말 로그아웃 하시겠습니까?</p>
                         <div className="modal-buttons">
-                          <button
-                            onClick={() => {
-                              localStorage.clear();
-                              setShowLogoutModal(false);
-                              navigate('/login'); // 로그인 페이지 경로
-                            }}
-                          >
-                            네, 로그아웃
-                          </button>
+                          <button onClick={handleLogout}>네, 로그아웃</button>
                           <button onClick={() => setShowLogoutModal(false)}>아니요</button>
                         </div>
                       </div>
@@ -1383,6 +1506,10 @@ useEffect(() => {
 
         {isAlreadyFriend ? (
           <div className="already-friend-text">✅ 이미 친구입니다</div>
+        ) : hasReceivedRequest ? (
+          <div className="already-friend-text">📩 이 사용자가 당신에게 친구 요청을 보냈습니다. 수락해주세요!</div>
+        ) : hasSentRequest ? (
+          <div className="already-friend-text">✅ 친구 요청을 보냈습니다!</div>
         ) : (
           <button
             className="friend-request-btn"
@@ -1400,22 +1527,18 @@ useEffect(() => {
   )
 ) : null}
 
-
-
-
-
       <button className="close-button" onClick={() => {
-  setIsSearchOpen(false);
-  setSearchNickname('');
-  setSearchResult(null);
-  setHasSearched(false);
-  setIsAlreadyFriend(false);
-}}>
-  닫기
-</button>
-    </div>
-  </div>
-)}
+        setIsSearchOpen(false);
+        setSearchNickname('');
+        setSearchResult(null);
+        setHasSearched(false);
+        setIsAlreadyFriend(false);
+      }}>
+        ❌닫기
+      </button>
+          </div>
+        </div>
+      )}
 
 
                 <img
@@ -1443,17 +1566,35 @@ useEffect(() => {
 
 
               </div>
+
               <div className="friend-list">
                 {friends.map(friend => (
                   <div key={friend.id} className="friend-item">
-                    <div
-                    className="friend-status-dot"
-                    style={{backgroundColor: friend.status === 'online' ? '#00ff5f' : '#ffffff', border: '1px solid gray',}}
-                  ></div>
-                    <div className="friend-nickname">{friend.friendNickname}</div>
+                    
+                    {/* 왼쪽: 상태 점 + 닉네임 묶기 */}
+                    <div className="friend-info-wrapper">
+                      <div
+                        className="friend-status-dot"
+                        style={{
+                          backgroundColor: friend.status === 'online' ? '#00ff5f' : '#ffffff',
+                          border: '1px solid gray',
+                        }}
+                      ></div>
+                      <div className="friend-nickname">{friend.friendNickname}</div>
+                    </div>
+
+                    {/* 오른쪽: 삭제 버튼 */}
+                    <button
+                      className="friend-delete-btn"
+                      onClick={() => handleDeleteFriend(friend.friendUuid)}
+                    >
+                      삭제
+                    </button>
                   </div>
                 ))}
               </div>
+
+              
                 {/* 친구 요청 알림 */}
                 {friendRequests.length > 0 && (
                   <>

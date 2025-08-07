@@ -795,6 +795,7 @@
   background-color: #e6e6e6;
   color: black;
   padding: 20px;
+  justify-content: space-between;
 }
 
 .friend-nickname {
@@ -1055,8 +1056,8 @@
   margin-top: 10px;
   background-color: #ddd;
   border: none;
+  font-size: 16px;
   padding: 6px 12px;
-  cursor: pointer;
 }
 .search-title {
   color: #000; /* 검정색 */
@@ -1086,6 +1087,7 @@
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.2s;
+  font-size: 16px;
 }
 
 .search-btn:hover {
@@ -1122,7 +1124,7 @@
   color: #888;
   text-align: center;
   margin-top: 10px;
-  font-size: 14px;
+  font-size: 18px;
 }
 .nickname-label {
   font-weight: bold;
@@ -1132,4 +1134,19 @@
 .already-friend-text {
   color: green;
   font-weight: bold;
+}
+.friend-delete-btn {
+  background: none;
+  border: none;
+  color: red;
+  font-weight: bold;
+  font-size: 14px;
+}
+.friend-delete-btn:hover {
+  text-decoration: underline;
+}
+.friend-info-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
