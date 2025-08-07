@@ -25,6 +25,7 @@ RUN npm run build --unsafe-perm
 # -------------------------------
 FROM nginx:alpine
 
+COPY ./default.conf /etc/nginx/conf.d/default.conf
 # 정적 파일 복사
 COPY --from=build /app/dist /usr/share/nginx/html
 
