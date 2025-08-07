@@ -19,7 +19,7 @@ const SingleTestPage = () => {
   const [buildingIndex, setBuildingIndex] = useState(0);
   const [isGameOver, setIsGameOver] = useState(false);
   const [kcal, setKcal] = useState(0);  // ✅ 이 줄이 있어야 함
-
+  const audioRef = useRef(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -175,9 +175,20 @@ const SingleTestPage = () => {
       console.log("🛑 Game Over!");
     }
   }, [health]);
-
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = 0.5; // 볼륨 설정 (0.0 ~ 1.0)
+      audioRef.current.loop = true; // 반복재생
+      audioRef.current.play().catch((err) => {
+        console.warn("자동재생 차단됨. 유저 상호작용 후 재생 필요", err);
+      });
+    }
+  }, []);
+  
   return (
     <div className="page-container">
+      {/* 🔊 오디오 태그 추가 */}
+      <audio ref={audioRef} src="/sounds/bgm.mp3" />
       {isGameOver && (
         <div className="game-over-overlay">
           <h1>GAME OVER</h1>
@@ -223,6 +234,11 @@ const SingleTestPage = () => {
 
         <div className="right-panel">
           <div className="kcal-display">{kcal} KCAL</div>
+
+          {/* 🔽 여기 추가 🔽 */}
+          <div className="building-status">🏢 부순 건물: {buildingIndex}</div>
+          <div className="coin-status">💰 코인: {buildingIndex * 1}</div> {/* 예: 건물당 5코인 가정 */}
+
           <div className="pixel-character"></div>
           <button className="quit-button">QUIT</button>
           <div className="webcam-container">

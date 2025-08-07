@@ -69,8 +69,8 @@ const PixiCanvas = ({ action, buildingIndex, onBuildingDestroyed, kcal, setKcal 
   }, []);
 
   const loadAssets = async (app) => {
-    const rightMargin = 10; // ← 이 줄이 없어서 에러났음
-    let topY = 30;
+    const rightMargin = 10;
+
     const containerWidth = pixiRef.current.clientWidth;
     const containerHeight = pixiRef.current.clientHeight;
 
@@ -126,46 +126,46 @@ const PixiCanvas = ({ action, buildingIndex, onBuildingDestroyed, kcal, setKcal 
     app.stage.addChild(hpFill);
 
 // KCAL 텍스트 (기존 유지)
-    const kcalText = new PIXI.Text(`${kcal} kcal`, {
-      fontFamily: 'Arial',
-      fontSize: 24,
-      fill: 'white',
-      fontWeight: 'bold',
-    });
-    kcalText.x = containerWidth - 140;
-    kcalText.y = 30;
-    kcalText.zIndex = 5;
-    kcalTextRef.current = kcalText;
-    app.stage.addChild(kcalText);
+    // const kcalText = new PIXI.Text(`${kcal} kcal`, {
+    //   fontFamily: 'Arial',
+    //   fontSize: 24,
+    //   fill: 'white',
+    //   fontWeight: 'bold',
+    // });
+    // kcalText.x = containerWidth - 140;
+    // kcalText.y = 30;
+    // kcalText.zIndex = 5;
+    // kcalTextRef.current = kcalText;
+    // app.stage.addChild(kcalText);
 
   // DESTROYED 텍스트 (KCAL 아래)
-    const destroyedText = new PIXI.Text(`DESTROYED: ${buildingIndex}`, {
-      fontFamily: 'Arial',
-      fontSize: 20,
-      fill: 'white',
-      fontWeight: 'bold',
-    });
-    destroyedText.anchor.set(1, 0); // 우측 정렬
-    destroyedText.x = containerWidth - rightMargin;
-    destroyedText.y = topY;
-    destroyedText.zIndex = 5;
-    destroyedTextRef.current = destroyedText;
-    app.stage.addChild(destroyedText);
+    // const destroyedText = new PIXI.Text(`DESTROYED: ${buildingIndex}`, {
+    //   fontFamily: 'Arial',
+    //   fontSize: 20,
+    //   fill: 'white',
+    //   fontWeight: 'bold',
+    // });
+    // destroyedText.anchor.set(1, 0); // 우측 정렬
+    // destroyedText.x = containerWidth - rightMargin;
+    // destroyedText.y = kcalText.y + kcalText.height + 10;
+    // destroyedText.zIndex = 5;
+    // destroyedTextRef.current = destroyedText;
+    // app.stage.addChild(destroyedText);
 
-    // COINS 텍스트 (DESTROYED 아래)
-    topY += 35;
-    const coinText = new PIXI.Text(`COINS: ${buildingIndex}`, {
-      fontFamily: 'Arial',
-      fontSize: 20,
-      fill: 'yellow',
-      fontWeight: 'bold',
-    });
-    coinText.anchor.set(1, 0); // 우측 정렬
-    coinText.x = containerWidth - rightMargin;
-    coinText.y = topY;
-    coinText.zIndex = 5;
-    coinTextRef.current = coinText;
-    app.stage.addChild(coinText);
+    // // COINS 텍스트 (DESTROYED 아래)
+    // // topY += 35;
+    // const coinText = new PIXI.Text(`COINS: ${buildingIndex}`, {
+    //   fontFamily: 'Arial',
+    //   fontSize: 20,
+    //   fill: 'yellow',
+    //   fontWeight: 'bold',
+    // });
+    // coinText.anchor.set(1, 0); // 우측 정렬
+    // coinText.x = containerWidth - rightMargin;
+    // coinText.y = destroyedText.y + destroyedText.height + 5;
+    // coinText.zIndex = 5;
+    // coinTextRef.current = coinText;
+    // app.stage.addChild(coinText);
   };
 
   useEffect(() => {
