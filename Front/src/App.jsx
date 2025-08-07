@@ -9,18 +9,19 @@ import {
 import "./styles/App.css";
 import { AnimatePresence } from "framer-motion";
 
-import StartPage from './pages/StartPage';
-import LoginPage from './pages/LoginPage';
-import GamePage from './pages/GamePage';
-import StoryPage from './pages/StoryPage';
-import MainPage from './pages/MainPage';
-import SignupPage from './pages/SignupPage';
-import EventPage from './pages/EventPage';
-import PasswordPage from './pages/PasswordPage';
-import ResetPasswordPage from './pages/ResetPasswordPage';
-import AppLayout from './components/AppLayout';
-import SingleTestPage from './pages/SingleTestPage';
-import ProtectedRoute from './components/ProtectedRoute'; // ✅ 경로 확인
+import StartPage from "./pages/StartPage";
+import LoginPage from "./pages/LoginPage";
+import GamePage from "./pages/GamePage";
+import StoryPage from "./pages/StoryPage";
+import MainPage from "./pages/MainPage";
+import SignupPage from "./pages/SignupPage";
+import EventPage from "./pages/EventPage";
+import PasswordPage from "./pages/PasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
+import SingleTestPage from "./pages/SingleTestPage";
+import MultiLobbyPage from "./pages/MultiLobbyPage"; // ✅ 새로 추가
+import AppLayout from "./components/AppLayout";
+import MultiModeEntryPage from "./pages/MultiModeEntryPage"; // ✅ 추가
 
 function AppRoutes() {
   const location = useLocation();

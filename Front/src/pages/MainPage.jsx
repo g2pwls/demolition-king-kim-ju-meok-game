@@ -1,8 +1,7 @@
-// StartPage.jsx
-import React, { useState } from 'react';
-import { useEffect } from 'react';
+// MainPage.jsx
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
-import axios from 'axios';
 import '../styles/MainPage.css';
 import myPageIcon from '../assets/images/main/mypageicon1.png';
 import tutorialIcon from '../assets/images/main/tutorialicon1.png';
@@ -435,7 +434,7 @@ useEffect(() => {
 
     setSelectedCalorieData(result);
   } else {
-    setSelectedCalorieData([]);
+    alert("해당 방은 존재하지 않습니다.");
   }
 }, [dateRange]);
     const formatDate = (date) => {
@@ -850,17 +849,17 @@ useEffect(() => {
       </div>
 
 
-      <div className="bottom-right-buttons">
-        <button className="bottom-icon-button" onClick={() => navigate('/event')}>
-          <img src={modeEvent} alt="이벤트 모드" />
-        </button>
-        <button className="bottom-icon-button" onClick={() => navigate('/singletest')}>
-          <img src={modeSingle} alt="싱글 모드" />
-        </button>
-        <button className="bottom-icon-button" onClick={() => setModalType('multi')}>
-          <img src={modeMulti} alt="멀티 모드" />
-        </button>
-      </div>
+        <div className="bottom-right-buttons">
+          <button className="bottom-icon-button" onClick={() => navigate('/event')}>
+            <img src={modeEvent} alt="이벤트 모드" />
+          </button>
+          <button className="bottom-icon-button" onClick={() => navigate('/singletest')}>
+            <img src={modeSingle} alt="싱글 모드" />
+          </button>
+          <button className="bottom-icon-button" onClick={() => setModalType('multi')}>
+            <img src={modeMulti} alt="멀티 모드" />
+          </button>
+        </div>
 
       <div className="character-section">
   <div className="nickname-text">{userInfo?.userNickname}</div>
@@ -1295,7 +1294,6 @@ useEffect(() => {
             )}
           </div>
         </div>
-      )}
 
       <div className="friend-buttons">
         <button
@@ -1474,10 +1472,34 @@ useEffect(() => {
                 )}
 
             </div>
-
           </div>
+        )}
+
+        <div className="friend-buttons">
+          <button className={`floating-button ${modalType ? 'disabled' : ''}`} onClick={() => { if (!modalType) setIsFriendPopupOpen(prev => !prev); }} disabled={!!modalType}>
+            <img src={fbottom} alt="플로팅 버튼" />
+          </button>
         </div>
-      )}
+
+        {isFriendPopupOpen && (
+          <div className="friend-popup-overlay" onClick={() => setIsFriendPopupOpen(false)}>
+            <div className="friend-popup" onClick={(e) => e.stopPropagation()}>
+              <button className="friend-popup-close-btn" onClick={() => setIsFriendPopupOpen(false)}>
+                <img src={fcbottom} alt="닫기 버튼" />
+              </button>
+              <div className="friend-popup-content">
+                <div className="my-profile">
+                  <img src={avatarUrl} alt="내 아바타" className="friend-avatar" />
+                  <div className="friend-nickname">나 (닉네임)</div>
+                </div>
+                <hr className="friend-divider" />
+                <div className="friend-list">
+                  <div className="friend-title">친구목록</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
