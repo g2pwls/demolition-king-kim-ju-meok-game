@@ -18,9 +18,9 @@ import SignupPage from './pages/SignupPage';
 import EventPage from './pages/EventPage';
 import PasswordPage from './pages/PasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
-import AppLayout from './components/AppLayout'; // 경로는 상황에 맞게 조정
+import AppLayout from './components/AppLayout';
 import SingleTestPage from './pages/SingleTestPage';
-
+import ProtectedRoute from './components/ProtectedRoute'; // ✅ 경로 확인
 
 function AppRoutes() {
   const location = useLocation();
@@ -30,14 +30,51 @@ function AppRoutes() {
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<AppLayout><StartPage /></AppLayout>} />
         <Route path="/login" element={<AppLayout><LoginPage /></AppLayout>} />
-        <Route path="/game" element={<AppLayout><GamePage /></AppLayout>} />
-        <Route path="/story" element={<AppLayout><StoryPage /></AppLayout>} />
-        <Route path="/main" element={<MainPage />} />
         <Route path="/signup" element={<AppLayout><SignupPage /></AppLayout>} />
-        <Route path="/event" element={<AppLayout><EventPage /></AppLayout>} />
         <Route path="/password" element={<AppLayout><PasswordPage /></AppLayout>} />
         <Route path="/resetpassword" element={<AppLayout><ResetPasswordPage /></AppLayout>} />
-        <Route path="/singletest" element={<SingleTestPage />}></Route>
+
+        {/* ✅ 로그인 보호가 필요한 페이지 */}
+        <Route
+          path="/main"
+          element={
+            <ProtectedRoute>
+              <MainPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/game"
+          element={
+            <ProtectedRoute>
+              <AppLayout><GamePage /></AppLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/story"
+          element={
+            <ProtectedRoute>
+              <AppLayout><StoryPage /></AppLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/event"
+          element={
+            <ProtectedRoute>
+              <AppLayout><EventPage /></AppLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/singletest"
+          element={
+            <ProtectedRoute>
+              <SingleTestPage />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </AnimatePresence>
   );

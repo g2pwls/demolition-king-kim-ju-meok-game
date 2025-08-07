@@ -19,6 +19,7 @@ import roomMake from '../assets/images/main/roomm.png';
 import avatarUrl from '../assets/images/avatar.png';
 import pencilIcon from '../assets/images/mypage/pencil.png';
 import newIcon from '../assets/images/main/new.png';
+import findIcon from '../assets/images/main/find.png';
 import { useNavigate } from 'react-router-dom';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
@@ -680,7 +681,154 @@ useEffect(() => {
     }
   };
 
-  
+  // 비밀번호 변경
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordVerified, setPasswordVerified] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+
+  const verifyPassword = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+
+      const res = await api.post(
+        '/user/auth/password/verify',
+        { currentPassword }, // ✅ key 수정됨!
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (res.data.isSuccess === true) {
+        alert('✅ 비밀번호 확인 성공!');
+        setPasswordVerified(true);
+      } else {
+        alert('❌ 비밀번호가 일치하지 않습니다.');
+      }
+    } catch (err) {
+      console.error('비밀번호 확인 실패:', err);
+      alert('⚠️ 서버 오류 또는 비밀번호 확인 실패');
+    }
+  };
+
+  const changePassword = async () => {
+    if (newPassword !== confirmNewPassword) {
+      alert('❌ 새 비밀번호가 일치하지 않습니다.');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('accessToken');
+      const email = userInfo?.useremail;
+  console.log("📧 이메일:", userInfo?.userEmail);
+
+      await api.post('/user/auth/password/reset', {
+        email: userInfo.userEmail,
+        newPassword,
+        confirmPassword: confirmNewPassword,
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      alert('✅ 비밀번호가 성공적으로 변경되었습니다!');
+      setIsChangingPassword(false);
+      setPasswordVerified(false);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmNewPassword('');
+    } catch (err) {
+      console.error('비밀번호 변경 실패:', err);
+      alert('❌ 비밀번호 변경에 실패했습니다.');
+    }
+  };
+
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchNickname, setSearchNickname] = useState('');
+  const [searchResult, setSearchResult] = useState(null);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [isAlreadyFriend, setIsAlreadyFriend] = useState(false);
+
+
+  const handleSearchFriend = async () => {
+  setHasSearched(true);
+  setIsAlreadyFriend(false); // 초기화
+
+  try {
+    const res = await api.get(`/users/friends/search`, {
+      params: { nickname: searchNickname },
+    });
+
+    const result = res.data.result;
+    setSearchResult(result);
+
+    // ✅ 현재 친구인지 확인
+    const token = localStorage.getItem('accessToken');
+    const statusRes = await api.get('/users/friends/status', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const myFriendList = statusRes.data.result || [];
+
+    const isFriend = myFriendList.some(friend => friend.friendUuid === result.userUuid);
+    setIsAlreadyFriend(isFriend);  // 상태 업데이트
+
+  } catch (err) {
+    console.error('❌ 친구 검색 실패:', err);
+    setSearchResult(null);
+  }
+};
+
+  const handleSendFriendRequest = async (friendUuid) => {
+  const token = localStorage.getItem('accessToken');
+
+  try {
+    // 1. 현재 친구 목록 조회
+    const statusRes = await api.get('/users/friends/status', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const myFriendList = statusRes.data.result; // ✅ 응답 구조에 따라 조정 필요
+
+    // 2. 친구 목록에 있는지 확인
+    const isAlreadyFriend = myFriendList.some(friend => friend.friendUuid === friendUuid);
+
+
+    if (isAlreadyFriend) {
+      alert('⚠️ 이미 친구인 사용자입니다.');
+      return;
+    }
+
+    // 3. 친구가 아니라면 요청
+    const inviteRes = await api.post('/users/friends/invite', null, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      params: {
+        friendUuid,
+      },
+    });
+
+    alert('✅ 친구 요청을 보냈습니다!');
+  } catch (err) {
+    const errorMsg = err.response?.data?.message || '서버 오류가 발생했습니다.';
+    alert(`❌ 친구 요청 실패: ${errorMsg}`);
+    console.error('❌ 친구 요청 실패:', err.response || err);
+  }
+};
+
+
+
 
   return (
     <div className="main-page-background">
@@ -941,8 +1089,67 @@ useEffect(() => {
                             <div className="info-me">{userInfo?.userEmail}</div>
                           </div>
                           <div className="info-row password-row">
-                            <button className="change-password-btn">비밀번호 변경</button>
+                            <button
+                              className="change-password-btn"
+                              onClick={() => {
+                                setIsChangingPassword(true);
+                                setPasswordVerified(false);
+                                setCurrentPassword('');
+                                setNewPassword('');
+                                setConfirmNewPassword('');
+                              }}>비밀번호 변경
+                            </button>
                           </div>
+
+                          {/* ✅ 비밀번호 변경 폼 표시 조건 */}
+                          {isChangingPassword && (
+                            <div className="password-change-form">
+                              {/* 닫기 버튼 상단에 배치 */}
+                              <div className="password-form-header">
+                                <button
+                                  className="close-password-btn"
+                                  onClick={() => {
+                                    setIsChangingPassword(false);
+                                    setPasswordVerified(false);
+                                    setCurrentPassword('');
+                                    setNewPassword('');
+                                    setConfirmNewPassword('');
+                                  }}>닫기 ❌
+                                </button>
+                              </div>
+
+                              {!passwordVerified ? (
+                                <>
+                                  <input
+                                    type="password"
+                                    value={currentPassword}
+                                    onChange={(e) => setCurrentPassword(e.target.value)}
+                                    placeholder="현재 비밀번호 입력"
+                                  />
+                                  <button className="verify-btn" onClick={verifyPassword}>확인</button>
+                                </>
+                              ) : (
+                                <>
+                                  <input
+                                    type="password"
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                    placeholder="새 비밀번호 입력"
+                                  />
+                                  <input
+                                    type="password"
+                                    value={confirmNewPassword}
+                                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                                    placeholder="새 비밀번호 재입력"
+                                  />
+                                  <div className="password-change-buttons">
+                                    <button className="cancel-btn" onClick={() => setIsChangingPassword(false)}>취소</button>
+                                    <button className="save-btn" onClick={changePassword}>저장</button>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          )}
                         </div>
 
                         {/* ✅ 닫기 버튼: profile-view 밖에 둠 */}
@@ -1111,7 +1318,18 @@ useEffect(() => {
 
 
       {isFriendPopupOpen && (
-        <div className="friend-popup-overlay" onClick={() => setIsFriendPopupOpen(false)}>
+        <div
+  className="friend-popup-overlay"
+  onClick={() => {
+    setIsFriendPopupOpen(false);
+    setIsSearchOpen(false);
+    setSearchNickname('');
+    setSearchResult(null);
+    setHasSearched(false);
+    setIsAlreadyFriend(false);
+  }}
+>
+
           <div
             className="friend-popup"
             onClick={(e) => e.stopPropagation()} // 팝업 안 누르면 닫히지 않도록
@@ -1132,6 +1350,74 @@ useEffect(() => {
 
               {/* 친구 리스트 */}
               <div className="friend-title">친구목록
+                <img
+                  src={findIcon}
+                  alt="친구 찾기"
+                  className="find-button"
+                  onClick={() => setIsSearchOpen(true)}
+                />
+                {isSearchOpen && (
+  <div className="friend-search-popup" onClick={() => setIsSearchOpen(false)}>
+    <div className="popup-content" onClick={(e) => e.stopPropagation()}>
+      <h3 className="search-title">친구 찾기</h3>
+
+<div className="search-row">
+  <input
+    type="text"
+    value={searchNickname}
+    onChange={(e) => setSearchNickname(e.target.value)}
+    placeholder="닉네임 입력"
+    className="search-input"
+  />
+  <button className="search-btn" onClick={handleSearchFriend}>검색</button>
+</div>
+
+
+      {hasSearched ? (
+  searchResult ? (
+    <div className="search-result">
+      <div className="search-result-row">
+        <div className="nickname-label">
+          닉네임: {searchResult.uerNickname}
+        </div>
+
+        {isAlreadyFriend ? (
+          <div className="already-friend-text">✅ 이미 친구입니다</div>
+        ) : (
+          <button
+            className="friend-request-btn"
+            onClick={() => handleSendFriendRequest(searchResult.userUuid)}
+          >
+            친구 요청
+          </button>
+        )}
+      </div>
+    </div>
+  ) : (
+    <div className="search-result">
+      <div className="search-result-empty">닉네임을 찾을 수 없습니다.</div>
+    </div>
+  )
+) : null}
+
+
+
+
+
+      <button className="close-button" onClick={() => {
+  setIsSearchOpen(false);
+  setSearchNickname('');
+  setSearchResult(null);
+  setHasSearched(false);
+  setIsAlreadyFriend(false);
+}}>
+  닫기
+</button>
+    </div>
+  </div>
+)}
+
+
                 <img
                   src={newIcon}
                   alt="새로고침"
