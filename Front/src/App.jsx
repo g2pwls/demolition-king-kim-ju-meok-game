@@ -29,89 +29,53 @@ function AppRoutes() {
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
+        <Route path="/" element={<AppLayout><StartPage /></AppLayout>} />
+        <Route path="/login" element={<AppLayout><LoginPage /></AppLayout>} />
+        <Route path="/signup" element={<AppLayout><SignupPage /></AppLayout>} />
+        <Route path="/password" element={<AppLayout><PasswordPage /></AppLayout>} />
+        <Route path="/resetpassword" element={<AppLayout><ResetPasswordPage /></AppLayout>} />
+
+        {/* ✅ 로그인 보호가 필요한 페이지 */}
         <Route
-          path="/"
+          path="/main"
           element={
-            <AppLayout>
-              <StartPage />
-            </AppLayout>
-          }
-        />
-        <Route
-          path="/login"
-          element={
-            <AppLayout>
-              <LoginPage />
-            </AppLayout>
+            <ProtectedRoute>
+              <MainPage />
+            </ProtectedRoute>
           }
         />
         <Route
           path="/game"
           element={
-            <AppLayout>
-              <GamePage />
-            </AppLayout>
+            <ProtectedRoute>
+              <AppLayout><GamePage /></AppLayout>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/story"
           element={
-            <AppLayout>
-              <StoryPage />
-            </AppLayout>
-          }
-        />
-        <Route path="/main" element={<MainPage />} />
-        <Route
-          path="/signup"
-          element={
-            <AppLayout>
-              <SignupPage />
-            </AppLayout>
+            <ProtectedRoute>
+              <AppLayout><StoryPage /></AppLayout>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/event"
           element={
-            <AppLayout>
-              <EventPage />
-            </AppLayout>
+            <ProtectedRoute>
+              <AppLayout><EventPage /></AppLayout>
+            </ProtectedRoute>
           }
         />
         <Route
-          path="/password"
+          path="/singletest"
           element={
-            <AppLayout>
-              <PasswordPage />
-            </AppLayout>
+            <ProtectedRoute>
+              <SingleTestPage />
+            </ProtectedRoute>
           }
         />
-        <Route
-          path="/resetpassword"
-          element={
-            <AppLayout>
-              <ResetPasswordPage />
-            </AppLayout>
-          }
-        />
-        <Route
-        path="/multimode"
-        element={
-          <AppLayout>
-            <MultiModeEntryPage />
-          </AppLayout>
-        }
-      />
-        <Route path="/singletest" element={<SingleTestPage />} />
-        <Route
-          path="/multilobby"
-          element={
-            <AppLayout>
-              <MultiLobbyPage />
-            </AppLayout>
-          }
-        />{" "}
-        {/* ✅ 추가 */}
       </Routes>
     </AnimatePresence>
   );

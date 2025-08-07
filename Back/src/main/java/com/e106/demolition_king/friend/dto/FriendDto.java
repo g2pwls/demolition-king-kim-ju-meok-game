@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class FriendDto {
     /** PK */
-    private Long id;
+    private Integer id;
 
     /** 친구 관계를 맺은 주체 유저 UUID */
     private String userUuid;

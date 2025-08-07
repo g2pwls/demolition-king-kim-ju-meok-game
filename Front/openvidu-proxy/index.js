@@ -1,53 +1,51 @@
-import "dotenv/config";
-import express from "express";
-import cors from "cors";
-import { AccessToken, WebhookReceiver } from "livekit-server-sdk";
-
-const SERVER_PORT = process.env.SERVER_PORT || 6080;
-const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY || "devkey";
-const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET || "secret";
-
+// openvidu-proxy/index.js
+const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
+const express = require('express');
+const cors = require('cors');
+// const fetch = require('node-fetch');
 const app = express();
+const port = 5000;
+
+const OPENVIDU_URL = 'http://localhost:4443';
+const OPENVIDU_SECRET = 'MY_SECRET'; // OpenVidu 실행 시 사용한 비밀번호와 동일해야 함
 
 app.use(cors());
 app.use(express.json());
-app.use(express.raw({ type: "application/webhook+json" }));
 
-app.post("/token", async (req, res) => {
-  const roomName = req.body.roomName;
-  const participantName = req.body.participantName;
+// ✅ 토큰 생성 API
+app.post('/api/get-token', async (req, res) => {
+  const sessionId = req.body.sessionId || 'TestSession';
 
-  if (!roomName || !participantName) {
-    res.status(400).json({ errorMessage: "roomName and participantName are required" });
-    return;
-  }
-
-  const at = new AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET, {
-    identity: participantName,
-  });
-  at.addGrant({ roomJoin: true, room: roomName });
-  const token = await at.toJwt();
-  res.json({ token });
-});
-
-const webhookReceiver = new WebhookReceiver(
-  LIVEKIT_API_KEY,
-  LIVEKIT_API_SECRET
-);
-
-app.post("/livekit/webhook", async (req, res) => {
   try {
-    const event = await webhookReceiver.receive(
-      req.body,
-      req.get("Authorization")
-    );
-    console.log(event);
-  } catch (error) {
-    console.error("Error validating webhook event", error);
+    // 1) 세션 생성
+    const sessionRes = await fetch(`${OPENVIDU_URL}/openvidu/api/sessions`, {
+      method: 'POST',
+      headers: {
+        Authorization: 'Basic ' + Buffer.from(`OPENVIDUAPP:${OPENVIDU_SECRET}`).toString('base64'),
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ customSessionId: sessionId }),
+    });
+
+    const session = await sessionRes.json();
+
+    // 2) 토큰 생성
+    const tokenRes = await fetch(`${OPENVIDU_URL}/openvidu/api/sessions/${session.id}/connection`, {
+      method: 'POST',
+      headers: {
+        Authorization: 'Basic ' + Buffer.from(`OPENVIDUAPP:${OPENVIDU_SECRET}`).toString('base64'),
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const token = await tokenRes.json();
+    res.json({ token: token.token });
+  } catch (err) {
+    console.error('❌ 토큰 생성 실패:', err);
+    res.status(500).json({ error: 'Token creation failed' });
   }
-  res.status(200).send();
 });
 
-app.listen(SERVER_PORT, () => {
-  console.log("Server started on port:", SERVER_PORT);
+app.listen(port, () => {
+  console.log(`✅ OpenVidu 프록시 서버 실행됨: http://localhost:${port}`);
 });

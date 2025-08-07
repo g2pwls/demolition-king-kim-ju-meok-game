@@ -1,34 +1,19 @@
 package com.e106.demolition_king.friend.service;
 
 import com.e106.demolition_king.friend.dto.FriendDto;
-import com.e106.demolition_king.friend.repository.FriendRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.e106.demolition_king.friend.dto.FriendRequestDto;
+import com.e106.demolition_king.friend.vo.out.FriendStatusVo;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
-@Service
-@RequiredArgsConstructor
-@Transactional(readOnly = true)
-public class FriendService {
-
-    private final FriendRepository friendRepository;
-
-    //특정 사용자의 친구 목록을 조회
-    public List<FriendDto> getFriends(String userUuid) {
-        return friendRepository.findAllByUserUserUuid(userUuid).stream()
-                .map(f -> FriendDto.builder()
-                        .id(f.getId())
-                        .userUuid(f.getUser().getUserUuid())
-                        .friendUuid(f.getFriend().getUserUuid())
-                        .friendNickname(f.getFriend().getUserNickname())
-                        .createdAt(f.getCreatedAt())
-                        .updatedAt(f.getUpdatedAt())
-                        .build()
-                )
-                .collect(Collectors.toList());
-    }
+public interface FriendService {
+    List<FriendStatusVo> getInvitableFriends(String userUuid);
+    List<FriendStatusVo> getFriendListWithStatus(String userUuid);
+    // 받은 친구 요청 목록 (PENDING 상태)
+    List<FriendStatusVo> getPendingRequestList(String userUuid);
+    void sendFriendRequest(String senderUuid, FriendRequestDto requestDto);
+    void acceptFriendRequest(String receiverUuid, String requesterUuid);
+    void rejectFriendRequest(String receiverUuid, String requesterUuid);
+    void deleteFriend(String userUuid, String friendUuid);
 
 }

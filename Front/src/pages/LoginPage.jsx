@@ -1,14 +1,11 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import { useNavigate, Link } from 'react-router-dom';
+import api from '../utils/api'; // ✅ axios 인스턴스 기반
 import '../styles/LoginPage.css';
 import googleIcon from '../assets/images/login/google.png';
 import kakaoIcon from '../assets/images/login/kakao.png';
 import loginBack from '../assets/images/login/loginbackf.png';
 import backIcon from '../assets/images/back.png';
-import { Link } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
-import api from '../utils/api';
-// import * as jwt_decode from 'jwt-decode';
 
 function parseJwt(token) {
   try {
@@ -31,7 +28,9 @@ function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
-   // 꼭 위에 import 추가하세요
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
 
 const handleLogin = async (e) => {
   e.preventDefault();
@@ -52,11 +51,43 @@ const handleLogin = async (e) => {
     // accessToken으로부터 userUuid 추출
     let userUuid = null;
     try {
+      // ✅ 로그인 요청 (axios 대신 api 사용)
+      const response = await api.post('/user/auth/login', null, {
+        params: { email, password },
+      });
+
+      const result = response?.data?.result;
+      const accessToken = result?.accessToken;
+      const refreshToken = result?.refreshToken;
+
+      // ✅ 토큰에서 userUuid 추출
       const decoded = parseJwt(accessToken);
-      console.log('✅ JWT Payload:', decoded);
-      userUuid = decoded?.sub || decoded?.userUuid || decoded?.id;
-    } catch (decodeError) {
-      console.error('❌ JWT decode 실패:', decodeError);
+      const userUuid = decoded?.sub || decoded?.userUuid || decoded?.id;
+
+      if (!userUuid) {
+        alert('userUuid를 토큰에서 추출하지 못했습니다.');
+        return;
+      }
+
+      // ✅ localStorage 저장
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('userUuid', userUuid);
+      localStorage.setItem('userEmail', email);
+
+      // ✅ 유저 정보 조회
+      const userInfo = await api.get(`/user/auth/getUserInfo?userUuid=${userUuid}`);
+      const nickname = userInfo.data.result.userNickname;
+
+      localStorage.setItem('userNickname', nickname);
+      localStorage.setItem('user', JSON.stringify(userInfo.data.result));
+
+      // ✅ 이동
+      navigate('/story');
+    } catch (error) {
+      const message =
+        error.response?.data?.message || '아이디 또는 비밀번호가 잘못되었습니다.';
+      alert(`❌ 로그인 실패: ${message}`);
     }
 
     if (!userUuid) {
@@ -90,14 +121,6 @@ const handleLogin = async (e) => {
       className="login-page-background"
       style={{ backgroundImage: `url(${loginBack})` }}
     >
-      {/* 왼쪽 상단 뒤로가기 버튼 */}
-      <button
-        className="back-button"
-        onClick={() => navigate(-1)}
-      >
-        <img src={backIcon} alt="뒤로가기" />
-      </button>
-
       <div className="login-box">
         <form className="login-form" onSubmit={handleLogin}>
           <div className="form-row1 with-button">
@@ -108,6 +131,7 @@ const handleLogin = async (e) => {
                   type="text"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  required
                 />
               </div>
               <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -116,15 +140,17 @@ const handleLogin = async (e) => {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  required
                 />
               </div>
             </div>
             <button type="submit" className="login-button">로그인</button>
           </div>
 
+          {/* ⚠️ 자동로그인은 현재 기능 미연결 상태 */}
           <div className="login-options">
             <label>
-              <input type="checkbox" /> 자동로그인
+              <input type="checkbox" disabled /> 자동로그인 (준비 중)
             </label>
           </div>
 

@@ -1,0 +1,22 @@
+package com.e106.demolition_king.game.repository;
+
+
+
+import com.e106.demolition_king.game.entity.ReportPerDate;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
+
+@Repository
+public interface ReportPerDateRepository extends JpaRepository<ReportPerDate, Integer> {
+
+    Optional<ReportPerDate> findByUser_UserUuidAndPlayDate(String userUuid, String playDate);
+
+    List<ReportPerDate> findAllByUser_UserUuidAndPlayDateBetweenOrderByPlayDateAsc(
+            String userUuid,
+            String startDate,
+            String endDate
+    );
+}

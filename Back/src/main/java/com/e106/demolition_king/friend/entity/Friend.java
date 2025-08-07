@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 public class Friend {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "friend_seq")
-    private Long id;
+    private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_uuid")
@@ -35,4 +35,7 @@ public class Friend {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Column(name = "status", nullable = false)
+    private String status;
 }

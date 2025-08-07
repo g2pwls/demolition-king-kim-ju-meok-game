@@ -2,10 +2,26 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import '../styles/SignupPage.css';
 import loginBack from '../assets/images/login/loginbackf.png';
+import profileBack from '../assets/images/login/profileback.png';
+import girl1 from '../assets/images/character/girl1.png';
+import girl2 from '../assets/images/character/girl2.png';
+import girl3 from '../assets/images/character/girl3.png';
+import boy1 from '../assets/images/character/boy1.png';
+import boy2 from '../assets/images/character/boy2.png';
+import boy3 from '../assets/images/character/boy3.png';
 import { useNavigate } from 'react-router-dom';
 
 function SignUp() {
   const navigate = useNavigate();
+
+  const profileList = [
+  { image: girl1 },
+  { image: boy1 },
+  { image: girl2 },
+  { image: boy2 },
+  { image: girl3 },
+  { image: boy3 }
+];
 
   const [email, setEmail] = useState('');
   const [authCode, setAuthCode] = useState('');
@@ -16,11 +32,10 @@ function SignUp() {
 
   // 닉네임 중복검사
   const checkNicknameDuplication = async () => {
-    try {
-      const res = await axios.post(
-        'https://i13e106.p.ssafy.io/api/user/auth/signup/nickname/check',
-        { nickname: userNickname }
-      );
+  try {
+    const res = await axios.post('https://i13e106.p.ssafy.io/api/user/auth/signup/nickname/check', {
+      nickname: userNickname,
+    });
 
       if (res.data.result.available) {
         alert('사용 가능한 닉네임입니다.');
@@ -36,9 +51,10 @@ function SignUp() {
   // 이메일 인증요청
   const requestAuthCode = async () => {
     try {
-      await axios.post('https://i13e106.p.ssafy.io/api/v1/user/email/signup/send', {
-        email,
-      });
+      await axios.post('https://i13e106.p.ssafy.io/api/v1/user/email/signup/send', { email });
+
+// 인증번호 확인
+
       alert('인증번호가 이메일로 전송되었습니다.');
     } catch (err) {
       console.error(err);
@@ -49,10 +65,10 @@ function SignUp() {
   // 인증코드 확인
   const verifyAuthCode = async () => {
     try {
-      const res = await axios.post('https://i13e106.p.ssafy.io/api/v1/user/email/signup/verify', {
-        email,
-        code: authCode,
-      });
+    const res = await axios.post('https://i13e106.p.ssafy.io/api/v1/user/email/signup/verify', {
+      email,
+      code: authCode,
+    });
 
       if (res.data.result.available === true) {
         alert('이메일 인증 성공!');
@@ -93,7 +109,7 @@ function SignUp() {
           },
         }
       );
-
+      
       console.log('회원가입 성공:', response.data);
       alert('회원가입 성공!');
       navigate('/login');
@@ -106,6 +122,25 @@ function SignUp() {
   return (
     <div className="signup-page" style={{ backgroundImage: `url(${loginBack})` }}>
       <div className="signup-box">
+        
+        <div
+          className="character-select-box"
+          style={{ backgroundImage: `url(${profileBack})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+        >
+          <div className="character-grid">
+  {profileList.map((profile, index) => (
+    <div
+      key={index}
+      className={`character-item ${profileSeq === index + 1 ? 'selected' : ''}`}
+      onClick={() => setProfileSeq(index + 1)}
+    >
+      <img src={profile.image} alt={`Character ${index + 1}`} />
+    </div>
+  ))}
+</div>
+
+        </div>
+
         <form className="signup-form" onSubmit={handleSignup}>
           {/* 닉네임 */}
           <div className="form-row2 with-button">

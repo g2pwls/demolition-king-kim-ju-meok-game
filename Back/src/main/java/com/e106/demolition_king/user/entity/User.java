@@ -1,5 +1,9 @@
 package com.e106.demolition_king.user.entity;
 
+import com.e106.demolition_king.game.entity.Gold;
+import com.e106.demolition_king.game.entity.Report;
+import com.e106.demolition_king.game.entity.ReportPerDate;
+import com.e106.demolition_king.skin.entity.PlayerSkin;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -7,8 +11,10 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 @Entity
 @Data
@@ -32,32 +38,12 @@ public class User implements UserDetails {
     @Column(name = "google_access", length = 500, unique = true)
     private String googleAccess;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "profile_seq")
     private Profile profile;
 
     private Timestamp createdAt;
     private Timestamp updatedAt;
-
-    // 일대 다
-//    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
-//    private List<PlayerSkin> skins;
-//
-//    //일대일
-//    @OneToOne(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
-//    private List<Report> reports;
-//
-//    // 일자별 리포트 수정 필요
-//
-//
-//    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
-//    private List<Friend> friends;
-//
-//    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
-//    private List<InviteList> invites;
-//
-//    @OneToOne(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
-//    private List<Gold> golds;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -81,5 +67,17 @@ public class User implements UserDetails {
     @Override
     public boolean isEnabled() { return true; }
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch=FetchType.LAZY)
+    private Gold gold;
 
+    @Builder.Default
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PlayerSkin> playerSkins = new ArrayList<>();
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Report report;
+
+    @Builder.Default
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ReportPerDate> reportPerDates = new ArrayList<>();
 }
