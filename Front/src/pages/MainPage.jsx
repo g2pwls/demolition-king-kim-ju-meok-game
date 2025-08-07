@@ -33,6 +33,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import ConfirmModal from '../components/BuyConfirmModal';
+import FriendNotification from '../components/FriendNotification';
 // 베이직 건물 이미지 import
 import building1 from '../assets/images/building/building1.png';
 import building2 from '../assets/images/building/building2.png';
@@ -163,7 +164,6 @@ function MainPage() {
     }
   };
 
-
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [userNickname, setUserNickname] = useState('');
   const [animationDirection, setAnimationDirection] = useState(null);
@@ -239,140 +239,140 @@ function MainPage() {
     const selectedIndex = result.findIndex((skin) => skin.isSelect === 1);
     setSelectedIndex(selectedIndex);
     setCurrentIndex(selectedIndex !== -1 ? selectedIndex : 0);
-  } catch (error) {
-    console.error('❌ 캐릭터 선택 실패:', error);
-  }
-};
+    } catch (error) {
+      console.error('❌ 캐릭터 선택 실패:', error);
+    }
+  };
 
-// 모달 상태 추가
-const [showBuyModal, setShowBuyModal] = useState(false);
-const [pendingSkin, setPendingSkin] = useState(null);
+  // 모달 상태 추가
+  const [showBuyModal, setShowBuyModal] = useState(false);
+  const [pendingSkin, setPendingSkin] = useState(null);
 
-// 구매 버튼 클릭 시
-const handleBuyClick = () => {
-  const currentSkin = skins[currentIndex];
-  setPendingSkin(currentSkin);
-  setShowBuyModal(true);
-};
-console.log('✅ 현재 스킨:', skins[currentIndex]);
-// 실제 구매 처리
-const confirmBuy = async () => {
-  const token = localStorage.getItem('accessToken');
-  try {
-    await api.patch('/skins/unLockUserSkin', {}, {
-      params: {
-        userUuid: userInfo.userUuid,
-        playerSkinItemSeq: pendingSkin.playerSkinItemSeq,
-      },
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+  // 구매 버튼 클릭 시
+  const handleBuyClick = () => {
+    const currentSkin = skins[currentIndex];
+    setPendingSkin(currentSkin);
+    setShowBuyModal(true);
+  };
+  // console.log('✅ 현재 스킨:', skins[currentIndex]);
+  // 실제 구매 처리
+  const confirmBuy = async () => {
+    const token = localStorage.getItem('accessToken');
+    try {
+      await api.patch('/skins/unLockUserSkin', {}, {
+        params: {
+          userUuid: userInfo.userUuid,
+          playerSkinItemSeq: pendingSkin.playerSkinItemSeq,
+        },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    await fetchSkins();
-    await fetchGold();
-    alert(`"${pendingSkin.name}" 캐릭터를 구매했습니다!`);
-  } catch (err) {
-    alert('구매 실패');
-  } finally {
-    setShowBuyModal(false);
-    setPendingSkin(null);
-  }
-};
+      await fetchSkins();
+      await fetchGold();
+      alert(`"${pendingSkin.name}" 캐릭터를 구매했습니다!`);
+    } catch (err) {
+      alert('구매 실패');
+    } finally {
+      setShowBuyModal(false);
+      setPendingSkin(null);
+    }
+  };
 
-// 건물 이미지
-const buildingImages = [
-  { src: building1, filename: 'building1.png' },
-  { src: building2, filename: 'building2.png' },
-  { src: building3, filename: 'building3.png' },
-  { src: building4, filename: 'building4.png' },
-  { src: building5, filename: 'building5.png' },
-  { src: building6, filename: 'building6.png' },
-  { src: building7, filename: 'building7.png' },
-  { src: building8, filename: 'building8.png' },
-  { src: building9, filename: 'building9.png' },
-  { src: building10, filename: 'building10.png' },
-  { src: building11, filename: 'building11.png' },
-  { src: building12, filename: 'building12.png' },
-  { src: building13, filename: 'building13.png' },
-  { src: building14, filename: 'building14.png' },
-  { src: building15, filename: 'building15.png' },
-  { src: building16, filename: 'building16.png' },
-  { src: building17, filename: 'building17.png' },
-  { src: building18, filename: 'building18.png' },
-  { src: building19, filename: 'building19.png' },
-  { src: building20, filename: 'building20.png' },
-  { src: building21, filename: 'building21.png' },
-  { src: building22, filename: 'building22.png' },
-  { src: building23, filename: 'building23.png' },
-  { src: building24, filename: 'building24.png' },
-  { src: building25, filename: 'building25.png' },
-  { src: building26, filename: 'building26.png' },
-];
+  // 건물 이미지
+  const buildingImages = [
+    { src: building1, filename: 'building1.png' },
+    { src: building2, filename: 'building2.png' },
+    { src: building3, filename: 'building3.png' },
+    { src: building4, filename: 'building4.png' },
+    { src: building5, filename: 'building5.png' },
+    { src: building6, filename: 'building6.png' },
+    { src: building7, filename: 'building7.png' },
+    { src: building8, filename: 'building8.png' },
+    { src: building9, filename: 'building9.png' },
+    { src: building10, filename: 'building10.png' },
+    { src: building11, filename: 'building11.png' },
+    { src: building12, filename: 'building12.png' },
+    { src: building13, filename: 'building13.png' },
+    { src: building14, filename: 'building14.png' },
+    { src: building15, filename: 'building15.png' },
+    { src: building16, filename: 'building16.png' },
+    { src: building17, filename: 'building17.png' },
+    { src: building18, filename: 'building18.png' },
+    { src: building19, filename: 'building19.png' },
+    { src: building20, filename: 'building20.png' },
+    { src: building21, filename: 'building21.png' },
+    { src: building22, filename: 'building22.png' },
+    { src: building23, filename: 'building23.png' },
+    { src: building24, filename: 'building24.png' },
+    { src: building25, filename: 'building25.png' },
+    { src: building26, filename: 'building26.png' },
+  ];
 
-const rareImages = [
-  { src: rare1, filename: 'rare1.png' },
-  { src: rare2, filename: 'rare2.png' },
-  { src: rare3, filename: 'rare3.png' },
-  { src: rare4, filename: 'rare4.png' },
-  { src: rare5, filename: 'rare5.png' },
-  { src: rare6, filename: 'rare6.png' },
-  { src: rare7, filename: 'rare7.png' },
-  { src: rare8, filename: 'rare8.png' },
-  { src: rare9, filename: 'rare9.png' },
-  { src: rare10, filename: 'rare10.png' },
-  { src: rare11, filename: 'rare11.png' },
-  { src: rare12, filename: 'rare12.png' },
-  { src: rare13, filename: 'rare13.png' },
-  { src: rare14, filename: 'rare14.png' },
-  { src: rare15, filename: 'rare15.png' },
-];
+  const rareImages = [
+    { src: rare1, filename: 'rare1.png' },
+    { src: rare2, filename: 'rare2.png' },
+    { src: rare3, filename: 'rare3.png' },
+    { src: rare4, filename: 'rare4.png' },
+    { src: rare5, filename: 'rare5.png' },
+    { src: rare6, filename: 'rare6.png' },
+    { src: rare7, filename: 'rare7.png' },
+    { src: rare8, filename: 'rare8.png' },
+    { src: rare9, filename: 'rare9.png' },
+    { src: rare10, filename: 'rare10.png' },
+    { src: rare11, filename: 'rare11.png' },
+    { src: rare12, filename: 'rare12.png' },
+    { src: rare13, filename: 'rare13.png' },
+    { src: rare14, filename: 'rare14.png' },
+    { src: rare15, filename: 'rare15.png' },
+  ];
 
-const legendaryImages = [
-  { src: legendary1, filename: 'legendary1.png' },
-  { src: legendary2, filename: 'legendary2.png' },
-  { src: legendary3, filename: 'legendary3.png' },
-  { src: legendary4, filename: 'legendary4.png' },
-];
+  const legendaryImages = [
+    { src: legendary1, filename: 'legendary1.png' },
+    { src: legendary2, filename: 'legendary2.png' },
+    { src: legendary3, filename: 'legendary3.png' },
+    { src: legendary4, filename: 'legendary4.png' },
+  ];
 
-const eventImages = [
-  { src: eventk1, filename: 'eventk1.png' },
-  { src: eventk2, filename: 'eventk2.png' },
-  { src: eventk3, filename: 'eventk3.png' },
-  { src: eventk4, filename: 'eventk4.png' },
-  { src: eventk5, filename: 'eventk5.png' },
-  { src: eventk6, filename: 'eventk6.png' },
-  { src: eventk7, filename: 'eventk7.png' },
-  { src: eventk8, filename: 'eventk8.png' },
-  { src: eventk9, filename: 'eventk9.png' },
-  { src: eventk10, filename: 'eventk10.png' },
-  { src: eventk11, filename: 'eventk11.png' },
-  { src: eventk12, filename: 'eventk12.png' },
-  { src: eventw1, filename: 'eventw1.png' },
-  { src: eventw2, filename: 'eventw2.png' },
-  { src: eventw3, filename: 'eventw3.png' },
-  { src: eventw4, filename: 'eventw4.png' },
-  { src: eventw5, filename: 'eventw5.png' },
-  { src: eventw6, filename: 'eventw6.png' },
-  { src: eventw7, filename: 'eventw7.png' },
-  { src: eventw8, filename: 'eventw8.png' },
-  { src: eventw9, filename: 'eventw9.png' },
-  { src: eventw10, filename: 'eventw10.png' },
-  { src: eventw11, filename: 'eventw11.png' },
-  { src: eventw12, filename: 'eventw12.png' },
-  { src: eventw13, filename: 'eventw13.png' },
-  { src: eventw14, filename: 'eventw14.png' },
-  { src: eventw15, filename: 'eventw15.png' },
-  { src: eventw16, filename: 'eventw16.png' },
-];
+  const eventImages = [
+    { src: eventk1, filename: 'eventk1.png' },
+    { src: eventk2, filename: 'eventk2.png' },
+    { src: eventk3, filename: 'eventk3.png' },
+    { src: eventk4, filename: 'eventk4.png' },
+    { src: eventk5, filename: 'eventk5.png' },
+    { src: eventk6, filename: 'eventk6.png' },
+    { src: eventk7, filename: 'eventk7.png' },
+    { src: eventk8, filename: 'eventk8.png' },
+    { src: eventk9, filename: 'eventk9.png' },
+    { src: eventk10, filename: 'eventk10.png' },
+    { src: eventk11, filename: 'eventk11.png' },
+    { src: eventk12, filename: 'eventk12.png' },
+    { src: eventw1, filename: 'eventw1.png' },
+    { src: eventw2, filename: 'eventw2.png' },
+    { src: eventw3, filename: 'eventw3.png' },
+    { src: eventw4, filename: 'eventw4.png' },
+    { src: eventw5, filename: 'eventw5.png' },
+    { src: eventw6, filename: 'eventw6.png' },
+    { src: eventw7, filename: 'eventw7.png' },
+    { src: eventw8, filename: 'eventw8.png' },
+    { src: eventw9, filename: 'eventw9.png' },
+    { src: eventw10, filename: 'eventw10.png' },
+    { src: eventw11, filename: 'eventw11.png' },
+    { src: eventw12, filename: 'eventw12.png' },
+    { src: eventw13, filename: 'eventw13.png' },
+    { src: eventw14, filename: 'eventw14.png' },
+    { src: eventw15, filename: 'eventw15.png' },
+    { src: eventw16, filename: 'eventw16.png' },
+  ];
 
   const navigate = useNavigate();
   const [modalType, setModalType] = useState(null); // 'tutorial' 또는 'mypage' 또는 null
   const [isFriendPopupOpen, setIsFriendPopupOpen] = useState(false); // ✅ 반드시 함수 컴포넌트 내부에
   const [activeTab, setActiveTab] = useState('통계');
-
   const [userInfo, setUserInfo] = useState(null);
 
+  // 유저 정보 불러오기
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
@@ -396,17 +396,16 @@ const eventImages = [
     fetchUserInfo();
   }, []);
 
-
-// userInfo 바뀌면 nickname, email 같이 업데이트
-useEffect(() => {
-  if (userInfo) {
-    setEditNickname(userInfo.nickname);
-    setEditEmail(userInfo.email);
-    setUserNickname(userInfo.nickname);  // 캐릭터 아래 닉네임 표기용
-    fetchTodayPlayTime();
-    fetchWeeklyPlayTime();
-  }
-}, [userInfo]);
+  // userInfo 바뀌면 nickname, email 같이 업데이트
+  useEffect(() => {
+    if (userInfo) {
+      setEditNickname(userInfo.nickname);
+      setEditEmail(userInfo.email);
+      setUserNickname(userInfo.nickname);  // 캐릭터 아래 닉네임 표기용
+      fetchTodayPlayTime();
+      fetchWeeklyPlayTime();
+    }
+  }, [userInfo]);
 
   // 오늘 플레이 시간
   const fetchTodayPlayTime = async () => {
@@ -472,8 +471,6 @@ useEffect(() => {
     console.error('❌ 주간 플레이 시간 조회 실패:', err);
   }
 };
-
-
 
   const [isEditing, setIsEditing] = useState(false);           // 수정 모드 진입 여부
   const [editNickname, setEditNickname] = useState(userInfo?.nickname); // 수정할 닉네임 임시 저장
@@ -964,10 +961,30 @@ useEffect(() => {
     }
   };
 
+  // 친구 새로고침
+  const refreshFriendData = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+
+      const [friendRes, requestRes] = await Promise.all([
+        api.get('/users/friends/status', {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        api.get('/users/friends/requests'),
+      ]);
+
+      setFriends(friendRes.data.result || []);
+      setFriendRequests(requestRes.data.result || []);
+      console.log('🔄 친구 목록 & 요청 새로고침 완료');
+    } catch (err) {
+      console.error('❌ 친구 새로고침 실패:', err);
+    }
+  };
 
 
   return (
     <div className="main-page-background">
+      {/* <FriendNotification token={token} /> */}
       <div className="main-fixed-wrapper">
         <div className="top-right-buttons">
           <button className="top-icon-button" onClick={() => setModalType('lank')}>
@@ -1006,6 +1023,7 @@ useEffect(() => {
                 src={skins[currentIndex]?.image}
                 alt="캐릭터"
                 className="main-character large"
+                style={{ opacity: skins[currentIndex]?.isUnlock === 0 ? 0.6 : 1 }} // ⭐ 추가
                 onAnimationEnd={() => setAnimationDirection(null)}/>
             )}
             <img src={arrowRight} alt="오른쪽" className="arrow-button large" onClick={handleRight} />
@@ -1039,11 +1057,23 @@ useEffect(() => {
           )}
         </div>
 
+      {/* 모달들 */}
       {modalType && (
         <div className="modal-overlay" onClick={() => {setModalType(null);setActiveTab('통계'); setIsEditing(false); setIsEditingNickname(false); setEditNickname(userInfo?.nickname);}}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-
-            {modalType === 'tutorial' && <img src={tutorialModal} alt="튜토리얼 모달" className="tutorial-modal-image"/>}
+            {modalType === 'tutorial' && (
+              <div className="tutorial-modal-wrapper">
+                <img src={tutorialModal} alt="튜토리얼 모달" className="tutorial-modal-image" />
+                <div className="tutorial-modal-text">
+                  🥊 모션을 따라 건물을 파괴하라!<br /><br />
+                  화면 상단에 뜨는 <strong style={{ color: 'black' }}>콤보 스택(잽, 어퍼컷, 회피)</strong>에 맞춰<br />
+                  정확한 모션을 취하세요.<br /><br />
+                  올바른 동작을 하면 건물 HP가 깎이고,<br />
+                  💥HP가 0이 되면 건물이 철거됩니다!<br /><br />
+                  ⏱ 건물을 철거하면 추가 시간이 주어집니다.<br /><br />
+                  제한 시간이 모두 끝나기 전에 더 많은 건물을 철거해보세요!</div>
+              </div>
+            )}
 
             {modalType === 'mypage' && (
               <div className="mypage-modal-wrapper">
@@ -1053,7 +1083,6 @@ useEffect(() => {
                   {/* 왼쪽: 프로필 영역 */}
                   <div className="mypage-left">
                     <img className="mypage-avatar" src={userInfo?.profile?.image} alt="프로필" />
-
                     <div className="mypage-name">{userInfo?.userNickname}</div>
                     <div className="mypage-email">{userInfo?.userEmail}</div>
                     <button
@@ -1065,7 +1094,6 @@ useEffect(() => {
                       onClick={() => setShowLogoutModal(true)}>
                       로그아웃
                     </button>
-
                   </div>
                   {showLogoutModal && (
                     <div className="modal-overlay">
@@ -1079,20 +1107,17 @@ useEffect(() => {
                     </div>
                   )}
 
-                  
                   <div className="mypage-right">
                     {/* 탭 버튼 */}
                     <div className="mypage-tabs">
                       <button
                         className={`tab-button ${activeTab === '통계' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('통계')}
-                      >
+                        onClick={() => setActiveTab('통계')}>
                         통계
                       </button>
                       <button
                         className={`tab-button ${activeTab === '도감' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('도감')}
-                      >
+                        onClick={() => setActiveTab('도감')}>
                         도감
                       </button>
                     </div>
@@ -1100,6 +1125,7 @@ useEffect(() => {
                     {/* ✅ 통계 탭 내용 */}
                     {activeTab === '통계' && !isEditing && (
                       <>
+                        {/* 플레이 시간 부분 */}
                         <div className="playtime-section">
                           {/* 총 플레이 시간 */}
                           <div className="playtime-row-vertical1">
@@ -1128,7 +1154,7 @@ useEffect(() => {
                         <div className="weekly-chart">
                           {playStats.weeklyPlayTime.map((minutes, i) => {
                             const maxMinutes = 300;
-                            const maxHeight = 120;
+                            const maxHeight = 500;
                             const heightPx = Math.min((minutes / maxMinutes) * maxHeight, maxHeight);
 
                             const timeLabel =
@@ -1275,7 +1301,7 @@ useEffect(() => {
                           )}
                         </div>
 
-                        {/* ✅ 닫기 버튼: profile-view 밖에 둠 */}
+                        {/* 닫기 버튼: profile-view 밖에 둠 */}
                         <div className="edit-close-wrapper">
                           <button
                             className="close-edit-btn"
@@ -1290,7 +1316,6 @@ useEffect(() => {
                         </div>
                       </>
                     )}
-
 
                     {/* 닉네임 수정 모드 */}
                     {activeTab === '통계' && isEditing && isEditingNickname && (
@@ -1310,14 +1335,12 @@ useEffect(() => {
                         )}
                         <div className="nickname-edit-buttons">
                           <button className="check-btn" onClick={handleCheckNickname}>중복확인</button>
-                          
                           <button
                             className="cancel-btn"
                             onClick={() => {
                               setEditNickname(userInfo.nickname);
                               setIsEditingNickname(false);
-                            }}
-                          >
+                            }}>
                             취소
                           </button>
 
@@ -1327,16 +1350,14 @@ useEffect(() => {
                             disabled={
                               nicknameCheckResult !== 'available' ||  // 중복확인 결과가 사용 가능이 아니면 비활성화
                               editNickname !== checkedNickname       // 중복확인 후 닉네임이 바뀌었으면 비활성화
-                            }
-                          >
+                            }>
                             저장
                           </button>
                         </div>
                       </div>
                     )}
 
-
-                    {/* ✅ 도감 탭 내용 */}
+                    {/* 도감 탭 내용 */}
                     {activeTab === '도감' && (
                       <div className="collection-section">
                         <div className="buildingname">COMMON</div>
@@ -1354,7 +1375,6 @@ useEffect(() => {
                             );
                           })}
                         </div>
-
 
                         <div className="buildingname1">RARE</div>
                         <div className="building-grid">
@@ -1419,18 +1439,18 @@ useEffect(() => {
           </div>
         </div>
       )}
-      
+
+      {/* 친구 팝업 버튼 표시 */}
       <div className="friend-buttons">
         <button
           className={`floating-button ${modalType ? 'disabled' : ''}`}
           onClick={() => {
             if (!modalType) setIsFriendPopupOpen(prev => !prev);
           }}
-          disabled={!!modalType}
-        >
+          disabled={!!modalType}>
           <img src={fbottom} alt="플로팅 버튼" />
 
-          {/* ✅ 친구 요청 배지 표시 */}
+          {/* 친구 요청 배지 표시 */}
           {friendRequests.length > 0 && (
             <div className="friend-request-badge">
               {friendRequests.length}
@@ -1438,25 +1458,20 @@ useEffect(() => {
           )}
         </button>
       </div>
-
-
+      {/* 친구 팝업 내용 표시 */}
       {isFriendPopupOpen && (
         <div
-  className="friend-popup-overlay"
-  onClick={() => {
-    setIsFriendPopupOpen(false);
-    setIsSearchOpen(false);
-    setSearchNickname('');
-    setSearchResult(null);
-    setHasSearched(false);
-    setIsAlreadyFriend(false);
-  }}
->
+          className="friend-popup-overlay"
+          onClick={() => {
+            setIsFriendPopupOpen(false);
+            setIsSearchOpen(false);
+            setSearchNickname('');
+            setSearchResult(null);
+            setHasSearched(false);
+            setIsAlreadyFriend(false);
+          }}>
 
-          <div
-            className="friend-popup"
-            onClick={(e) => e.stopPropagation()} // 팝업 안 누르면 닫히지 않도록
-          >
+          <div className="friend-popup" onClick={(e) => e.stopPropagation()}> {/* 팝업 안 누르면 닫히지 않도록 */}
             <button className="friend-popup-close-btn" onClick={() => setIsFriendPopupOpen(false)}>
               <img src={fcbottom} alt="닫기 버튼" />
             </button>
@@ -1464,158 +1479,106 @@ useEffect(() => {
               {/* 내 정보 */}
               <div className="my-profile">
                 <img className="friend-avatar" src={userInfo?.profile?.image} alt="프로필" />
-
                 <div className="friend-nickname">{userInfo.userNickname} (나)</div>
               </div>
-
               <hr className="friend-divider" />
-
-
               {/* 친구 리스트 */}
               <div className="friend-title">친구목록
-                <img
-                  src={findIcon}
-                  alt="친구 찾기"
-                  className="find-button"
-                  onClick={() => setIsSearchOpen(true)}
-                />
+                <img src={findIcon} alt="친구 찾기" className="find-button" onClick={() => setIsSearchOpen(true)}/>
                 {isSearchOpen && (
-  <div className="friend-search-popup" onClick={() => setIsSearchOpen(false)}>
-    <div className="popup-content" onClick={(e) => e.stopPropagation()}>
-      <h3 className="search-title">친구 찾기</h3>
+                  <div className="friend-search-popup" onClick={() => setIsSearchOpen(false)}>
+                    <div className="popup-content" onClick={(e) => e.stopPropagation()}>
+                      <h3 className="search-title">친구 찾기</h3>
 
-<div className="search-row">
-  <input
-    type="text"
-    value={searchNickname}
-    onChange={(e) => setSearchNickname(e.target.value)}
-    placeholder="닉네임 입력"
-    className="search-input"
-  />
-  <button className="search-btn" onClick={handleSearchFriend}>검색</button>
-</div>
+                      <div className="search-row">
+                        <input
+                          type="text"
+                          value={searchNickname}
+                          onChange={(e) => setSearchNickname(e.target.value)}
+                          placeholder="닉네임 입력"
+                          className="search-input"
+                        />
+                        <button className="search-btn" onClick={handleSearchFriend}>검색</button>
+                      </div>
 
+                      {hasSearched ? (searchResult ? (
+                          <div className="search-result">
+                            <div className="search-result-row">
+                              <div className="nickname-label">닉네임: {searchResult.uerNickname}</div>
 
-      {hasSearched ? (
-  searchResult ? (
-    <div className="search-result">
-      <div className="search-result-row">
-        <div className="nickname-label">
-          닉네임: {searchResult.uerNickname}
-        </div>
+                              {isAlreadyFriend ? (
+                                <div className="already-friend-text">✅ 이미 친구입니다</div>
+                              ) : hasReceivedRequest ? (
+                                <div className="already-friend-text">📩 이 사용자가 당신에게 친구 요청을 보냈습니다. 수락해주세요!</div>
+                              ) : hasSentRequest ? (
+                                <div className="already-friend-text">✅ 친구 요청을 보냈습니다!</div>
+                              ) : (
+                                <button
+                                  className="friend-request-btn"
+                                  onClick={() => handleSendFriendRequest(searchResult.userUuid)}>
+                                  친구 요청
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="search-result">
+                            <div className="search-result-empty">닉네임을 찾을 수 없습니다.</div>
+                          </div>
+                        )
+                      ) : null}
 
-        {isAlreadyFriend ? (
-          <div className="already-friend-text">✅ 이미 친구입니다</div>
-        ) : hasReceivedRequest ? (
-          <div className="already-friend-text">📩 이 사용자가 당신에게 친구 요청을 보냈습니다. 수락해주세요!</div>
-        ) : hasSentRequest ? (
-          <div className="already-friend-text">✅ 친구 요청을 보냈습니다!</div>
-        ) : (
-          <button
-            className="friend-request-btn"
-            onClick={() => handleSendFriendRequest(searchResult.userUuid)}
-          >
-            친구 요청
-          </button>
-        )}
-      </div>
-    </div>
-  ) : (
-    <div className="search-result">
-      <div className="search-result-empty">닉네임을 찾을 수 없습니다.</div>
-    </div>
-  )
-) : null}
+                      <button className="close-button" onClick={() => {
+                        setIsSearchOpen(false);
+                        setSearchNickname('');
+                        setSearchResult(null);
+                        setHasSearched(false);
+                        setIsAlreadyFriend(false);}}>
+                        ❌닫기
+                      </button>
+                    </div>
+                  </div>
+                )}
 
-      <button className="close-button" onClick={() => {
-        setIsSearchOpen(false);
-        setSearchNickname('');
-        setSearchResult(null);
-        setHasSearched(false);
-        setIsAlreadyFriend(false);
-      }}>
-        ❌닫기
-      </button>
-          </div>
-        </div>
-      )}
-
-
-                <img
-                  src={newIcon}
-                  alt="새로고침"
-                  className="new-button"
-                  onClick={async () => {
-                    try {
-                      const token = localStorage.getItem('accessToken');
-                      const [friendRes, requestRes] = await Promise.all([
-                        api.get('/users/friends/status', {
-                          headers: { Authorization: `Bearer ${token}` },
-                        }),
-                        api.get('/users/friends/requests'),
-                      ]);
-
-                      setFriends(friendRes.data.result || []);
-                      setFriendRequests(requestRes.data.result || []);
-                      console.log('🔄 친구 목록 & 요청 새로고침 완료');
-                    } catch (err) {
-                      console.error('❌ 친구 새로고침 실패:', err);
-                    }
-                  }}
-                />
-
-
+                <img src={newIcon} alt="새로고침" className="new-button" onClick={refreshFriendData}/>
               </div>
-
+              
+              {/* 친구 목록 리스트 */}
               <div className="friend-list">
                 {friends.map(friend => (
                   <div key={friend.id} className="friend-item">
-                    
                     {/* 왼쪽: 상태 점 + 닉네임 묶기 */}
                     <div className="friend-info-wrapper">
-                      <div
-                        className="friend-status-dot"
-                        style={{
-                          backgroundColor: friend.status === 'online' ? '#00ff5f' : '#ffffff',
-                          border: '1px solid gray',
-                        }}
-                      ></div>
+                      <div className="friend-status-dot"
+                        style={{ backgroundColor: friend.status === 'online' ? '#00ff5f' : '#ffffff', border: '1px solid gray',}}></div>
                       <div className="friend-nickname">{friend.friendNickname}</div>
                     </div>
 
                     {/* 오른쪽: 삭제 버튼 */}
-                    <button
-                      className="friend-delete-btn"
-                      onClick={() => handleDeleteFriend(friend.friendUuid)}
-                    >
-                      삭제
-                    </button>
+                    <button className="friend-delete-btn" onClick={() => handleDeleteFriend(friend.friendUuid)}> 삭제</button>
                   </div>
                 ))}
               </div>
 
-              
-                {/* 친구 요청 알림 */}
-                {friendRequests.length > 0 && (
-                  <>
-                    <hr className="friend-divider" />
-                      <div className="friend-title">친구 요청</div>
-                    <div className="friend-request-section">
-                      {friendRequests.map((req) => (
-                        <div key={req.id} className="friend-request-item">
-                          <div className="friend-nickname">{req.friendNickname}</div>
-                          <div className="friend-request-buttons">
-                            <button onClick={() => acceptFriend(req.id)}>✅</button>
-                            <button onClick={() => rejectFriend(req.id)}>❌</button>
+              {/* 친구 요청 알림 */}
+              {friendRequests.length > 0 && (
+                <>
+                  <hr className="friend-divider" />
+                    <div className="friend-title">친구 요청</div>
+                      <div className="friend-request-section">
+                        {friendRequests.map((req) => (
+                          <div key={req.id} className="friend-request-item">
+                            <div className="friend-nickname">{req.friendNickname}</div>
+                            <div className="friend-request-buttons">
+                              <button onClick={() => acceptFriend(req.id)}>✅</button>
+                              <button onClick={() => rejectFriend(req.id)}>❌</button>
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                )}
-
+                        ))}
+                      </div>
+                </>
+              )}
             </div>
-
           </div>
         </div>
       )}
