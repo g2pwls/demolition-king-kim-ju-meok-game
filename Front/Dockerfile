@@ -1,5 +1,5 @@
 # 1단계: Node.js 기반 빌드 환경
-FROM node:18 as build
+FROM node:20 AS build
 
 # 작업 디렉토리 설정
 WORKDIR /app
@@ -7,14 +7,17 @@ WORKDIR /app
 # 의존성 설치를 위해 package 파일 복사
 COPY package*.json ./
 
-# 캐시 제거 및 안정적인 설치를 위해 npm ci 사용
-RUN rm -rf node_modules && npm ci
+# 불필요한 캐시 제거 후 깨끗한 설치
+RUN rm -rf node_modules package-lock.json && npm install
 
-# 전체 앱 소스 복사
+# 전체 소스 복사
 COPY . .
 
-# Vite 권한 문제 해결
+# 실행 권한 부여 (Vite, Rollup 관련)
 RUN chmod -R +x node_modules/.bin
+
+# 🔧 네이티브 모듈 관련 오류 방지
+RUN npm rebuild
 
 # 앱 빌드
 RUN npm run build --unsafe-perm
