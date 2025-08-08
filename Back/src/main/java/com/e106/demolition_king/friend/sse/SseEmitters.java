@@ -20,12 +20,18 @@ public class SseEmitters {
         emitters.remove(userUuid);
     }
 
+    // 기존 friend-request 전송 메소드 유지
     public void send(String userUuid, String message) {
+        send(userUuid, "friend-request", message);
+    }
+
+    // 이벤트 이름을 지정할 수 있는 범용 전송 메소드 추가
+    public void send(String userUuid, String eventName, String message) {
         SseEmitter emitter = emitters.get(userUuid);
         if (emitter != null) {
             try {
                 emitter.send(SseEmitter.event()
-                        .name("friend-request")
+                        .name(eventName)
                         .data(message));
             } catch (IOException e) {
                 emitters.remove(userUuid);
