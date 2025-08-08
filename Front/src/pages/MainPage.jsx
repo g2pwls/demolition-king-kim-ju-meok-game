@@ -376,11 +376,19 @@ function MainPage() {
   ];
 
   const navigate = useNavigate();
-  const [modalType, setModalType] = useState(null); // 'tutorial' 또는 'mypage' 또는 null
+  const [modalType, setModalType] = useState(null);
+  const goToMultiLobby = () => {
+  setModalType(null); // 모달 닫기
+  navigate('/multilobby', {
+    state: { autoJoin: true, action: 'create' }, // ⬅️ 로비에서 자동 입장 신호
+  });
+};
+
+   // 'tutorial' 또는 'mypage' 또는 null
   const [isFriendPopupOpen, setIsFriendPopupOpen] = useState(false); // ✅ 반드시 함수 컴포넌트 내부에
   const [activeTab, setActiveTab] = useState('통계');
   const [userInfo, setUserInfo] = useState(null);
-
+  
   // 유저 정보 불러오기
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -1974,11 +1982,16 @@ useEffect(() => {
             )}
 
             {modalType === 'multi' && (
-              <div className="multi-mode-buttons">
-                <button><img src={roomMake} alt="방 만들기" /></button>
-                <button><img src={roomParticipation} alt="방 참가하기" /></button>
-              </div>
-            )}
+            <div className="multi-mode-buttons">
+              <button onClick={goToMultiLobby}>
+                <img src={roomMake} alt="방 만들기" />
+              </button>
+              <button>
+                <img src={roomParticipation} alt="방 참가하기" />
+              </button>
+            </div>
+          )}
+
           </div>
         </div>
       )}

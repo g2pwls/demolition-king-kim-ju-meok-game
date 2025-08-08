@@ -1,17 +1,13 @@
-// ✅ MultiLobbyPage.jsx에서 사용자 정보를 localStorage + getUserInfo API로 가져오도록 최소 수정 적용
-
-import React, { useEffect, useState } from "react";
+// ✅ MultiLobbyPage.jsx
+import React, { useEffect, useState, useRef } from "react";
 import { createLocalAudioTrack, Room, RoomEvent } from "livekit-client";
 import awaitroomBg from "../assets/images/awaitroom/awaitroom.png";
-import characterBack from "../assets/images/awaitroom/characterback.png";
-import api from "../utils/api"; 
-import "../styles/App.css";
+import characterBack from "../assets/images/awaitroom/awaitroom.png"; // 안 쓰면 삭제해도 됨
+import api from "../utils/api"; // 안 쓰면 삭제해도 됨
+import "../styles/MultiLobbyPage.css";
 
-// const APPLICATION_SERVER_URL = "https://i13e106.p.ssafy.io/openviduback/";
-// const LIVEKIT_URL = "wss://i13e106.p.ssafy.io/livekit";
 const APPLICATION_SERVER_URL = "http://localhost:6080/";
 const LIVEKIT_URL = "ws://localhost:7880/";
-
 
 function MultiLobbyPage() {
   const [participants, setParticipants] = useState([]);
@@ -21,38 +17,24 @@ function MultiLobbyPage() {
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState("");
 
-  // ✅ 닉네임, uuid useState 추가
+  const chatListRef = useRef(null); // ✅ 채팅 리스트 ref
   const [nickName, setNickName] = useState("");
   const [userUuid, setUserUuid] = useState("");
 
-// useEffect(() => {
-//   // const accessToken = localStorage.getItem("accessToken");
-//   const accessToken = "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI3MTgyMDMyYi02ZGVhLTQwY2MtYjZmZS1lMTc0YThmYzdiMmQiLCJyb2xlcyI6WyJVU0VSIl0sImlhdCI6MTc1NDQ4MjU2NCwiZXhwIjoxNzU0NDg2MTY0fQ.MGDEhxJFiISo55QW6pMgaVv-F8fh8VQuhMxdWFM5uMQ";
-//   if (!accessToken) {
-//     alert("로그인이 필요합니다.");
-//     return;
-//   }
+  // ✅ chatMessages 변경 시 자동 스크롤 맨 아래로
+  useEffect(() => {
+    const el = chatListRef.current;
+    if (!el) return;
+    // 레이아웃 반영 후 스크롤 (이미지/폰트 로딩 보정)
+    requestAnimationFrame(() => {
+      el.scrollTop = el.scrollHeight;
+    });
+  }, [chatMessages]);
 
-//   fetch("https://i13e106.p.ssafy.io/api/user/auth/getUserInfo", {
-//     method: "GET",
-//     headers: {
-//       Authorization: accessToken,
-//     },
-//   })
-//     .then((res) => {
-//       const user = res.data.result;
-//       setUserUuid(user.userUuid);
-//       setNickName(user.nickName);
-//     })
-//     .catch((err) => {
-//       console.error("❌ 유저 정보 조회 실패", err);
-//     });
-// }, []);
-
+  // ✅ 유저 정보 불러오기
+  // ✅ 유저 정보 불러오기
 useEffect(() => {
-  // const accessToken = localStorage.getItem("accessToken");
-  const accessToken = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI3MTgyMDMyYi02ZGVhLTQwY2MtYjZmZS1lMTc0YThmYzdiMmQiLCJyb2xlcyI6WyJVU0VSIl0sImlhdCI6MTc1NDQ4NjU1NSwiZXhwIjoxNzU0NDkwMTU1fQ.iK7Wmm5w2I4lG4bQ8TqXJfczbAHAheN8LkW5iLlAiSc";
-
+  const accessToken = localStorage.getItem("accessToken"); // 🔹 저장된 토큰 불러오기
 
   if (!accessToken) {
     alert("로그인이 필요합니다.");
@@ -61,12 +43,10 @@ useEffect(() => {
 
   fetch("https://i13e106.p.ssafy.io/api/user/auth/getUserInfo", {
     method: "GET",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
+    headers: { Authorization: `Bearer ${accessToken}` },
   })
     .then((res) => {
-      if (!res.ok) throw new Error("응답 오류" + res.status);
+      if (!res.ok) throw new Error("응답 오류 " + res.status);
       return res.json();
     })
     .then((data) => {
@@ -75,7 +55,7 @@ useEffect(() => {
         const name = data.result.userNickname;
         setUserUuid(data.result.userUuid);
         setNickName(name);
-        setRoomName(name + "의방");
+        setRoomName(`${name}의방`);
       } else {
         throw new Error("데이터 형식 오류");
       }
@@ -84,33 +64,7 @@ useEffect(() => {
       console.error("❌ 유저 정보 조회 실패", err);
       alert("유저 정보를 가져오는 데 실패했습니다.");
     });
-  }, []);
-  
- console.log("nickname : " + nickName);
- console.log("roomname : " + roomName);
-
- console.log("uuid : " + userUuid);
-
-  // ✅ 로그인된 유저의 UUID와 닉네임 가져오기 (최소 수정)
-  // useEffect(() => {
-  //   const accessToken = localStorage.getItem("accessToken");
-  //   const uuid = localStorage.getItem("userUuid");
-  //   if (!accessToken || !uuid) {
-  //     alert("로그인이 필요합니다.");
-  //     return;
-  //   }
-  //   setUserUuid(uuid);
-  //   api
-  //     .get(`/user/auth/getUserInfo?userUuid=${uuid}`, {
-  //       headers: { Authorization: accessToken },
-  //     })
-  //     .then((res) => {
-  //       setNickName(res.data.result.userNickname);
-  //     })
-  //     .catch((err) => {
-  //       console.error("❌ 유저 정보 조회 실패", err);
-  //     });
-  // }, []);
+}, []);
 
 
   async function joinRoom() {
@@ -130,13 +84,11 @@ useEffect(() => {
       );
     });
 
-     // ✅ 참가자 입장 이벤트 등록
     newRoom.on(RoomEvent.ParticipantConnected, (participant) => {
       setParticipants((prev) => [...prev, participant.identity]);
       console.log("참가자 입장:", participant.identity);
     });
 
-    // ✅ 참가자 퇴장 이벤트 등록
     newRoom.on(RoomEvent.ParticipantDisconnected, (participant) => {
       setParticipants((prev) => prev.filter((id) => id !== participant.identity));
       console.log("참가자 퇴장:", participant.identity);
@@ -148,12 +100,10 @@ useEffect(() => {
     });
 
     try {
-      const token = await getToken(roomName, nickName, userUuid); // ✅ nickname, uuid 반영
+      const token = await getToken(roomName, nickName, userUuid);
       await newRoom.connect(LIVEKIT_URL, token);
       const audioTrack = await createLocalAudioTrack();
       await newRoom.localParticipant.publishTrack(audioTrack);
-
-      // ✅ 본인도 참가자 목록에 추가
       setParticipants((prev) => [...prev, newRoom.localParticipant.identity]);
     } catch (error) {
       console.log("❌ 연결 오류:", error.message);
@@ -175,28 +125,29 @@ useEffect(() => {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(`Failed to get token: ${error.errorMessage}`);
+      let errorMessage = "unknown";
+      try {
+        const error = await response.json();
+        errorMessage = error.errorMessage || JSON.stringify(error);
+      } catch (_) {}
+      throw new Error(`Failed to get token: ${errorMessage}`);
     }
-
     const data = await response.json();
     return data.token;
   }
 
   async function sendMessage() {
     if (!room || !chatInput.trim()) return;
-
     const encoder = new TextEncoder();
-    await room.localParticipant.publishData(encoder.encode(chatInput), {
-      reliable: true,
-    });
-
+    await room.localParticipant.publishData(encoder.encode(chatInput), { reliable: true });
     setChatMessages((prev) => [...prev, { sender: nickName, message: chatInput }]);
     setChatInput("");
   }
 
+  const displayUuids = [userUuid, ...participants].slice(0, 4);
+  while (displayUuids.length < 4) displayUuids.push(null);
+
   return (
-    // ✅ 배경 등 기존 UI는 그대로 유지
     <>
       {!room ? (
         <div
@@ -217,8 +168,8 @@ useEffect(() => {
             <h2>Join a Room</h2>
             <form
               onSubmit={(e) => {
-                joinRoom();
                 e.preventDefault();
+                joinRoom();
               }}
             >
               <div>
@@ -250,47 +201,51 @@ useEffect(() => {
             display: "flex",
             flexDirection: "row",
             alignItems: "center",
-            justifyContent: "center",
-            gap: 40,
+            justifyContent: "flex-start",
+            gap: 24,
             padding: 20,
           }}
         >
-          <div className="character-container">
-            {[1, 2, 3, 4].map((i) => (
-              <img key={i} src={characterBack} alt={`character slot ${i}`} className="character-box" />
-            ))}
-          </div>
-
-          <div id="chat-section" className="chat-box">
-            <div id="chat-title">CHAT</div>
-            <div id="chat-messages">
-              {chatMessages.map((msg, idx) => (
-                <div className="chat-message" key={idx}>
-                  <span className="chat-sender">{msg.sender}:</span> {msg.message}
-                </div>
+          {/* ⬅ 슬롯 래퍼 */}
+          <div className="slot-wrapper">
+            <div className="character-grid">
+              {displayUuids.map((uuid, idx) => (
+                <div
+                  key={idx}
+                  className={`character-slot ${uuid ? "filled" : "empty"}`}
+                  data-uuid={uuid || ""}
+                />
               ))}
             </div>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                sendMessage();
-              }}
-              id="chat-input-container"
-            >
-              <input
-                type="text"
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                placeholder="채팅을 입력하세요..."
-              />
-              <button type="submit">전송</button>
-                 <div style={{ marginTop: 10, color: "black" }}>참가자 수: {participants.length}</div>
-             {/* <ul style={{ color: "black" }}>
-              {participants.map((id, idx) => (
-                <li key={idx}>{id}</li>
-              ))}
-            </ul> */}
-            </form>
+          </div>
+
+          {/* ⬅ 채팅 래퍼 */}
+          <div className="chat-wrapper">
+            <div id="chat-section" className="chat-box">
+              <div id="chat-title">CHAT</div>
+              <div id="chat-messages" ref={chatListRef}>
+                {chatMessages.map((msg, idx) => (
+                  <div className="chat-message" key={idx}>
+                    <span className="chat-sender">{msg.sender}:</span> {msg.message}
+                  </div>
+                ))}
+              </div>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  sendMessage();
+                }}
+                id="chat-input-container"
+              >
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  placeholder="채팅을 입력하세요..."
+                />
+                <button type="submit">전송</button>
+              </form>
+            </div>
           </div>
         </div>
       )}
