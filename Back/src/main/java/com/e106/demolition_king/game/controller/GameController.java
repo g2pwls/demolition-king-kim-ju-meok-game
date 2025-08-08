@@ -15,6 +15,7 @@ import com.e106.demolition_king.user.service.UserServiceImpl;
 import com.e106.demolition_king.user.vo.in.EmailVerificationReRequestVo;
 import com.e106.demolition_king.user.vo.in.ProfileUpdateRequestVo;
 import com.e106.demolition_king.user.vo.out.EmailVerificationReResponseVo;
+import com.e106.demolition_king.user.vo.out.ProfileResponseVo;
 import com.e106.demolition_king.util.JwtUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -39,10 +40,20 @@ public class GameController {
 
 
     @Operation(
+            summary     = "전체 프로필 조회",
+            description = "전체 프로필 정보를 조회합니다."
+    )
+    @GetMapping("/profiles")
+    public ResponseEntity<List<ProfileResponseVo>> findAll() {
+        return ResponseEntity.ok(userService.getAllProfiles());
+    }
+
+
+    @Operation(
             summary     = "프로필 변경",
             description = "로그인한 사용자의 프로필을 다른 것으로 변경합니다."
     )
-    @PatchMapping("/profile")
+    @PatchMapping("/profile/change")
     public BaseResponse<Void> updateProfile(
             @RequestHeader("Authorization") String authHeader,
             @RequestBody ProfileUpdateRequestVo vo
@@ -62,6 +73,10 @@ public class GameController {
         // 4) 응답
         return BaseResponse.ok();
     }
+
+
+
+
 
     @Operation(summary = "사용자 리포트 조회", description = "특정 사용자의 리포트 정보를 반환합니다.")
     @GetMapping("/{userUuid}/reports")
