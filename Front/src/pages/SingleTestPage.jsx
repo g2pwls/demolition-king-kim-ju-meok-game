@@ -3,6 +3,10 @@ import { Pose } from '@mediapipe/pose';
 import { Camera } from '@mediapipe/camera_utils';
 import { drawLandmarks } from '@mediapipe/drawing_utils';
 import PixiCanvas from '../components/pixi/PixiCanvas';
+import punchImg from '../assets/images/singlemode/punch.png';
+import upperImg from '../assets/images/singlemode/upper.png';
+import dodgeImg from '../assets/images/singlemode/dodge.png';
+import combobImg from '../assets/images/singlemode/combob.png';
 import "../styles/SingleTestPage.css";
 
 const SingleTestPage = () => {
@@ -382,15 +386,17 @@ const SingleTestPage = () => {
             <div className="progress-bar">
               <div className="progress-fill" style={{ width: `${health}%` }}></div>
             </div>
+            <div className="combob-bg" style={{ backgroundImage: `url(${combobImg})` }}>
             <div className="command-sequence">
-              <div className="command-circle red">잽</div>
-              <div className="command-circle green">회피</div>
-              <div className="command-circle black">어퍼</div>
-              <div className="command-circle red">잽</div>
-              <div className="command-circle red">잽</div>
-              <div className="command-circle red">잽</div>
-              <div className="command-circle green">회피</div>
-              <div className="command-circle black">어퍼</div>
+              <div className="command-circle red" style={{ backgroundImage: `url(${punchImg})` }} />
+              <div className="command-circle green" style={{ backgroundImage: `url(${dodgeImg})` }} />
+              <div className="command-circle black" style={{ backgroundImage: `url(${upperImg})` }} />
+              <div className="command-circle red" style={{ backgroundImage: `url(${punchImg})` }} />
+              <div className="command-circle red" style={{ backgroundImage: `url(${punchImg})` }} />
+              <div className="command-circle red" style={{ backgroundImage: `url(${punchImg})` }} />
+              <div className="command-circle green" style={{ backgroundImage: `url(${dodgeImg})` }} />
+              <div className="command-circle black" style={{ backgroundImage: `url(${upperImg})` }} />
+            </div>
             </div>
           </div>
 

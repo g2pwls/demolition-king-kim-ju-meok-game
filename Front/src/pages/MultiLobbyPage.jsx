@@ -172,7 +172,7 @@ useEffect(() => {
                 joinRoom();
               }}
             >
-              <div>
+              <div >
                 <label htmlFor="room-name">Room</label>
                 <input
                   id="room-name"
