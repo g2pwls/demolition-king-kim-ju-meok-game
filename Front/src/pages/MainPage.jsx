@@ -23,6 +23,8 @@ import findIcon from '../assets/images/main/find.png';
 import { useNavigate } from 'react-router-dom';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
+import closeIcon from '../assets/images/mypage/close.png';
+
 import {
   LineChart,
   Line,
@@ -1061,19 +1063,38 @@ function MainPage() {
       {modalType && (
         <div className="modal-overlay" onClick={() => {setModalType(null);setActiveTab('통계'); setIsEditing(false); setIsEditingNickname(false); setEditNickname(userInfo?.nickname);}}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            {modalType === 'tutorial' && (
-              <div className="tutorial-modal-wrapper">
-                <img src={tutorialModal} alt="튜토리얼 모달" className="tutorial-modal-image" />
-                <div className="tutorial-modal-text">
-                  🥊 모션을 따라 건물을 파괴하라!<br /><br />
-                  화면 상단에 뜨는 <strong style={{ color: 'black' }}>콤보 스택(잽, 어퍼컷, 회피)</strong>에 맞춰<br />
-                  정확한 모션을 취하세요.<br /><br />
-                  올바른 동작을 하면 건물 HP가 깎이고,<br />
-                  💥HP가 0이 되면 건물이 철거됩니다!<br /><br />
-                  ⏱ 건물을 철거하면 추가 시간이 주어집니다.<br /><br />
-                  제한 시간이 모두 끝나기 전에 더 많은 건물을 철거해보세요!</div>
+            <div className="tutorial-modal-wrapper" style={{ position: 'relative', display: 'inline-block' }}>
+              {/* 닫기 버튼 */}
+              <img
+                  src={closeIcon}
+                  alt="닫기"
+                  onClick={() => setModalType(null)}
+                  style={{
+                    position: 'absolute',
+                    top: '15%',      // 모달 내부에서 위쪽 위치
+                    right: '16%',  // 모달 내부에서 오른쪽 위치
+                    width: '50px',  // 크게
+                    height: '50px',
+                    cursor: 'pointer',
+                    zIndex: 10
+                  }}
+              />
+
+              {/* 기존 모달 이미지 */}
+              <img src={tutorialModal} alt="튜토리얼 모달" className="tutorial-modal-image" />
+
+              {/* 기존 오버레이 텍스트 (크기 변경 X) */}
+              <div className="tutorial-modal-text">
+                🥊 모션을 따라 건물을 파괴하라!<br /><br />
+                화면 상단에 뜨는 <strong style={{ color: 'black' }}>콤보 스택(잽, 어퍼컷, 회피)</strong>에 맞춰<br />
+                정확한 모션을 취하세요.<br /><br />
+                올바른 동작을 하면 건물 HP가 깎이고,<br />
+                💥HP가 0이 되면 건물이 철거됩니다!<br /><br />
+                ⏱ 건물을 철거하면 추가 시간이 주어집니다.<br /><br />
+                제한 시간이 모두 끝나기 전에 더 많은 건물을 철거해보세요!
               </div>
-            )}
+            </div>
+
 
             {modalType === 'mypage' && (
               <div className="mypage-modal-wrapper">
