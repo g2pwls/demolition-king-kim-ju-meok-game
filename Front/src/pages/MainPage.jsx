@@ -376,19 +376,11 @@ function MainPage() {
   ];
 
   const navigate = useNavigate();
-  const [modalType, setModalType] = useState(null);
-  const goToMultiLobby = () => {
-  setModalType(null); // 모달 닫기
-  navigate('/multilobby', {
-    state: { autoJoin: true, action: 'create' }, // ⬅️ 로비에서 자동 입장 신호
-  });
-};
-
-   // 'tutorial' 또는 'mypage' 또는 null
+  const [modalType, setModalType] = useState(null); // 'tutorial' 또는 'mypage' 또는 null
   const [isFriendPopupOpen, setIsFriendPopupOpen] = useState(false); // ✅ 반드시 함수 컴포넌트 내부에
   const [activeTab, setActiveTab] = useState('통계');
   const [userInfo, setUserInfo] = useState(null);
-  
+
   // 유저 정보 불러오기
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -1092,7 +1084,7 @@ const fetchTotalPlayTime = async () => {
     }
   };
 
-  // 프로필(아바타) 선택용 상태
+   // 프로필(아바타) 선택용 상태
   const [isPickingProfile, setIsPickingProfile] = useState(false);
   const [profileOptions, setProfileOptions] = useState([]);  // [{profileSeq, imageUrl}, ...]
   const [tempProfileSeq, setTempProfileSeq] = useState(null); // 임시 선택값
@@ -1101,8 +1093,8 @@ const fetchTotalPlayTime = async () => {
   // 프로필 목록 조회 (마이페이지 열고 "프로필 변경" 버튼 눌렀을 때 호출)
 const fetchProfileOptions = async () => {
   try {
-    const res = await api.get('/user/auth/profile/list'); // 예: 목록 반환
-    const list = res.data?.result ?? [];
+    const res = await api.get('/users/games/profiles'); // 예: 목록 반환
+    const list = res.data ?? [];
     setProfileOptions(list);
     setTempProfileSeq(userInfo?.profile?.profileSeq ?? null);
   } catch (err) {
@@ -1120,7 +1112,7 @@ const saveProfileSelection = async () => {
     const token = localStorage.getItem('accessToken');
 
     await api.patch(
-      '/users/games/profile',                // ✅ PATCH + 올바른 경로
+      '/users/games/profile/change',                // ✅ PATCH + 올바른 경로
       { profileSeq: tempProfileSeq },        // ✅ Request body
       {
         headers: {
@@ -1137,7 +1129,6 @@ const saveProfileSelection = async () => {
     setUserInfo(refreshed.data.result);
 
     setIsPickingProfile(false);
-    alert('프로필이 변경되었습니다!');
   } catch (err) {
     console.error('❌ 프로필 변경 실패:', {
       status: err.response?.status,
@@ -1519,23 +1510,23 @@ useEffect(() => {
                     {isPickingProfile && (
                       <div className="modal-overlay" onClick={() => setIsPickingProfile(false)}>
                         <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                          <h3>프로필 선택</h3>
+                          <div className="profile-title">프로필 선택</div>
 
-                          <div className="character-grid">
+                          <div className="character-grid1">
                             {profileOptions.map((p) => (
                               <div
                                 key={p.profileSeq}
                                 className={`character-item ${tempProfileSeq === p.profileSeq ? 'selected' : ''}`}
                                 onClick={() => setTempProfileSeq(p.profileSeq)}
                               >
-                                <img src={p.imageUrl} alt={`profile-${p.profileSeq}`} />
+                                <img src={p.image} alt={`profile-${p.profileSeq}`} />
                               </div>
                             ))}
                           </div>
 
                           <div style={{ marginTop: 16, display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                            <button onClick={() => setIsPickingProfile(false)}>취소</button>
-                            <button onClick={saveProfileSelection} disabled={!tempProfileSeq || savingProfile}>
+                            <button className="cancel-btn"onClick={() => setIsPickingProfile(false)}>취소</button>
+                            <button className="save-btn"onClick={saveProfileSelection} disabled={!tempProfileSeq || savingProfile}>
                               {savingProfile ? '저장 중...' : '저장'}
                             </button>
                           </div>
@@ -1867,6 +1858,169 @@ useEffect(() => {
                       </>
                     )}
 
+                    {activeTab === '도감' && isEditing && !isEditingNickname && (
+                      <>
+                        <div className="profile-view">
+                          <div className="info-row">
+                            <label>닉네임:</label>
+                            <div className="info-me">{userInfo?.userNickname}</div>
+                            <button className="edit-icon-btn" onClick={() => setIsEditingNickname(true)}>
+                              <img src={pencilIcon} alt="수정" className="edit-icon" />
+                            </button>
+                          </div>
+                          <div className="info-row">
+                            <label>이메일:</label>
+                            <div className="info-me">{userInfo?.userEmail}</div>
+                          </div>
+                          <div className="info-row password-row">
+                            <button
+                              className="change-password-btn"
+                              onClick={() => {
+                                setIsChangingPassword(true);
+                                setPasswordVerified(false);
+                                setCurrentPassword('');
+                                setNewPassword('');
+                                setConfirmNewPassword('');
+                              }}>비밀번호 변경
+                            </button>
+                          </div>
+                          <div className="delete-account-wrapper">
+                            <button
+                              className="delete-account-btn"
+                              onClick={() => {
+                                setIsDeletingAccount(true);  // ❗ 폼 열기
+                                setWithdrawPassword('');     // 입력 초기화
+                              }}
+                            >
+                              회원탈퇴
+                            </button>
+                          </div>
+
+                          {/* ✅ 회원탈퇴 폼 */}
+{isDeletingAccount && (
+  <div className="withdraw-form">
+    <div className="password-form-header">
+      <button
+        className="close-password-btn"
+        onClick={() => {
+          setIsDeletingAccount(false);
+          setWithdrawPassword('');
+        }}
+      >
+        닫기 ❌
+      </button>
+    </div>
+
+                              {/* 에러 메시지 */}
+{withdrawError && (
+  <p className="withdraw-error-text">
+    {withdrawError}
+  </p>
+)}
+
+    <input
+  type="password"
+  value={withdrawPassword}
+  onChange={(e) => {
+    setWithdrawPassword(e.target.value);
+    if (withdrawError) setWithdrawError(''); // ⬅️ 타이핑 하면 에러 제거
+  }}
+  placeholder="본인 확인용 비밀번호 입력"
+/>
+
+
+    <div className="password-change-buttons">
+      <button className="cancel-btn" onClick={() => setIsDeletingAccount(false)}>취소</button>
+      <button className="save-btn" onClick={handleWithdraw} disabled={!withdrawPassword}>
+        회원탈퇴
+      </button>
+    </div>
+
+    {/* ✅ 커스텀 확인 모달 */}
+    {showWithdrawConfirm && (
+      <div className="modal-overlay" onClick={() => setShowWithdrawConfirm(false)}>
+        <div className="delete-modal" onClick={(e) => e.stopPropagation()}>
+          <p>정말 탈퇴하시겠습니까? <br />이 작업은 되돌릴 수 없습니다.</p>
+          <div className="modal-buttons">
+            <button onClick={confirmWithdrawNow}>확인</button>
+            <button onClick={() => setShowWithdrawConfirm(false)}>취소</button>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
+)}
+
+
+
+                          {/* ✅ 비밀번호 변경 폼 표시 조건 */}
+                          {isChangingPassword && (
+                            <div className="password-change-form">
+                              {/* 닫기 버튼 상단에 배치 */}
+                              <div className="password-form-header">
+                                <button
+                                  className="close-password-btn"
+                                  onClick={() => {
+                                    setIsChangingPassword(false);
+                                    setPasswordVerified(false);
+                                    setCurrentPassword('');
+                                    setNewPassword('');
+                                    setConfirmNewPassword('');
+                                  }}>닫기 ❌
+                                </button>
+                              </div>
+
+                              {!passwordVerified ? (
+                                <>
+                                  <input
+                                    type="password"
+                                    value={currentPassword}
+                                    onChange={(e) => setCurrentPassword(e.target.value)}
+                                    placeholder="현재 비밀번호 입력"
+                                  />
+                                  <button className="verify-btn" onClick={verifyPassword}>확인</button>
+                                </>
+                              ) : (
+                                <>
+                                  <input
+                                    type="password"
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                    placeholder="새 비밀번호 입력"
+                                  />
+                                  <input
+                                    type="password"
+                                    value={confirmNewPassword}
+                                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                                    placeholder="새 비밀번호 재입력"
+                                  />
+                                  <div className="password-change-buttons">
+                                    <button className="cancel-btn" onClick={() => setIsChangingPassword(false)}>취소</button>
+                                    <button className="save-btn" onClick={changePassword}>저장</button>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* 닫기 버튼: profile-view 밖에 둠 */}
+                        <div className="edit-close-wrapper">
+                          <button
+                            className="close-edit-btn"
+                            onClick={() => {
+                              setIsEditing(false);
+                              setIsEditingNickname(false);
+                              setEditNickname(userInfo.nickname);
+                            }}
+                          >
+                            닫기
+                          </button>
+                        </div>
+                      </>
+                    )}
+
+
                     {/* 닉네임 수정 모드 */}
                     {activeTab === '통계' && isEditing && isEditingNickname && (
                       <div className="nickname-edit-form">
@@ -1907,8 +2061,47 @@ useEffect(() => {
                       </div>
                     )}
 
+                    {activeTab === '도감' && isEditing && isEditingNickname && (
+                      <div className="nickname-edit-form">
+                        <label>닉네임:</label>
+                        <input
+                          value={editNickname}
+                          onChange={(e) => setEditNickname(e.target.value)}
+                          className="nickname-input"
+                        />
+                        {/* 중복 확인 메시지 */}
+                        {nicknameCheckResult === 'available' && (
+                          <div className="nickname-check-success">✅ 사용 가능한 닉네임입니다.</div>
+                        )}
+                        {nicknameCheckResult === 'duplicate' && (
+                          <div className="nickname-check-error">❌ 이미 사용 중인 닉네임입니다.</div>
+                        )}
+                        <div className="nickname-edit-buttons">
+                          <button className="check-btn" onClick={handleCheckNickname}>중복확인</button>
+                          <button
+                            className="cancel-btn"
+                            onClick={() => {
+                              setEditNickname(userInfo.nickname);
+                              setIsEditingNickname(false);
+                            }}>
+                            취소
+                          </button>
+
+                          <button
+                            className="save-btn"
+                            onClick={handleSaveNickname}
+                            disabled={
+                              nicknameCheckResult !== 'available' ||  // 중복확인 결과가 사용 가능이 아니면 비활성화
+                              editNickname !== checkedNickname       // 중복확인 후 닉네임이 바뀌었으면 비활성화
+                            }>
+                            저장
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
                     {/* 도감 탭 내용 */}
-                    {activeTab === '도감' && (
+                    {activeTab === '도감' && !isEditing && (
                       <div className="collection-section">
                         <div className="buildingname">COMMON</div>
                         <div className="building-grid">
@@ -1936,6 +2129,7 @@ useEffect(() => {
                                 <img
                                   src={src}
                                   alt={`건물 ${filename}`}
+                                  loading="lazy"
                                   className={`building-image ${isUnlocked ? 'unlocked' : ''}`}
                                 />
                               </div>
@@ -1952,6 +2146,7 @@ useEffect(() => {
                                 <img
                                   src={src}
                                   alt={`건물 ${filename}`}
+                                  loading="lazy"
                                   className={`building-image ${isUnlocked ? 'unlocked' : ''}`}
                                 />
                               </div>
@@ -1968,6 +2163,7 @@ useEffect(() => {
                                 <img
                                   src={src}
                                   alt={`건물 ${filename}`}
+                                  loading="lazy"
                                   className={`building-image ${isUnlocked ? 'unlocked' : ''}`}
                                 />
                               </div>
@@ -1982,16 +2178,11 @@ useEffect(() => {
             )}
 
             {modalType === 'multi' && (
-            <div className="multi-mode-buttons">
-              <button onClick={goToMultiLobby}>
-                <img src={roomMake} alt="방 만들기" />
-              </button>
-              <button>
-                <img src={roomParticipation} alt="방 참가하기" />
-              </button>
-            </div>
-          )}
-
+              <div className="multi-mode-buttons">
+                <button><img src={roomMake} alt="방 만들기" /></button>
+                <button><img src={roomParticipation} alt="방 참가하기" /></button>
+              </div>
+            )}
           </div>
         </div>
       )}
