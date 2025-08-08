@@ -7,6 +7,8 @@ import com.e106.demolition_king.user.vo.in.LoginRequestVo;
 import com.e106.demolition_king.user.vo.in.ResetPasswordRequestVo;
 import com.e106.demolition_king.user.vo.out.*;
 
+import java.util.List;
+
 public interface UserService {
     void signup(SignupRequestDto request);
     TokenResponseVo login(LoginRequestVo vo);
@@ -29,6 +31,8 @@ public interface UserService {
     public GetUserInfoResponseVo getUserByUuid(String userUuid);
 
     boolean isCurrentPasswordValid(String userUuid, String currentPassword);
+
+    List<ProfileResponseVo> getAllProfiles();
 
     void updateProfile(String userUuid, Integer profileSeq);
 
