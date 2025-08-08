@@ -15,7 +15,14 @@ import karina_final_anim_03 from '../../assets/images/karina/karina_final_anim_0
 import karina_final_anim_04 from '../../assets/images/karina/karina_final_anim_04.png';
 import karina_final_anim_05 from '../../assets/images/karina/karina_final_anim_05.png';
 
-const karinaFrames = [karina_final_anim_01,karina_final_anim_03, karina_final_anim_05,karina_final_anim_05,karina_final_anim_03,karina_final_anim_01];
+const karinaFrames = [
+  karina_final_anim_01,
+  karina_final_anim_03,
+  karina_final_anim_05,
+  karina_final_anim_05,
+  karina_final_anim_03,
+  karina_final_anim_01
+];
 const buildingImages = [building1, building2, building3];
 const dustFrames = [buildingDust1, buildingDust2, buildingDust3, buildingDust2, buildingDust1];
 
@@ -26,21 +33,20 @@ const PixiCanvas = ({ action, buildingIndex, onBuildingDestroyed, kcal, setKcal 
   const buildingRef = useRef(null);
   const healthBarRef = useRef(null);
   const dustSpriteRef = useRef(null);
-  const kcalTextRef = useRef(null);
   const prevActionRef = useRef('idle');
+  const crackSpritesRef = useRef([]);
+
+  const destroyedLock = useRef(false);
   const [buildingHP, setBuildingHP] = useState(100);
   const [isBuildingFalling, setIsBuildingFalling] = useState(false);
   const [isNewBuildingDropping, setIsNewBuildingDropping] = useState(false);
 
   const boxerWidth = 250;
   const boxerHeight = 250;
-  const coinTextRef = useRef(null);  // 🔥 이 줄을 추가해줘!
-  const destroyedTextRef = useRef(null);
-  const crackSpritesRef = useRef([]);
 
+  // PIXI 초기화
   useEffect(() => {
     if (!pixiRef.current) return;
-
     const app = new PIXI.Application({
       width: pixiRef.current.clientWidth,
       height: pixiRef.current.clientHeight,
@@ -50,19 +56,13 @@ const PixiCanvas = ({ action, buildingIndex, onBuildingDestroyed, kcal, setKcal 
 
     appRef.current = app;
     pixiRef.current.appendChild(app.view);
-
-    setTimeout(() => {
-      if (app.stage) loadAssets(app);
-    }, 0);
-
     app.stage.sortableChildren = true;
 
-    const handleResize = () => {
-      if (pixiRef.current) {
-        app.renderer.resize(pixiRef.current.clientWidth, pixiRef.current.clientHeight);
-      }
-    };
+    loadAssets(app);
 
+    const handleResize = () => {
+      app.renderer.resize(pixiRef.current.clientWidth, pixiRef.current.clientHeight);
+    };
     window.addEventListener('resize', handleResize);
 
     return () => {
@@ -72,18 +72,22 @@ const PixiCanvas = ({ action, buildingIndex, onBuildingDestroyed, kcal, setKcal 
     };
   }, []);
 
-  const loadAssets = async (app) => {
-    const rightMargin = 10;
+  const safeAddChild = (sprite) => {
+    if (appRef.current?.stage && !appRef.current.stage.destroyed) {
+      appRef.current.stage.addChild(sprite);
+    }
+  };
 
+  const loadAssets = () => {
     const containerWidth = pixiRef.current.clientWidth;
     const containerHeight = pixiRef.current.clientHeight;
 
-    const background = new PIXI.Sprite(await PIXI.Assets.load(singleBack));
+    const background = PIXI.Sprite.from(singleBack);
     background.anchor.set(0.5);
-    background.zIndex = 0;
     background.x = containerWidth / 2;
     background.y = containerHeight / 2 - 100;
-    app.stage.addChild(background);
+    background.zIndex = 0;
+    safeAddChild(background);
 
     const boxer = new PIXI.Sprite(PIXI.Texture.from(karina_final_anim_01));
     boxer.anchor.set(0.5);
@@ -93,7 +97,7 @@ const PixiCanvas = ({ action, buildingIndex, onBuildingDestroyed, kcal, setKcal 
     boxer.y = containerHeight * 0.75;
     boxer.zIndex = 1;
     boxerRef.current = boxer;
-    app.stage.addChild(boxer);
+    safeAddChild(boxer);
 
     const building = new PIXI.Sprite(PIXI.Texture.from(buildingImages[buildingIndex]));
     building.anchor.set(0.5);
@@ -102,7 +106,7 @@ const PixiCanvas = ({ action, buildingIndex, onBuildingDestroyed, kcal, setKcal 
     building.scale.set(0.5);
     building.zIndex = 1;
     buildingRef.current = building;
-    app.stage.addChild(building);
+    safeAddChild(building);
 
     const dust = new PIXI.Sprite(PIXI.Texture.from(dustFrames[0]));
     dust.anchor.set(0.5);
@@ -112,14 +116,14 @@ const PixiCanvas = ({ action, buildingIndex, onBuildingDestroyed, kcal, setKcal 
     dust.visible = false;
     dust.zIndex = 2;
     dustSpriteRef.current = dust;
-    app.stage.addChild(dust);
+    safeAddChild(dust);
 
     const hpBg = new PIXI.Graphics();
     hpBg.beginFill(0xaaaaaa).drawRect(0, 0, 200, 15).endFill();
     hpBg.x = building.x - 100;
     hpBg.y = building.y - building.height / 2 - 250;
     hpBg.zIndex = 2;
-    app.stage.addChild(hpBg);
+    safeAddChild(hpBg);
 
     const hpFill = new PIXI.Graphics();
     hpFill.beginFill(0xff3333).drawRect(0, 0, 200, 15).endFill();
@@ -127,79 +131,32 @@ const PixiCanvas = ({ action, buildingIndex, onBuildingDestroyed, kcal, setKcal 
     hpFill.y = hpBg.y;
     hpFill.zIndex = 3;
     healthBarRef.current = hpFill;
-    app.stage.addChild(hpFill);
+    safeAddChild(hpFill);
 
-    // loadAssets 함수 내부에 추가
     const crackSprites = [];
-
     for (let i = 0; i < 3; i++) {
       const crack = new PIXI.Sprite(PIXI.Texture.from(crackTexture));
       crack.alpha = 0.6;
       crack.anchor.set(0.5);
-      crack.scale.set(0.4 + Math.random() * 0.3); // 크기 랜덤
-      crack.x = building.x + (Math.random() * 100 - 50); // 건물 주변 랜덤 위치
+      crack.scale.set(0.4 + Math.random() * 0.3);
+      crack.x = building.x + (Math.random() * 100 - 50);
       crack.y = building.y + (Math.random() * 100 - 50);
       crack.visible = false;
       crack.zIndex = 3;
       crackSprites.push(crack);
-      app.stage.addChild(crack);
+      safeAddChild(crack);
     }
-
     crackSpritesRef.current = crackSprites;
-
-
-// KCAL 텍스트 (기존 유지)
-  //   const kcalText = new PIXI.Text(${kcal} kcal, {
-  //     fontFamily: 'Arial',
-  //     fontSize: 24,
-  //     fill: 'white',
-  //     fontWeight: 'bold',
-  //   });
-  //   kcalText.x = containerWidth - 140;
-  //   kcalText.y = 30;
-  //   kcalText.zIndex = 5;
-  //   kcalTextRef.current = kcalText;
-  //   app.stage.addChild(kcalText);
-
-  // // DESTROYED 텍스트 (KCAL 아래)
-  //   const destroyedText = new PIXI.Text(DESTROYED: ${destroyedCount}, {
-  //     fontFamily: 'Arial',
-  //     fontSize: 20,
-  //     fill: 'white',
-  //     fontWeight: 'bold',
-  //   });
-  //   destroyedText.anchor.set(1, 0); // 우측 정렬
-  //   destroyedText.x = containerWidth - rightMargin;
-  //   destroyedText.y = kcalText.y + kcalText.height + 10;
-  //   destroyedText.zIndex = 5;
-  //   destroyedTextRef.current = destroyedText;
-  //   app.stage.addChild(destroyedText);
-
-  //   // COINS 텍스트 (DESTROYED 아래)
-  //   // topY += 35;
-  //   const coinText = new PIXI.Text(COINS: ${coinCount}, {
-  //     fontFamily: 'Arial',
-  //     fontSize: 20,
-  //     fill: 'yellow',
-  //     fontWeight: 'bold',
-  //   });
-  //   coinText.anchor.set(1, 0); // 우측 정렬
-  //   coinText.x = containerWidth - rightMargin;
-  //   coinText.y = destroyedText.y + destroyedText.height + 5;
-  //   coinText.zIndex = 5;
-  //   coinTextRef.current = coinText;
-  //   app.stage.addChild(coinText);
   };
 
+  // 펀치
   useEffect(() => {
-    if (!boxerRef.current || !healthBarRef.current) return;
-
+    if (!boxerRef.current) return;
     if (action === 'punch' && prevActionRef.current !== 'punch' && !isBuildingFalling && !isNewBuildingDropping) {
-      const boxer = boxerRef.current;
       let i = 0;
       const interval = setInterval(() => {
         if (i < karinaFrames.length) {
-          boxer.texture = PIXI.Texture.from(karinaFrames[i]);
+          boxerRef.current.texture = PIXI.Texture.from(karinaFrames[i]);
           i++;
         } else {
           clearInterval(interval);
@@ -208,54 +165,36 @@ const PixiCanvas = ({ action, buildingIndex, onBuildingDestroyed, kcal, setKcal 
       setBuildingHP((prev) => Math.max(prev - 25, 0));
       setKcal((prev) => prev + 1);
     }
-
     prevActionRef.current = action;
-  }, [action]);
+  }, [action, isNewBuildingDropping, isBuildingFalling]);
 
-  // 건물 이미지 업데이트
+  // HP 변화
   useEffect(() => {
-    if (buildingRef.current) {
-      buildingRef.current.texture = PIXI.Texture.from(buildingImages[buildingIndex]);
-    }
-  }, [buildingIndex]);
-
-  // 체력 변화에 따라 체력바 및 균열 상태 업데이트
-  useEffect(() => {
-    // 체력바 너비 조절
     if (healthBarRef.current) {
       const newWidth = (buildingHP / 100) * 200;
       healthBarRef.current.clear();
       healthBarRef.current.beginFill(0xff3333).drawRect(0, 0, newWidth, 15).endFill();
     }
 
-    // 균열 표시 조건 (HP 상태 및 건물 전환 시 재적용)
     if (crackSpritesRef.current) {
       crackSpritesRef.current.forEach((sprite, index) => {
-        if (buildingHP <= 25 && index <= 2) {
-          sprite.visible = true;
-        } else if (buildingHP <= 50 && index <= 1) {
-          sprite.visible = true;
-        } else if (buildingHP <= 75 && index === 0) {
-          sprite.visible = true;
-        } else {
-          sprite.visible = false;
-        }
+        if (buildingHP <= 25 && index <= 2) sprite.visible = true;
+        else if (buildingHP <= 50 && index <= 1) sprite.visible = true;
+        else if (buildingHP <= 75 && index === 0) sprite.visible = true;
+        else sprite.visible = false;
       });
     }
 
-    // 건물 붕괴 상태 트리거
     if (buildingHP <= 0 && !isBuildingFalling) {
-      crackSpritesRef.current?.forEach(sprite => (sprite.visible = false)); // 죽으면 균열 제거
       setIsBuildingFalling(true);
     }
-  }, [buildingHP, buildingIndex]); // ✅ buildingIndex 의존성 포함
+  }, [buildingHP]);
 
-
+  // 건물 붕괴 → 먼지
   useEffect(() => {
-    const app = appRef.current;
     const building = buildingRef.current;
     const dust = dustSpriteRef.current;
-    if (!app || !building || !dust) return;
+    if (!building || !dust) return;
 
     let frameIndex = 0;
     let interval;
@@ -273,22 +212,24 @@ const PixiCanvas = ({ action, buildingIndex, onBuildingDestroyed, kcal, setKcal 
           dust.visible = false;
           setIsBuildingFalling(false);
           setIsNewBuildingDropping(true);
-          onBuildingDestroyed();
+
+          if (!destroyedLock.current) {
+            destroyedLock.current = true;
+            onBuildingDestroyed();
+          }
         }
       }, 100);
     }
-
     return () => {
       if (interval) clearInterval(interval);
     };
   }, [isBuildingFalling]);
 
+  // 새 건물 드랍
   useEffect(() => {
     const app = appRef.current;
     const building = buildingRef.current;
     if (!app || !building) return;
-
-    let ticker;
 
     if (isNewBuildingDropping) {
       building.x = app.renderer.width * 0.63;
@@ -297,64 +238,18 @@ const PixiCanvas = ({ action, buildingIndex, onBuildingDestroyed, kcal, setKcal 
       building.visible = true;
       setBuildingHP(100);
 
-      // 기존 균열 제거
-      if (crackSpritesRef.current) {
-        crackSpritesRef.current.forEach((sprite) => {
-          app.stage.removeChild(sprite);
-        });
-      }
-
-      // 새 균열 생성 (위치 임시)
-      const newCracks = [];
-      for (let i = 0; i < 3; i++) {
-        const crack = new PIXI.Sprite(PIXI.Texture.from(crackTexture));
-        crack.alpha = 0.85;
-        crack.anchor.set(0.5);
-        crack.scale.set(0.4 + Math.random() * 0.3);
-        crack.visible = false;
-        crack.zIndex = 3;
-        app.stage.addChild(crack);
-        newCracks.push(crack);
-      }
-      crackSpritesRef.current = newCracks;
-
-      // 건물 낙하 애니메이션
-      ticker = (delta) => {
+      const ticker = (delta) => {
         building.y += 15 * delta;
         if (building.y >= app.renderer.height * 0.63) {
           building.y = app.renderer.height * 0.63;
           setIsNewBuildingDropping(false);
-
-          // ✅ 균열 위치 재조정 (건물이 도착한 이후!)
-          crackSpritesRef.current.forEach((crack) => {
-            crack.x = building.x + (Math.random() * 100 - 50);
-            crack.y = building.y + (Math.random() * 100 - 50);
-          });
+          destroyedLock.current = false;
+          app.ticker.remove(ticker);
         }
       };
-
       app.ticker.add(ticker);
     }
-
-    return () => {
-      if (ticker) app.ticker.remove(ticker);
-    };
   }, [isNewBuildingDropping, buildingIndex]);
-
-
-
-    // useEffect(() => {
-    //   if (kcalTextRef.current) {
-    //     kcalTextRef.current.text = ${kcal} kcal;
-    //   }
-    //   if (coinTextRef.current) {
-    //     coinTextRef.current.text = COINS: ${coinCount};
-    //   }
-    //   if (destroyedTextRef.current) {
-    //     destroyedTextRef.current.text = 부순 건물 ${destroyedCount};
-    //   }
-    // }, [buildingIndex]);
-
 
   return (
     <div
