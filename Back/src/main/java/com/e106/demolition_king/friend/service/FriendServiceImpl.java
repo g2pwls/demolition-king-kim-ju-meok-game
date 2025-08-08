@@ -28,12 +28,31 @@ public class FriendServiceImpl implements FriendService {
 
     private final PresenceService presenceService;
     private final FriendRepository friendRepository;
-    private final RedisTemplate<String, String> redisTemplate;
     private final UserRepository userRepository;
     private final FriendValidator friendValidator;
-    private final FriendWebSocketService friendWebSocketService;
-    private final FriendRedisService friendRedisService;
     private final SseEmitters sseEmitters;
+
+    @Override
+    @Transactional
+    public void sendRoomInvite(String senderUuid, String receiverUuid, String roomName) {
+        // 1) 유저 존재 확인
+        User sender = userRepository.findByUserUuid(senderUuid)
+                .orElseThrow(() -> new RuntimeException("보내는 유저가 존재하지 않습니다."));
+        User receiver = userRepository.findByUserUuid(receiverUuid)
+                .orElseThrow(() -> new RuntimeException("받는 유저가 존재하지 않습니다."));
+
+        // 2) (선택) 친구 관계 검증이 필요하면 여기에 추가
+
+        // 3) 초대 메시지 생성
+        String message = sender.getUserNickname()
+                + "님이 [" + roomName + "] 방으로 초대하셨습니다.";
+
+        // 4) SSE 전송
+        if (sseEmitters.isOnline(receiverUuid)) {
+            sseEmitters.send(receiverUuid, "room-invite", message);
+        }
+    }
+
 
     @Override
     public List<FriendStatusVo> getInvitableFriends(String userUuid) {
@@ -128,9 +147,9 @@ public class FriendServiceImpl implements FriendService {
         // SSE 알림 전송
         String receiverUuid = receiver.getUserUuid();
         if (sseEmitters.isOnline(receiverUuid)) {
-            String message = sender.getUserNickname() + " sent you a friend request!";
-            sseEmitters.send(receiverUuid, message);
-        } else {
+            String message = sender.getUserNickname() + "님이 친구 요청을 보냈습니다!";
+            sseEmitters.send(receiverUuid, "friend-request", message);
+        }else {
         }
     }
 
