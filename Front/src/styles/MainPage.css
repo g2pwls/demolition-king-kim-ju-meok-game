@@ -379,6 +379,37 @@
   background: yellow;
 }
 
+.medal-section {
+  display: flex;
+  flex-direction: row;
+  gap: 40px;
+  margin-bottom: 16px;
+  align-items: center
+}
+
+.medal-row-section {
+  display: flex;
+  flex-direction: row;
+  gap: 30px;
+}
+
+.medal-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.medal-item img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.medal-count {
+  font-weight: 700;
+  font-size: 20px;
+}
+
 .playtime-section {
   display: flex;
   flex-direction: column;
@@ -450,6 +481,12 @@
   display: flex;
 }
 
+.weekly-chart-label1 {
+  margin-bottom: 15px;
+  font-size: 14px;
+  display: flex;
+}
+
 .weekly-chart {
   position: relative;
   display: flex;
@@ -463,7 +500,7 @@
   justify-content: center;
   margin: 0 auto; /* ⬅️ 가로 중앙 배치 핵심 */
   /* overflow: hidden; */
-  margin-bottom: 5px;
+  margin-bottom: 40px;
 }
 
 .bar-column {
@@ -751,6 +788,10 @@
   justify-content: center;
 }
 
+.close-account-wrapper {
+  display: flex;
+}
+
 .close-edit-btn {
   padding: 8px 20px;
   background-color: #ff0000;
@@ -758,16 +799,45 @@
   border: none;
   border-radius: 6px;
   font-size: 16px;
-  margin-left: 200px;
+  margin-left: 270px;
 }
 
 .close-edit-btn:hover {
   background-color: #555;
 }
+
+.delete-account-wrapper {
+  margin-top: 20px;
+  display: flex;
+  /* justify-content: center; */
+}
+
+.delete-account-btn {
+  padding: 8px 20px;
+  background-color: #ff0000;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  /* margin-left: 20px; */
+}
+
+.delete-account-btn:hover {
+  background-color: #555;
+}
+
+.modal-content.tutorial {
+  display: inline-block;   /* 내용 크기만큼 */
+  max-width: none;         /* 제한 해제 */
+  max-height: none;
+  text-align: initial;     /* 중앙정렬로 생기는 여백 제거 */
+}
 .tutorial-modal-wrapper {
   position: relative;
   display: inline-block;
   text-align: center;
+  margin: 0;        /* ✅ 외부 여백 제거 */
+  padding: 0;       /* ✅ 내부 여백 제거 */
 }
 .tutorial-modal-image {
   width: 80%;              /* 원하는 비율로 조정 (예: 60%, 70% 등) */
@@ -920,8 +990,7 @@
   padding: 8px 16px;
   border: none;
   border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
+  /* font-weight: bold; */
 }
 
 .modal-buttons button:first-child {
@@ -1163,4 +1232,97 @@
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+/* 비밀번호 변경 폼과 동일하게 보이도록 */
+.withdraw-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #f8f8f8;
+  padding: 16px;
+  border-radius: 8px;
+}
+.withdraw-form input {
+  padding: 8px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+.delete-modal {
+  background: #ffffff;
+  padding: 24px 32px;
+  border-radius: 8px;
+  text-align: center;
+  width: 300px;
+  color:#000;
+}
+.withdraw-error-text {
+  color: #e53935;  /* 빨강 */
+  font-size: 0.9rem;
+}
+.left-top3-card {
+  position: fixed;        /* 화면 고정 */
+  left: 40px;             /* 좌측 여백 */
+  top: 240px;             /* 상단에서 떨어뜨리기 (상단 버튼들과 안 겹치게) */
+  width: 280px;
+  /* background: rgba(255, 255, 255, 0.9); */
+  /* border: 2px solid #ddd; */
+  border-radius: 14px;
+  padding: 6px 16px;
+  z-index: 900;           /* 모달보다 아래, 상단 버튼보다 위면 조정 */
+  /* box-shadow: 0 4px 14px rgba(0,0,0,0.08); */
+}
+
+.left-top3-title {
+  color: white;
+  /* -webkit-text-stroke: 0.0001px rgb(255, 73, 73); */
+  /* font-weight: 800; */
+  font-size: 26px;
+  text-align: left;
+  margin-bottom: 10px;
+  letter-spacing: -1.5px;
+}
+
+.left-top3-status {
+  text-align: center;
+  font-weight: 600;
+  padding: 10px 0;
+}
+.left-top3-status.error {
+  color: #ff4d4f;
+}
+
+.left-top3-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+
+.left-top3-item {
+  display: grid;
+  grid-template-columns: 28px 44px 1fr;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px;
+  border-radius: 10px;
+  /* background: #ffffff; */
+  /* border: 1px solid #eee; */
+}
+
+.left-top3-trophy {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.left-top3-rank {
+  font-size: 24px;
+}
+
+.left-top3-nick {
+  font-size: 24px;
+  /* overflow: hidden; */
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
