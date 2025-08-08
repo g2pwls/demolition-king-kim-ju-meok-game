@@ -9,20 +9,36 @@ import buildingDust1 from '../../assets/images/effects/building_dust_1.png';
 import buildingDust2 from '../../assets/images/effects/building_dust_2.png';
 import buildingDust3 from '../../assets/images/effects/building_dust_3.png';
 import crackTexture from '../../assets/images/effects/building_break.png';
+
+// 잽 프레임 이미지
 import karina_final_anim_01 from '../../assets/images/karina/karina_final_anim_01.png';
 import karina_final_anim_02 from '../../assets/images/karina/karina_final_anim_02.png';
 import karina_final_anim_03 from '../../assets/images/karina/karina_final_anim_03.png';
 import karina_final_anim_04 from '../../assets/images/karina/karina_final_anim_04.png';
 import karina_final_anim_05 from '../../assets/images/karina/karina_final_anim_05.png';
 
-const karinaFrames = [
+// 어퍼컷 전용 이미지
+import karina_upper from '../../assets/images/karina/karina_upper.png';
+
+// 👇 잽/어퍼컷 각각의 애니메이션 시퀀스
+const jabFrames = [
   karina_final_anim_01,
   karina_final_anim_03,
   karina_final_anim_05,
   karina_final_anim_05,
   karina_final_anim_03,
-  karina_final_anim_01
+  karina_final_anim_01,
 ];
+
+const uppercutFrames = [
+  karina_final_anim_01,
+  karina_final_anim_03,
+  karina_upper,
+  karina_upper,
+  karina_final_anim_03,
+  karina_final_anim_01,
+];
+
 const buildingImages = [building1, building2, building3];
 const dustFrames = [buildingDust1, buildingDust2, buildingDust3, buildingDust2, buildingDust1];
 
@@ -149,24 +165,44 @@ const PixiCanvas = ({ action, buildingIndex, onBuildingDestroyed, kcal, setKcal 
     crackSpritesRef.current = crackSprites;
   };
 
-  // 펀치
+  // 🔥 액션별 애니메이션 선택 (jab vs uppercut)
   useEffect(() => {
     if (!boxerRef.current) return;
-    if (action === 'punch' && prevActionRef.current !== 'punch' && !isBuildingFalling && !isNewBuildingDropping) {
+
+    const isJab =
+      typeof action === 'string' && (action === 'punch' || action.endsWith('_jab'));
+    const isUppercut =
+      typeof action === 'string' && action.endsWith('_uppercut');
+
+    // 동일 action으로 중복 재생 방지 + 건물 이동/붕괴 중에는 무시
+    if ((isJab || isUppercut) &&
+        prevActionRef.current !== action &&
+        !isBuildingFalling &&
+        !isNewBuildingDropping) {
+
+      const frames = isUppercut ? uppercutFrames : jabFrames;
+
       let i = 0;
       const interval = setInterval(() => {
-        if (i < karinaFrames.length) {
-          boxerRef.current.texture = PIXI.Texture.from(karinaFrames[i]);
+        if (!boxerRef.current) {
+          clearInterval(interval);
+          return;
+        }
+        if (i < frames.length) {
+          boxerRef.current.texture = PIXI.Texture.from(frames[i]);
           i++;
         } else {
           clearInterval(interval);
         }
       }, 80);
+
+      // 데미지는 동일 유지(원하면 잽/어퍼컷 차등도 가능)
       setBuildingHP((prev) => Math.max(prev - 25, 0));
       setKcal((prev) => prev + 1);
     }
+
     prevActionRef.current = action;
-  }, [action, isNewBuildingDropping, isBuildingFalling]);
+  }, [action, isNewBuildingDropping, isBuildingFalling, setKcal]);
 
   // HP 변화
   useEffect(() => {
@@ -188,7 +224,7 @@ const PixiCanvas = ({ action, buildingIndex, onBuildingDestroyed, kcal, setKcal 
     if (buildingHP <= 0 && !isBuildingFalling) {
       setIsBuildingFalling(true);
     }
-  }, [buildingHP]);
+  }, [buildingHP, isBuildingFalling]);
 
   // 건물 붕괴 → 먼지
   useEffect(() => {
@@ -204,6 +240,7 @@ const PixiCanvas = ({ action, buildingIndex, onBuildingDestroyed, kcal, setKcal 
       building.visible = false;
 
       interval = setInterval(() => {
+        if (!dust) return;
         if (frameIndex < dustFrames.length) {
           dust.texture = PIXI.Texture.from(dustFrames[frameIndex]);
           frameIndex++;
@@ -223,7 +260,7 @@ const PixiCanvas = ({ action, buildingIndex, onBuildingDestroyed, kcal, setKcal 
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isBuildingFalling]);
+  }, [isBuildingFalling, onBuildingDestroyed]);
 
   // 새 건물 드랍
   useEffect(() => {
