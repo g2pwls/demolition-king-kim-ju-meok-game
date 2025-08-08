@@ -10,10 +10,7 @@ import com.e106.demolition_king.game.service.GameServiceImpl;
 import com.e106.demolition_king.game.vo.in.GoldUpdateRequestVo;
 import com.e106.demolition_king.game.vo.in.ReportPerDateUpdateRequestVo;
 import com.e106.demolition_king.game.vo.in.ReportUpdateRequestVo;
-import com.e106.demolition_king.game.vo.out.PlayTimeResponseVo;
-import com.e106.demolition_king.game.vo.out.ReportResponseVo;
-import com.e106.demolition_king.game.vo.out.ReportUpdateResponseVo;
-import com.e106.demolition_king.game.vo.out.WeeklyReportVo;
+import com.e106.demolition_king.game.vo.out.*;
 import com.e106.demolition_king.user.service.UserServiceImpl;
 import com.e106.demolition_king.user.vo.in.EmailVerificationReRequestVo;
 import com.e106.demolition_king.user.vo.in.ProfileUpdateRequestVo;
@@ -136,6 +133,34 @@ public class GameController {
         List<WeeklyReportVo> weekly = gameService.getWeeklyReports(userUuid);
 
         return ResponseEntity.ok(weekly);
+    }
+
+    @Operation(summary = "선택한 구간별 칼로리 정보", description = "선택한 기간의 칼로리 정보를 반환합니다.")
+    @GetMapping("/kcal")
+    public BaseResponse<List<KcalPerDayResponseVo>> getKcalData(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestParam String start, // YYYY.MM.DD
+            @RequestParam String end    // YYYY.MM.DD
+    ) {
+        // 1) 토큰에서 UUID 추출
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new RuntimeException("Authorization 헤더가 잘못되었습니다.");
+        }
+        String token = authHeader.substring(7);
+        if (!jwtUtil.validateToken(token)) {
+            throw new RuntimeException("유효하지 않은 토큰입니다.");
+        }
+        String userUuid = jwtUtil.getUserUuid(token);
+
+        // 2) 날짜 포맷 변환 (2025.08.01 → 20250801)
+        String startDate = start.replace(".", "");
+        String endDate = end.replace(".", "");
+
+        // 3) 서비스 호출
+        List<KcalPerDayResponseVo> kcalList = gameService.getKcalData(userUuid, startDate, endDate);
+
+        // 4) 응답 생성
+        return BaseResponse.of(kcalList);
     }
 
     @Operation(summary = "사용자 리포트 정보 갱신", description = "특정 사용자의 리포트 정보를 갱신합니다.")
