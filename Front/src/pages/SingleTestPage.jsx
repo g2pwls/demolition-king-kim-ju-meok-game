@@ -1,98 +1,53 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { OpenVidu } from 'openvidu-browser';
 import { Pose } from '@mediapipe/pose';
-import { POSE_CONNECTIONS } from '@mediapipe/pose';
-import { drawRectangle, drawLandmarks } from '@mediapipe/drawing_utils';
 import { Camera } from '@mediapipe/camera_utils';
+import { drawLandmarks } from '@mediapipe/drawing_utils';
 import PixiCanvas from '../components/pixi/PixiCanvas';
 import "../styles/SingleTestPage.css";
 
 const SingleTestPage = () => {
   const canvasRef = useRef(null);
-  const [session, setSession] = useState(null);
-  const [publisher, setPublisher] = useState(null);
-  const [subscribers, setSubscribers] = useState([]);
+  const videoRef = useRef(null);
+
   const [action, setAction] = useState('idle');
   const [health, setHealth] = useState(100);
-  const OV = useRef(null);
-  const localUserRef = useRef(null);
   const [buildingIndex, setBuildingIndex] = useState(0);
   const [isGameOver, setIsGameOver] = useState(false);
-  const [kcal, setKcal] = useState(0);  // ✅ 이 줄이 있어야 함
-  const audioRef = useRef(null);
+  const [kcal, setKcal] = useState(0);
 
+  const audioRef = useRef(null);
+  const mediaStreamRef = useRef(null);
+  const mediapipeCameraRef = useRef(null);
+
+  // 체력 자연 감소
   useEffect(() => {
     const interval = setInterval(() => {
       if (action !== 'punch') {
-        setHealth(prev => Math.max(prev - 1, 0));
+        setHealth((prev) => Math.max(prev - 1, 0));
       }
     }, 1000);
-
     return () => clearInterval(interval);
   }, [action]);
 
-  const getToken = async () => {
-    const response = await fetch('http://localhost:5000/api/get-token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sessionId: 'TestSession' }),
+  // 카메라 시작
+  const startCamera = async () => {
+    // 1) 로컬 카메라 열기
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { width: 640, height: 480, facingMode: 'user' },
+      audio: false,
     });
-    const data = await response.json();
-    return data.token;
-  };
+    mediaStreamRef.current = stream;
 
-  const joinSession = async () => {
-    OV.current = new OpenVidu();
-    const newSession = OV.current.initSession();
-    const token = await getToken();
-    await newSession.connect(token, { clientData: 'User' });
+    const videoEl = videoRef.current;
+    videoEl.srcObject = stream;
+    videoEl.muted = true;
+    videoEl.playsInline = true;
+    await videoEl.play().catch(() => { /* 자동재생 차단 시 버튼 한번 더 눌러야 할 수 있음 */ });
 
-    const newPublisher = OV.current.initPublisher(undefined, {
-      audioSource: undefined,
-      videoSource: undefined,
-      publishAudio: true,
-      publishVideo: true,
-      resolution: '640x480',
-      frameRate: 60,
-      insertMode: 'APPEND',
-      mirror: false,
-    });
-
-    newSession.publish(newPublisher);
-    setPublisher(newPublisher);
-    setSession(newSession);
-
-    newPublisher.addVideoElement(localUserRef.current);
-  };
-
-  const leaveSession = () => {
-    if (session) session.disconnect();
-    setSession(null);
-    setPublisher(null);
-    setSubscribers([]);
-    OV.current = null;
-  };
-
-  useEffect(() => {
-    joinSession();
-
-    return () => {
-      if (session) session.disconnect();
-      setSession(null);
-      setPublisher(null);
-      OV.current = null;
-    };
-  }, []);
-
-  useEffect(() => {
-    const videoElement = localUserRef.current;
-    const canvasElement = canvasRef.current;
-    const canvasCtx = canvasElement.getContext('2d');
-
+    // 2) MediaPipe Pose 설정
     const pose = new Pose({
       locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`,
     });
-
     pose.setOptions({
       modelComplexity: 0,
       smoothLandmarks: true,
@@ -105,7 +60,9 @@ const SingleTestPage = () => {
     let motionCooldown = false;
 
     pose.onResults((results) => {
-      canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+      const canvasEl = canvasRef.current;
+      const ctx = canvasEl.getContext('2d');
+      ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
 
       const landmarks = results.poseLandmarks;
       if (!landmarks) {
@@ -113,11 +70,10 @@ const SingleTestPage = () => {
         return;
       }
 
-      drawLandmarks(canvasCtx, landmarks, { color: '#FF0000', radius: 3 });
+      drawLandmarks(ctx, landmarks, { color: '#FF0000', radius: 3 });
 
       const rightWrist = landmarks[16];
       const rightShoulder = landmarks[12];
-
       if (!rightWrist || !rightShoulder) return;
 
       if (!lastRightWrist) {
@@ -129,10 +85,8 @@ const SingleTestPage = () => {
       const aboveShoulder = rightWrist.y < rightShoulder.y;
 
       if (movedForward && aboveShoulder && !motionCooldown) {
-        console.log('잽 감지!');
         setAction('punch');
         motionCooldown = true;
-
         setTimeout(() => {
           motionCooldown = false;
           setAction('idle');
@@ -142,49 +96,63 @@ const SingleTestPage = () => {
       lastRightWrist = { ...rightWrist };
     });
 
-    const camera = new Camera(videoElement, {
+    // 3) MediaPipe Camera로 비디오 프레임 처리
+    const cam = new Camera(videoEl, {
       onFrame: async () => {
         try {
-          await pose.send({ image: videoElement });
-        } catch (err) {
-          console.error('MediaPipe 처리 중 에러', err);
+          await pose.send({ image: videoEl });
+        } catch (e) {
+          // 처리 에러 무시
         }
       },
       width: 640,
       height: 480,
     });
+    mediapipeCameraRef.current = cam;
+    cam.start();
+  };
 
-    camera.start();
-    return () => {
-      camera.stop();
-    };
-  }, [session]);
+  // 카메라 종료
+  const stopCamera = () => {
+    mediapipeCameraRef.current?.stop();
+    mediapipeCameraRef.current = null;
 
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach((t) => t.stop());
+      mediaStreamRef.current = null;
+    }
+
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+  };
+
+  // 컴포넌트 언마운트 시 정리
   useEffect(() => {
     return () => {
-      leaveSession();
+      stopCamera();
     };
   }, []);
 
+  // 게임오버 체크
   useEffect(() => {
     if (health === 0) {
       setIsGameOver(true);
-      console.log("🛑 Game Over!");
+      // console.log("🛑 Game Over!");
     }
   }, [health]);
+
+  // BGM
   useEffect(() => {
     if (audioRef.current) {
-      audioRef.current.volume = 0.5; // 볼륨 설정 (0.0 ~ 1.0)
-      audioRef.current.loop = true; // 반복재생
-      audioRef.current.play().catch((err) => {
-        console.warn("자동재생 차단됨. 유저 상호작용 후 재생 필요", err);
-      });
+      audioRef.current.volume = 0.5;
+      audioRef.current.loop = true;
+      audioRef.current.play().catch(() => {});
     }
   }, []);
-  
+
   return (
     <div className="page-container">
-      {/* 🔊 오디오 태그 추가 */}
       <audio ref={audioRef} src="/sounds/bgm.mp3" />
       {isGameOver && (
         <div className="game-over-overlay">
@@ -194,10 +162,10 @@ const SingleTestPage = () => {
       )}
 
       <div className="top-controls">
-        <h1>OpenVidu + MediaPipe 얼굴 감지</h1>
+        <h1>싱글모드: 로컬 카메라 + MediaPipe</h1>
         <div className="buttons">
-          <button onClick={joinSession}>세션 참가</button>
-          <button onClick={leaveSession}>세션 종료</button>
+          <button onClick={startCamera}>카메라 시작</button>
+          <button onClick={stopCamera}>카메라 종료</button>
         </div>
       </div>
 
@@ -218,12 +186,13 @@ const SingleTestPage = () => {
               <div className="command-circle black">어퍼</div>
             </div>
           </div>
+
           <PixiCanvas
             action={action}
             buildingIndex={buildingIndex}
             onBuildingDestroyed={() => {
-              setHealth(prev => Math.min(prev + 30, 100)); // 체력 회복
-              setBuildingIndex(prev => (prev + 1) % 3);    // 다음 건물 (3개 순환)
+              setHealth((prev) => Math.min(prev + 30, 100)); // 체력 회복
+              setBuildingIndex((prev) => (prev + 1) % 3);    // 다음 건물 (3개 순환)
             }}
             setKcal={setKcal}
           />
@@ -231,16 +200,15 @@ const SingleTestPage = () => {
 
         <div className="right-panel">
           <div className="kcal-display">{kcal} KCAL</div>
-
-          {/* 🔽 여기 추가 🔽 */}
           <div className="building-status">🏢 부순 건물: {buildingIndex}</div>
-          <div className="coin-status">💰 코인: {buildingIndex * 1}</div> {/* 예: 건물당 5코인 가정 */}
+          <div className="coin-status">💰 코인: {buildingIndex * 1}</div>
 
           <div className="pixel-character"></div>
           <button className="quit-button">QUIT</button>
+
           <div className="webcam-container">
-            <video ref={localUserRef} autoPlay muted className="webcam-video" />
-            <canvas ref={canvasRef} className="webcam-canvas"></canvas>
+            <video ref={videoRef} autoPlay muted className="webcam-video" />
+            <canvas ref={canvasRef} className="webcam-canvas" width="640" height="480"></canvas>
           </div>
         </div>
       </div>
