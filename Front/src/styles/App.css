@@ -229,3 +229,32 @@
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     }
 }
+
+div,
+body,
+img,
+button,
+a,
+input,
+select,
+textarea {
+  cursor: url('/mouse65.png') 16 16, auto;
+  /* 16 16은 핫스팟 위치(x, y)입니다. 마우스 클릭 기준점이 PNG에서 어디인지 지정 */
+}
+
+@font-face {
+  font-family: 'DungGeunMo';
+  src: url('../assets/fonts/DungGeunMo.ttf') format('truetype');
+}
+
+* {
+  font-family: 'DungGeunMo', sans-serif;
+}
+
+html, body, #root {
+  width: 1536px;
+  height: 864px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* 스크롤 방지 */
+}

@@ -130,16 +130,16 @@ function SignUp() {
           style={{ backgroundImage: `url(${profileBack})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
         >
           <div className="character-grid">
-  {profileList.map((profile, index) => (
-    <div
-      key={index}
-      className={`character-item ${profileSeq === index + 1 ? 'selected' : ''}`}
-      onClick={() => setProfileSeq(index + 1)}
-    >
-      <img src={profile.image} alt={`Character ${index + 1}`} />
-    </div>
-  ))}
-</div>
+            {profileList.map((profile, index) => (
+              <div
+                key={index}
+                className={`character-item ${profileSeq === index + 1 ? 'selected' : ''}`}
+                onClick={() => setProfileSeq(index + 1)}
+              >
+                <img src={profile.image} alt={`Character ${index + 1}`} />
+              </div>
+            ))}
+          </div>
 
         </div>
 
