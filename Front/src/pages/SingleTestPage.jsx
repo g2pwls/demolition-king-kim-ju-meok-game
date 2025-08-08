@@ -14,6 +14,9 @@ const SingleTestPage = () => {
   const [buildingIndex, setBuildingIndex] = useState(0);
   const [isGameOver, setIsGameOver] = useState(false);
   const [kcal, setKcal] = useState(0);
+  const [destroyedCount, setDestroyedCount] = useState(0);
+  const [coinCount, setCoinCount] = useState(0);
+  const COIN_PER_BUILDING = 1;
 
   const audioRef = useRef(null);
   const mediaStreamRef = useRef(null);
@@ -192,7 +195,9 @@ const SingleTestPage = () => {
             buildingIndex={buildingIndex}
             onBuildingDestroyed={() => {
               setHealth((prev) => Math.min(prev + 30, 100)); // 체력 회복
-              setBuildingIndex((prev) => (prev + 1) % 3);    // 다음 건물 (3개 순환)
+              setBuildingIndex((prev) => (prev + 1) % 3);
+              setDestroyedCount((c) => c + 1); 
+              setCoinCount((c) => c + COIN_PER_BUILDING);   // 다음 건물 (3개 순환)
             }}
             setKcal={setKcal}
           />
@@ -200,10 +205,9 @@ const SingleTestPage = () => {
 
         <div className="right-panel">
           <div className="kcal-display">{kcal} KCAL</div>
-          <div className="building-status">🏢 부순 건물: {buildingIndex}</div>
-          <div className="coin-status">💰 코인: {buildingIndex * 1}</div>
-
-          <div className="pixel-character"></div>
+          <div className="building-status">🏢 부순 건물: {destroyedCount}</div>
+          <div className="coin-status">💰 코인: {coinCount}</div>
+          
           <button className="quit-button">QUIT</button>
 
           <div className="webcam-container">
