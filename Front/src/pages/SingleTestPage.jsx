@@ -6,10 +6,6 @@ import PixiCanvas from '../components/pixi/PixiCanvas';
 import "../styles/SingleTestPage.css";
 
 const SingleTestPage = () => {
-
-  const DEBUG = true;
-  let lastLogTs = 0;
-
   const canvasRef = useRef(null);
   const videoRef = useRef(null);
 
@@ -45,7 +41,7 @@ const SingleTestPage = () => {
   const rOverCntRef = useRef(0); // 오른손 연속 프레임 카운터
 
 // 튜닝 포인트
-  const EMA_ALPHA = 0.6;        // 0.5~0.7 추천 (클수록 더 부드러움 = 반응은 살짝 느려짐)
+  const EMA_ALPHA = 0.5;        // 0.5~0.7 추천 (클수록 더 부드러움 = 반응은 살짝 느려짐)
   const HIT_MIN_FRAMES = 3;     // 2~5 추천 (연속 프레임 개수)
   const COOLDOWN_SEC = 0.6;     // 기존 1.0에서 살짝 줄여 반응성 ↑
 
@@ -180,16 +176,16 @@ const SingleTestPage = () => {
 
   // === 임계값 (조정됨) ===
   // 잽: 수평 강하게 + 수직 흔들림은 작게 + 수평 속도 존재
-  const JAB_X_TH       = 0.28 * shoulderDist; // 가로 이동 최소
-  const JAB_FLAT_Y_MAX = 0.18 * shoulderDist; // 수직 흔들림 허용치
-  const JAB_DIST_GAIN  = 0.25 * shoulderDist; // 손목-어깨 거리 증가량
-  const VEL_X_TH       = 0.09 * shoulderDist / Math.max(dt, 1e-3); // 수평 속도
+  const JAB_X_TH       = 0.22 * shoulderDist;
+  const JAB_FLAT_Y_MAX = 0.22 * shoulderDist;
+  const JAB_DIST_GAIN  = 0.18 * shoulderDist;
+  const VEL_X_TH       = 0.04 * shoulderDist / Math.max(dt, 1e-3);
+
 
   // 어퍼: 위로 크게 + 수직 우세 + 수직 속도 존재
-  const UPP_Y_TH      = 0.30 * shoulderDist;
-  const UPP_DOM_RATIO = 1.50;
-  const VEL_Y_TH      = 0.10 * shoulderDist / Math.max(dt, 1e-3);
-
+  const UPP_Y_TH      = 0.33 * shoulderDist;
+  const UPP_DOM_RATIO = 1.70;
+  const VEL_Y_TH      = 0.06 * shoulderDist / Math.max(dt, 1e-3);
   // 2) 현재값 + EMA
   const lNowRaw = { x: lm[LW].x, y: lm[LW].y };
   const rNowRaw = { x: lm[RW].x, y: lm[RW].y };
@@ -245,40 +241,6 @@ const SingleTestPage = () => {
                       && (-lvy) > VEL_Y_TH;
 
   const lMovedAny = lJabCand || lUpperCand;
-  if (DEBUG) {
-  const t = performance.now();
-  if (t - lastLogTs > 100) { // 100ms마다 한 번
-    lastLogTs = t;
-    console.table({
-      shoulderDist: +shoulderDist.toFixed(3),
-
-      // 왼손
-      ldx: +ldx.toFixed(3),
-      ldy: +ldy.toFixed(3),
-      lvx: +lvx.toFixed(3),
-      lvy: +lvy.toFixed(3),
-      lWS0: +lWS0.toFixed(3),
-      lWS: +lWS.toFixed(3),
-      lWS_gain: +(lWS - lWS0).toFixed(3),
-
-      // 오른손
-      rdx: +rdx.toFixed(3),
-      rdy: +rdy.toFixed(3),
-      rvx: +rvx.toFixed(3),
-      rvy: +rvy.toFixed(3),
-      rWS0: +rWS0.toFixed(3),
-      rWS: +rWS.toFixed(3),
-      rWS_gain: +(rWS - rWS0).toFixed(3),
-
-      // 임계값(좌우 공통)
-      JAB_X_TH: +JAB_X_TH.toFixed(3),
-      JAB_FLAT_Y_MAX: +JAB_FLAT_Y_MAX.toFixed(3),
-      VEL_X_TH: +VEL_X_TH.toFixed(3),
-      UPP_Y_TH: +UPP_Y_TH.toFixed(3),
-      VEL_Y_TH: +VEL_Y_TH.toFixed(3),
-    });
-  }
-}
   if (lMovedAny) {
     lOverCntRef.current++;
     if (lOverCntRef.current >= Math.max(2, HIT_MIN_FRAMES - 1)) {
