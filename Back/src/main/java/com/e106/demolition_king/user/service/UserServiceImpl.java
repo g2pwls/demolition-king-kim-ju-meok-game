@@ -197,11 +197,11 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
         // Redis에 Refresh Token 저장 (7일 유효)
         redisTemplate.opsForValue().set(
-                "RT:" + user.getUserUuid(), refreshToken, 7, TimeUnit.DAYS
+                "RT:" + user.getUserUuid(), refreshToken, 31, TimeUnit.DAYS
         );
         //온라인 유저 redis에 추가
         redisTemplate.opsForValue().set(
-                "online:"+ user.getUserUuid(), "true", 7, TimeUnit.DAYS
+                "online:"+ user.getUserUuid(), "true", 1, TimeUnit.DAYS
         );
         return TokenResponseVo.builder()
                 .accessToken(accessToken)
@@ -291,12 +291,21 @@ public class UserServiceImpl implements UserService, UserDetailsService {
                 .password(user.getPassword())
                 .userNickname(user.getUserNickname())
                 .kakaoAccessToken(user.getKakaoAccessToken())
-                .googleAccess(user.getGoogleAccess())
+                .googleSub(user.getGoogleSub())
                 .profile(ProfileDto.from(user.getProfile()))
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .build();
     }
+
+    @Override
+    public List<ProfileResponseVo> getAllProfiles() {
+        return profileRepository.findAllByOrderByProfileSeqAsc()
+                .stream()
+                .map(p -> new ProfileResponseVo(p.getProfileSeq(), p.getImage()))
+                .toList();
+    }
+
     @Override
     @Transactional
     public void updateProfile(String userUuid, Integer profileSeq){

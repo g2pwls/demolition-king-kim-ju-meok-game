@@ -4,14 +4,15 @@ package com.e106.demolition_king.friend.controller;
 import com.e106.demolition_king.common.base.BaseResponse;
 import com.e106.demolition_king.friend.dto.FriendRequestDto;
 import com.e106.demolition_king.friend.service.FriendService;
-import com.e106.demolition_king.friend.vo.out.FriendResponseVo;
+import com.e106.demolition_king.friend.vo.in.RoomInviteRequestVo;
 import com.e106.demolition_king.friend.vo.out.FriendStatusVo;
 import com.e106.demolition_king.user.service.UserService;
-import com.e106.demolition_king.user.service.UserServiceImpl;
 import com.e106.demolition_king.user.vo.out.UserSearchResponseVo;
 import com.e106.demolition_king.util.JwtUtil;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +28,32 @@ public class FriendController {
     private final UserService userService;
     private final JwtUtil jwtUtil;
 
+    @Operation(
+            summary = "방 초대 전송",
+            description = "헤더에 친구 UUID, 쿼리 파라미터에 방 이름(roomName)을 담아 SSE 초대 알림을 보냅니다."
+    )
+    @PostMapping("/invite-room")
+    public BaseResponse<Void> inviteRoom(
+            @RequestHeader("Authorization")
+            @Schema(description = "Access Token") String authHeader,
+            @RequestHeader("Friend-Uuid")
+            @Schema(description = "초대할 친구의 UUID") String friendUuid,
+            @RequestParam("roomName")
+            @Schema(description = "방 이름", example = "복싱연습방-7") String roomName
+    ) {
+        // 1) 토큰 검증 및 발신자 UUID 추출
+        String token = authHeader.replace("Bearer ", "").trim();
+        if (!jwtUtil.validateToken(token)) {
+            throw new RuntimeException("유효하지 않은 토큰입니다.");
+        }
+        String senderUuid = jwtUtil.getUserUuid(token);
+
+        // 2) 서비스 호출
+        friendService.sendRoomInvite(senderUuid, friendUuid, roomName);
+
+        // 3) 성공 응답
+        return BaseResponse.ok();
+    }
     @Operation(
             summary = "닉네임으로 유저 조회",
             description = "친구 추가를 위해, 유저 닉네임으로 해당 유저 정보를 가져옵니다."

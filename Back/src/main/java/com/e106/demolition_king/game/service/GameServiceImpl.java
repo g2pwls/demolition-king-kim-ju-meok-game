@@ -11,6 +11,7 @@ import com.e106.demolition_king.game.entity.ReportPerDate;
 import com.e106.demolition_king.game.repository.GoldRepository;
 import com.e106.demolition_king.game.repository.ReportPerDateRepository;
 import com.e106.demolition_king.game.repository.ReportRepository;
+import com.e106.demolition_king.game.vo.out.KcalPerDayResponseVo;
 import com.e106.demolition_king.game.vo.out.ReportUpdateResponseVo;
 import com.e106.demolition_king.game.vo.out.WeeklyReportVo;
 import com.e106.demolition_king.user.dto.SignupRequestDto;
@@ -143,6 +144,12 @@ public class GameServiceImpl implements GameService {
                         r.getKcal()
                 ))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public List<KcalPerDayResponseVo> getKcalData(String userUuid, String start, String end){
+        return reportPerDateRepository.findKcalByUser_UserUuidAndDateRange(userUuid, start, end);
     }
 
     @Override

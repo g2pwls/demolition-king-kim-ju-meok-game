@@ -15,5 +15,11 @@ public interface FriendService {
     void acceptFriendRequest(String receiverUuid, String requesterUuid);
     void rejectFriendRequest(String receiverUuid, String requesterUuid);
     void deleteFriend(String userUuid, String friendUuid);
-
+    /**
+     * 방 초대 SSE 전송
+     * @param senderUuid   발신자 UUID
+     * @param receiverUuid 피초대자 UUID
+     * @param roomName     방 이름 문자열
+     */
+    void sendRoomInvite(String senderUuid, String receiverUuid, String roomName);
 }

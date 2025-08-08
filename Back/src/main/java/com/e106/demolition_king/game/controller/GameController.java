@@ -10,14 +10,12 @@ import com.e106.demolition_king.game.service.GameServiceImpl;
 import com.e106.demolition_king.game.vo.in.GoldUpdateRequestVo;
 import com.e106.demolition_king.game.vo.in.ReportPerDateUpdateRequestVo;
 import com.e106.demolition_king.game.vo.in.ReportUpdateRequestVo;
-import com.e106.demolition_king.game.vo.out.PlayTimeResponseVo;
-import com.e106.demolition_king.game.vo.out.ReportResponseVo;
-import com.e106.demolition_king.game.vo.out.ReportUpdateResponseVo;
-import com.e106.demolition_king.game.vo.out.WeeklyReportVo;
+import com.e106.demolition_king.game.vo.out.*;
 import com.e106.demolition_king.user.service.UserServiceImpl;
 import com.e106.demolition_king.user.vo.in.EmailVerificationReRequestVo;
 import com.e106.demolition_king.user.vo.in.ProfileUpdateRequestVo;
 import com.e106.demolition_king.user.vo.out.EmailVerificationReResponseVo;
+import com.e106.demolition_king.user.vo.out.ProfileResponseVo;
 import com.e106.demolition_king.util.JwtUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -42,10 +40,20 @@ public class GameController {
 
 
     @Operation(
+            summary     = "전체 프로필 조회",
+            description = "전체 프로필 정보를 조회합니다."
+    )
+    @GetMapping("/profiles")
+    public ResponseEntity<List<ProfileResponseVo>> findAll() {
+        return ResponseEntity.ok(userService.getAllProfiles());
+    }
+
+
+    @Operation(
             summary     = "프로필 변경",
             description = "로그인한 사용자의 프로필을 다른 것으로 변경합니다."
     )
-    @PatchMapping("/profile")
+    @PatchMapping("/profile/change")
     public BaseResponse<Void> updateProfile(
             @RequestHeader("Authorization") String authHeader,
             @RequestBody ProfileUpdateRequestVo vo
@@ -65,6 +73,10 @@ public class GameController {
         // 4) 응답
         return BaseResponse.ok();
     }
+
+
+
+
 
     @Operation(summary = "사용자 리포트 조회", description = "특정 사용자의 리포트 정보를 반환합니다.")
     @GetMapping("/{userUuid}/reports")
@@ -136,6 +148,34 @@ public class GameController {
         List<WeeklyReportVo> weekly = gameService.getWeeklyReports(userUuid);
 
         return ResponseEntity.ok(weekly);
+    }
+
+    @Operation(summary = "선택한 구간별 칼로리 정보", description = "선택한 기간의 칼로리 정보를 반환합니다.")
+    @GetMapping("/kcal")
+    public BaseResponse<List<KcalPerDayResponseVo>> getKcalData(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestParam String start, // YYYY.MM.DD
+            @RequestParam String end    // YYYY.MM.DD
+    ) {
+        // 1) 토큰에서 UUID 추출
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new RuntimeException("Authorization 헤더가 잘못되었습니다.");
+        }
+        String token = authHeader.substring(7);
+        if (!jwtUtil.validateToken(token)) {
+            throw new RuntimeException("유효하지 않은 토큰입니다.");
+        }
+        String userUuid = jwtUtil.getUserUuid(token);
+
+        // 2) 날짜 포맷 변환 (2025.08.01 → 20250801)
+        String startDate = start.replace(".", "");
+        String endDate = end.replace(".", "");
+
+        // 3) 서비스 호출
+        List<KcalPerDayResponseVo> kcalList = gameService.getKcalData(userUuid, startDate, endDate);
+
+        // 4) 응답 생성
+        return BaseResponse.of(kcalList);
     }
 
     @Operation(summary = "사용자 리포트 정보 갱신", description = "특정 사용자의 리포트 정보를 갱신합니다.")

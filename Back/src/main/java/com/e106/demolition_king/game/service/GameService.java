@@ -4,6 +4,7 @@ package com.e106.demolition_king.game.service;
 import com.e106.demolition_king.game.dto.GoldDto;
 import com.e106.demolition_king.game.dto.ReportDto;
 import com.e106.demolition_king.game.dto.ReportPerDateRequestDto;
+import com.e106.demolition_king.game.vo.out.KcalPerDayResponseVo;
 import com.e106.demolition_king.game.vo.out.WeeklyReportVo;
 import com.e106.demolition_king.user.dto.SignupRequestDto;
 import com.e106.demolition_king.user.vo.in.LoginRequestVo;
@@ -31,4 +32,6 @@ public interface GameService {
     public String payGold(String userUuid, Integer spendGold);
 
     List<WeeklyReportVo> getWeeklyReports(String userUuid);
+
+    List<KcalPerDayResponseVo> getKcalData(String userUuid, String start, String end);
 }

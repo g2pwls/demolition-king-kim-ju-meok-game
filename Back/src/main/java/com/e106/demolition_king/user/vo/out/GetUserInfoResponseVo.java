@@ -20,7 +20,7 @@ public class GetUserInfoResponseVo {
     private String password;
     private String userNickname;
     private String kakaoAccessToken;
-    private String googleAccess;
+    private String googleSub;
     private ProfileDto profile;
     private Timestamp createdAt;
     private Timestamp updatedAt;
