@@ -14,6 +14,7 @@
   border-bottom: 2px solid #ddd;
   width: 100%;
   max-width: 1280px;
+  position: fixed; top: 0;
 }
 
 .top-controls h1 {
