@@ -1092,7 +1092,8 @@ const fetchTotalPlayTime = async () => {
     }
   };
 
-  // 프로필(아바타) 선택용 상태
+
+   // 프로필(아바타) 선택용 상태
   const [isPickingProfile, setIsPickingProfile] = useState(false);
   const [profileOptions, setProfileOptions] = useState([]);  // [{profileSeq, imageUrl}, ...]
   const [tempProfileSeq, setTempProfileSeq] = useState(null); // 임시 선택값
@@ -1101,8 +1102,8 @@ const fetchTotalPlayTime = async () => {
   // 프로필 목록 조회 (마이페이지 열고 "프로필 변경" 버튼 눌렀을 때 호출)
 const fetchProfileOptions = async () => {
   try {
-    const res = await api.get('/user/auth/profile/list'); // 예: 목록 반환
-    const list = res.data?.result ?? [];
+    const res = await api.get('/users/games/profiles'); // 예: 목록 반환
+    const list = res.data ?? [];
     setProfileOptions(list);
     setTempProfileSeq(userInfo?.profile?.profileSeq ?? null);
   } catch (err) {
@@ -1120,7 +1121,7 @@ const saveProfileSelection = async () => {
     const token = localStorage.getItem('accessToken');
 
     await api.patch(
-      '/users/games/profile',                // ✅ PATCH + 올바른 경로
+      '/users/games/profile/change',                // ✅ PATCH + 올바른 경로
       { profileSeq: tempProfileSeq },        // ✅ Request body
       {
         headers: {
@@ -1137,7 +1138,6 @@ const saveProfileSelection = async () => {
     setUserInfo(refreshed.data.result);
 
     setIsPickingProfile(false);
-    alert('프로필이 변경되었습니다!');
   } catch (err) {
     console.error('❌ 프로필 변경 실패:', {
       status: err.response?.status,
@@ -1521,21 +1521,21 @@ useEffect(() => {
                         <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                           <h3>프로필 선택</h3>
 
-                          <div className="character-grid">
+                          <div className="character-grid1">
                             {profileOptions.map((p) => (
                               <div
                                 key={p.profileSeq}
                                 className={`character-item ${tempProfileSeq === p.profileSeq ? 'selected' : ''}`}
                                 onClick={() => setTempProfileSeq(p.profileSeq)}
                               >
-                                <img src={p.imageUrl} alt={`profile-${p.profileSeq}`} />
+                                <img src={p.image} alt={`profile-${p.profileSeq}`} />
                               </div>
                             ))}
                           </div>
 
                           <div style={{ marginTop: 16, display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                            <button onClick={() => setIsPickingProfile(false)}>취소</button>
-                            <button onClick={saveProfileSelection} disabled={!tempProfileSeq || savingProfile}>
+                            <button className="cancel-btn" onClick={() => setIsPickingProfile(false)}>취소</button>
+                            <button className="save-btn" onClick={saveProfileSelection} disabled={!tempProfileSeq || savingProfile}>
                               {savingProfile ? '저장 중...' : '저장'}
                             </button>
                           </div>
