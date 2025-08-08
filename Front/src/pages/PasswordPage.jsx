@@ -53,7 +53,8 @@ export default function PasswordPage() {
       return;
     }
 
-    navigate('/PasswordReset'); // 다음 페이지로 이동 (원하는 라우터 경로로 바꿔도 됨)
+    // ✅ 이메일을 state로 같이 전달
+    navigate('/resetpassword', { state: { email } });
   };
 
   return (
