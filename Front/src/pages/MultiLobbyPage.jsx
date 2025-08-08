@@ -172,8 +172,8 @@ useEffect(() => {
                 joinRoom();
               }}
             >
-              <div>
-                <label htmlFor="room-name">Room</label>
+              <div id="roombox">
+                <label htmlFor="room-name">방제목</label>
                 <input
                   id="room-name"
                   type="text"
@@ -183,7 +183,7 @@ useEffect(() => {
                 />
               </div>
               <button type="submit" disabled={!roomName || !nickName}>
-                Join
+                입장하기
               </button>
             </form>
           </div>
