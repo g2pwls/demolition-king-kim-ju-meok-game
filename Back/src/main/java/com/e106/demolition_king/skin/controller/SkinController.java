@@ -8,6 +8,7 @@ import com.e106.demolition_king.constructure.vo.out.ConstructureResponseVo;
 import com.e106.demolition_king.constructure.vo.out.GetConstructureResponseVo;
 import com.e106.demolition_king.skin.service.SkinServiceImpl;
 import com.e106.demolition_king.skin.vo.in.SelectSkinRequestVo;
+import com.e106.demolition_king.skin.vo.out.SkinInfoResponseVo;
 import com.e106.demolition_king.skin.vo.out.getSkinResponseVo;
 import com.e106.demolition_king.util.JwtUtil;
 import io.swagger.v3.oas.annotations.Operation;
@@ -55,7 +56,7 @@ public class SkinController {
 
     @Operation(summary = "선택된 스킨 url 조회", description = "회원의 선택된 스킨 url을 가져옵니다.")
     @GetMapping("/getSkin")
-    public BaseResponse<String> generateConstructures(@RequestHeader("Authorization") String authorizationHeader) {
+    public BaseResponse<SkinInfoResponseVo> generateConstructures(@RequestHeader("Authorization") String authorizationHeader) {
         if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
             throw new RuntimeException("Authorization 헤더가 잘못되었습니다.");
         }
@@ -70,13 +71,13 @@ public class SkinController {
         // 3. UUID 추출
         String userUuid = jwtUtil.getUserUuid(token);
 
-        return BaseResponse.of(skinService.getSelectedSkinImageUrl(userUuid));
+        return BaseResponse.of(skinService.getSelectedSkinInfo(userUuid));
     }
 
     @Operation(summary = "uuid로 선택된 스킨 url 조회", description = "uuid로 회원의 선택된 스킨 url을 가져옵니다.")
     @GetMapping("/getSkinByUuid")
-    public BaseResponse<String> getSkinByUserUuid(@RequestParam String userUuid) {
-        return BaseResponse.of(skinService.getSelectedSkinImageUrl(userUuid));
+    public BaseResponse<SkinInfoResponseVo> getSkinByUserUuid(@RequestParam String userUuid) {
+        return BaseResponse.of(skinService.getSelectedSkinInfo(userUuid));
     }
 
 //    uuid로 조회하여 전체 스킨정보 조회 여기다 짜줘
