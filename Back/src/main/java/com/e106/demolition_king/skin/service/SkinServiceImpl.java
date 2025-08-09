@@ -15,6 +15,7 @@ import com.e106.demolition_king.skin.entity.PlayerSkinItem;
 import com.e106.demolition_king.skin.repository.PlayerSkinItemRepository;
 import com.e106.demolition_king.skin.repository.PlayerSkinRepository;
 import com.e106.demolition_king.skin.vo.in.SelectSkinRequestVo;
+import com.e106.demolition_king.skin.vo.out.SkinInfoResponseVo;
 import com.e106.demolition_king.skin.vo.out.getSkinResponseVo;
 import com.e106.demolition_king.user.entity.User;
 import com.e106.demolition_king.user.repository.UserRepository;
@@ -70,11 +71,11 @@ public class SkinServiceImpl implements SkinService {
 
 
     @Override
-    public String getSelectedSkinImageUrl(String userUuid) {
+    public SkinInfoResponseVo getSelectedSkinInfo(String userUuid) {
         return playerSkinRepository.findByUser_UserUuidAndIsSelect(userUuid, 1)
                 .flatMap(selectedSkin ->
-                        playerSkinItemRepository.findById(selectedSkin.getPlayerSkinItemSeq()))
-                .map(PlayerSkinItem::getImage)
+                        playerSkinItemRepository.findById(selectedSkin.getPlayerSkinItemSeq())
+                                .map(item -> new SkinInfoResponseVo(item.getPlayerskinItemSeq(), item.getImage())))
                 .orElse(null);
     }
 
