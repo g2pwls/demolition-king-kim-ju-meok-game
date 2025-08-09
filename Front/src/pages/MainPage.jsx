@@ -36,6 +36,7 @@ import {
 } from 'recharts';
 import ConfirmModal from '../components/BuyConfirmModal';
 import FriendNotification from '../components/FriendNotification';
+import RankingModal from '../components/RankingModal';
 // 베이직 건물 이미지 import
 import building1 from '../assets/images/building/building1.png';
 import building2 from '../assets/images/building/building2.png';
@@ -120,8 +121,14 @@ import arrowLeft from "../assets/images/main/left.png";
 import arrowRight from "../assets/images/main/right.png";
 import selectButton from "../assets/images/main/select.png";
 import buyButton from '../assets/images/main/buy.png';
-
 import coinIcon from '../assets/images/main/coin.png';
+import goldImg from '../assets/images/mypage/gold.png';
+import silverImg from '../assets/images/mypage/silver.png';
+import bronzeImg from '../assets/images/mypage/bronze.png';
+import firstTrophy from '../assets/images/main/first.png';
+import secondTrophy from '../assets/images/main/second.png';
+import thirdTrophy from '../assets/images/main/third.png';
+
 
 function MainPage() {
 
@@ -369,11 +376,19 @@ function MainPage() {
   ];
 
   const navigate = useNavigate();
-  const [modalType, setModalType] = useState(null); // 'tutorial' 또는 'mypage' 또는 null
+  const [modalType, setModalType] = useState(null);
+  const goToMultiLobby = () => {
+  setModalType(null); // 모달 닫기
+  navigate('/multilobby', {
+    state: { autoJoin: true, action: 'create' }, // ⬅️ 로비에서 자동 입장 신호
+  });
+};
+
+   // 'tutorial' 또는 'mypage' 또는 null
   const [isFriendPopupOpen, setIsFriendPopupOpen] = useState(false); // ✅ 반드시 함수 컴포넌트 내부에
   const [activeTab, setActiveTab] = useState('통계');
   const [userInfo, setUserInfo] = useState(null);
-
+  
   // 유저 정보 불러오기
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -404,10 +419,40 @@ function MainPage() {
       setEditNickname(userInfo.nickname);
       setEditEmail(userInfo.email);
       setUserNickname(userInfo.nickname);  // 캐릭터 아래 닉네임 표기용
+      fetchTotalPlayTime();
       fetchTodayPlayTime();
       fetchWeeklyPlayTime();
     }
   }, [userInfo]);
+
+  // ✅ 누적 플레이 시간(분) 조회
+const fetchTotalPlayTime = async () => {
+  try {
+    if (!userInfo?.userUuid) return;
+
+    const token = localStorage.getItem('accessToken');
+    const res = await api.get(`/users/games/${userInfo.userUuid}/reports`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const payload = res.data?.result ?? res.data;
+
+    let totalMinutes = 0;
+    if (Array.isArray(payload)) {
+      totalMinutes = payload.reduce((sum, r) => sum + (Number(r?.playTime) || 0), 0);
+    } else if (typeof payload === 'number') {
+      totalMinutes = payload;
+    } else if (payload && typeof payload === 'object') {
+      totalMinutes = Number(payload.playTime ?? payload.totalPlayTime ?? 0);
+    }
+
+    setPlayStats(prev => ({ ...prev, totalPlayTime: totalMinutes }));
+    console.log('🧮 누적 플레이 시간(분):', totalMinutes);
+  } catch (err) {
+    console.error('❌ 누적 플레이 시간 조회 실패:', err);
+  }
+};
+
 
   // 오늘 플레이 시간
   const fetchTodayPlayTime = async () => {
@@ -433,7 +478,7 @@ function MainPage() {
       console.error('❌ 오늘의 플레이 시간 조회 실패:', err);
     }
   };
-
+  // 이번 주 플레이 시간
   const fetchWeeklyPlayTime = async () => {
   try {
     const token = localStorage.getItem('accessToken');
@@ -479,20 +524,21 @@ function MainPage() {
   const [editEmail, setEditEmail] = useState(userInfo?.email);          // 수정할 이메일 임시 저장
   const [isEditingNickname, setIsEditingNickname] = useState(false);
   const [playStats, setPlayStats] = useState({
-    totalPlayTime: 157,       // 누적 (분 단위)
-    weeklyPlayTime: [110, 220, 50, 60, 300, 270, 60], // 일~토, 분 단위
+    totalPlayTime: 0,             // 누적 (분 단위)
+    todayPlayTime: 0,             // 오늘 플레이 시간
+    weeklyPlayTime: Array(7).fill(0), // 일~토 기본값 0
   });
   const [dateRange, setDateRange] = useState([null, null]);
-  const [selectedCalorieData, setSelectedCalorieData] = useState([]);
-  const calorieData = {
-    '2025-07-25': 220,
-    '2025-07-26': 150,
-    '2025-07-27': 180,
-    '2025-07-28': 90,
-    '2025-07-29': 270,
-    '2025-07-30': 60,
-    '2025-07-31': 300,
-  };
+//   const [selectedCalorieData, setSelectedCalorieData] = useState([]);
+//   const calorieData = {
+//     '2025-07-25': 220,
+//     '2025-07-26': 150,
+//     '2025-07-27': 180,
+//     '2025-07-28': 90,
+//     '2025-07-29': 270,
+//     '2025-07-30': 60,
+//     '2025-07-31': 300,
+//   };
 
   useEffect(() => {
   const userEmail = localStorage.getItem('userEmail');
@@ -502,33 +548,33 @@ function MainPage() {
   console.log('🔐 로그인한 유저 닉네임:', userNickname);
 }, []);
 
-    useEffect(() => {
-  if (dateRange[0] && dateRange[1]) {
-    const start = new Date(dateRange[0]);
-    const end = new Date(dateRange[1]);
-    const result = [];
+//     useEffect(() => {
+//   if (dateRange[0] && dateRange[1]) {
+//     const start = new Date(dateRange[0]);
+//     const end = new Date(dateRange[1]);
+//     const result = [];
 
-    const current = new Date(start);
-    while (current <= end) {
-      const key = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}-${String(current.getDate()).padStart(2, '0')}`;
-      if (calorieData[key]) {
-        result.push({
-          date: key,
-          calorie: calorieData[key],
-        });
-      }
-      current.setDate(current.getDate() + 1);
-    }
+//     const current = new Date(start);
+//     while (current <= end) {
+//       const key = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}-${String(current.getDate()).padStart(2, '0')}`;
+//       if (calorieData[key]) {
+//         result.push({
+//           date: key,
+//           calorie: calorieData[key],
+//         });
+//       }
+//       current.setDate(current.getDate() + 1);
+//     }
 
-    setSelectedCalorieData(result);
-  } else {
-    setSelectedCalorieData([]);
-  }
-}, [dateRange]);
-    const formatDate = (date) => {
-      if (!date) return '';
-      return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
-    };
+//     setSelectedCalorieData(result);
+//   } else {
+//     setSelectedCalorieData([]);
+//   }
+// }, [dateRange]);
+//     const formatDate = (date) => {
+//       if (!date) return '';
+//       return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
+//     };
 
   // 유저 골드 조회
   const [gold, setGold] = useState(0);
@@ -983,6 +1029,321 @@ function MainPage() {
     }
   };
 
+  // 상단 state 모음에 추가
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [withdrawPassword, setWithdrawPassword] = useState('');
+  const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false);
+  // 탈퇴 관련 state 모음 옆에 추가
+  const [withdrawError, setWithdrawError] = useState('');
+
+  // 탈퇴 시 비밀번호 검증
+  const handleWithdraw = async () => {
+    if (!withdrawPassword) {
+      setWithdrawError('비밀번호를 입력해주세요.');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('accessToken');
+      // ✅ 비밀번호 먼저 검증
+      const res = await api.post(
+        '/user/auth/password/verify',
+        { currentPassword: withdrawPassword },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (res.data?.isSuccess === true) {
+        setWithdrawError('');
+        setShowWithdrawConfirm(true); // 확인 모달 오픈
+      } else {
+        setWithdrawError('비밀번호가 일치하지 않습니다.');
+      }
+    } catch (err) {
+      setWithdrawError('비밀번호가 일치하지 않습니다.');
+      console.error('❌ 비밀번호 검증 실패:', err);
+    }
+  };
+
+  // 실제 탈퇴 실행
+  const confirmWithdrawNow = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      await api.delete('/user/auth/withdraw', {
+        params: { password: withdrawPassword },
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      alert('회원탈퇴가 완료되었습니다.');
+      localStorage.clear();
+      navigate('/login');
+    } catch (err) {
+      const msg = err?.response?.data?.message || '비밀번호가 올바르지 않거나 서버 오류가 발생했습니다.';
+      setWithdrawError(msg); // ⬅️ 에러 문구를 위에 보여주기
+      console.error('❌ 회원탈퇴 실패:', err);
+    } finally {
+      setShowWithdrawConfirm(false);
+      setIsDeletingAccount(false);
+      setWithdrawPassword('');
+    }
+  };
+
+
+   // 프로필(아바타) 선택용 상태
+  const [isPickingProfile, setIsPickingProfile] = useState(false);
+  const [profileOptions, setProfileOptions] = useState([]);  // [{profileSeq, imageUrl}, ...]
+  const [tempProfileSeq, setTempProfileSeq] = useState(null); // 임시 선택값
+  const [savingProfile, setSavingProfile] = useState(false);
+
+  // 프로필 목록 조회 (마이페이지 열고 "프로필 변경" 버튼 눌렀을 때 호출)
+const fetchProfileOptions = async () => {
+  try {
+    const res = await api.get('/users/games/profiles'); // 예: 목록 반환
+    const list = res.data ?? [];
+    setProfileOptions(list);
+    setTempProfileSeq(userInfo?.profile?.profileSeq ?? null);
+  } catch (err) {
+    console.error('❌ 프로필 목록 불러오기 실패:', err);
+    alert('프로필 목록을 불러오지 못했습니다.');
+  }
+};
+const saveProfileSelection = async () => {
+  // 0도 유효할 수 있으므로 null/undefined만 차단
+  if (tempProfileSeq === null || tempProfileSeq === undefined) return;
+
+  try {
+    setSavingProfile(true);
+
+    const token = localStorage.getItem('accessToken');
+
+    await api.patch(
+      '/users/games/profile/change',                // ✅ PATCH + 올바른 경로
+      { profileSeq: tempProfileSeq },        // ✅ Request body
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,  // ✅ 필수 헤더
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    // 성공 시 유저정보 리프레시
+    const refreshed = await api.get('/user/auth/getUserInfo', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    setUserInfo(refreshed.data.result);
+
+    setIsPickingProfile(false);
+  } catch (err) {
+    console.error('❌ 프로필 변경 실패:', {
+      status: err.response?.status,
+      data: err.response?.data
+    });
+    alert(err.response?.data?.message ?? '프로필 변경에 실패했습니다.');
+  } finally {
+    setSavingProfile(false);
+  }
+};
+
+
+  // 메달 상태
+const [medals, setMedals] = useState({ gold: 0, silver: 0, bronze: 0 });
+
+const fetchMedals = async () => {
+  try {
+    const token = localStorage.getItem('accessToken');
+    const res = await api.get(`/users/games/${userInfo.userUuid}/reports`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    // 응답이 배열(리스트)이라면 합산, 객체 하나라면 그대로 반영
+    const payload = res.data?.result ?? res.data ?? [];
+    let totals = { gold: 0, silver: 0, bronze: 0 };
+
+    if (Array.isArray(payload)) {
+      totals = payload.reduce(
+        (acc, r) => ({
+          gold: acc.gold + (r.goldMedal ?? 0),
+          silver: acc.silver + (r.silverMedal ?? 0),
+          bronze: acc.bronze + (r.bronzeMedal ?? 0),
+        }),
+        totals
+      );
+    } else {
+      totals = {
+        gold: payload.goldMedal ?? 0,
+        silver: payload.silverMedal ?? 0,
+        bronze: payload.bronzeMedal ?? 0,
+      };
+    }
+
+    setMedals(totals);
+  } catch (err) {
+    console.error('❌ 메달 조회 실패:', {
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+  }
+};
+
+useEffect(() => {
+  if (userInfo?.userUuid) {
+    fetchMedals();
+  }
+}, [userInfo]);
+
+const [top3, setTop3] = useState([]);
+const [top3Loading, setTop3Loading] = useState(false);
+const [top3Err, setTop3Err] = useState(null);
+
+const fetchTop3 = async () => {
+  try {
+    setTop3Loading(true);
+    setTop3Err(null);
+
+    const { data } = await api.get('/statistics/leaderboard/top');
+    // 응답이 정렬되어 있지 않을 수도 있으니 rank 오름차순 정렬 후 3명만
+    const list = Array.isArray(data) ? data.slice() : [];
+    list.sort((a, b) => (a.rank ?? 9999) - (b.rank ?? 9999));
+    const only3 = list.slice(0, 3);
+
+    setTop3(only3);
+  } catch (e) {
+    console.error('TOP3 조회 실패:', e);
+    setTop3([]);
+    setTop3Err('랭킹을 불러오지 못했어요.');
+  } finally {
+    setTop3Loading(false);
+  }
+};
+useEffect(() => {
+  fetchTop3();
+}, []);
+
+// ====== 칼로리 조회 상태 ======
+const [selectedCalorieData, setSelectedCalorieData] = useState([]);
+const [kcalLoading, setKcalLoading] = useState(false);
+const [kcalErr, setKcalErr] = useState(null);
+const resetCaloriesView = () => {
+  setDateRange([null, null]);
+  setSelectedCalorieData([]);
+  setKcalErr(null);
+  setKcalLoading(false);
+};
+
+
+// 화면 표기를 위한 날짜 포맷 (예: 2025.08.02)
+const formatDate = (date) => {
+  if (!date) return '';
+  if (typeof date === 'string') return date;
+  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
+};
+
+// ---- 날짜 유틸 ----
+// 서버 1차 요청용: YYYYMMDD
+const toYYYYMMDD = (d) =>
+  `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+
+// 서버 2차 폴백용: YYYY-MM-DD
+const toDash = (d) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+
+// 키 통일: YYYY-MM-DD
+const toKey = (d) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+
+// start~end 사이 날짜 모두 생성
+const eachDay = (start, end) => {
+  const out = [];
+  const cur = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+  const last = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+  while (cur <= last) {
+    out.push(new Date(cur));
+    cur.setDate(cur.getDate() + 1);
+  }
+  return out;
+};
+
+// ---- API 호출 ----
+const fetchCalories = async (startDate, endDate) => {
+  if (!startDate || !endDate) return;
+
+  try {
+    setKcalLoading(true);
+    setKcalErr(null);
+
+    const token = localStorage.getItem('accessToken');
+
+    // 1차: YYYYMMDD
+    const params1 = { start: toYYYYMMDD(startDate), end: toYYYYMMDD(endDate) };
+    let res;
+    try {
+      res = await api.get('/users/games/kcal', {
+        headers: { Authorization: `Bearer ${token}` },
+        params: params1,
+      });
+    } catch (e) {
+      // 2차: YYYY-MM-DD
+      const params2 = { start: toDash(startDate), end: toDash(endDate) };
+      res = await api.get('/users/games/kcal', {
+        headers: { Authorization: `Bearer ${token}` },
+        params: params2,
+      });
+    }
+
+    // Swagger: result: [{ playDate: "string", kcal: number }]
+    const list = res.data?.result ?? [];
+
+    // 응답을 Map으로: key=YYYY-MM-DD, value=kcal
+    const dataMap = new Map(
+      list.map(row => {
+        const raw = String(row.playDate ?? '');
+        const key = raw.includes('-')
+          ? raw
+          : (raw.length === 8 ? `${raw.slice(0,4)}-${raw.slice(4,6)}-${raw.slice(6,8)}` : raw);
+        return [key, Number(row.kcal) || 0];
+      })
+    );
+
+    // 선택한 기간 전체 채우기(없으면 0)
+    const filled = eachDay(startDate, endDate).map(d => {
+      const key = toKey(d);
+      return { date: key, calorie: dataMap.get(key) ?? 0 };
+    });
+
+    setSelectedCalorieData(filled);
+  } catch (err) {
+    console.error('❌ 칼로리 조회 실패:', err.response?.status, err.response?.data);
+
+    // 실패해도 0으로 채워서 보여주기
+    if (startDate && endDate) {
+      const fallback = eachDay(startDate, endDate).map(d => ({ date: toKey(d), calorie: 0 }));
+      setSelectedCalorieData(fallback);
+    } else {
+      setSelectedCalorieData([]);
+    }
+
+    setKcalErr('칼로리 정보를 불러오지 못했어요.');
+  } finally {
+    setKcalLoading(false);
+  }
+};
+
+// 날짜 선택될 때마다 호출
+useEffect(() => {
+  if (dateRange[0] && dateRange[1]) {
+    fetchCalories(dateRange[0], dateRange[1]);
+  } else {
+    setSelectedCalorieData([]);
+  }
+}, [dateRange]);
+
+
+
 
   return (
     <div className="main-page-background">
@@ -999,6 +1360,33 @@ function MainPage() {
             <img src={myPageIcon} alt="마이페이지" />
           </button>
         </div>
+        {/* 좌측 TOP3 위젯 */}
+<div className="left-top3-card">
+  <div className="left-top3-title">싱글모드 랭킹 TOP 3</div>
+
+  {top3Loading && <div className="left-top3-status">불러오는 중…</div>}
+  {top3Err && <div className="left-top3-status error">{top3Err}</div>}
+
+  {!top3Loading && !top3Err && (
+    <ul className="left-top3-list">
+      {top3.map((u, idx) => {
+        const rank = u.rank ?? idx + 1;
+        const trophy =
+          rank === 1 ? firstTrophy :
+          rank === 2 ? secondTrophy :
+          thirdTrophy;
+
+        return (
+          <li key={u.nickname + '_' + rank} className="left-top3-item">
+            <img className="left-top3-trophy" src={trophy} alt={`${rank}등 트로피`} />
+            <span className="left-top3-nick" title={u.nickname}>{u.nickname}</span>
+          </li>
+        );
+      })}
+    </ul>
+  )}
+</div>
+
         <div className="gold-display">
           <img src={coinIcon} alt="코인" className="coin-icon" />
           <span className="gold-amount">{gold.toLocaleString()} G</span>
@@ -1061,39 +1449,45 @@ function MainPage() {
 
       {/* 모달들 */}
       {modalType && (
-        <div className="modal-overlay" onClick={() => {setModalType(null);setActiveTab('통계'); setIsEditing(false); setIsEditingNickname(false); setEditNickname(userInfo?.nickname);}}>
+        <div className="modal-overlay" onClick={() => {if (modalType === 'mypage') {
+        resetCaloriesView();
+      }setModalType(null);setActiveTab('통계'); setIsEditing(false); setIsEditingNickname(false); setEditNickname(userInfo?.nickname);}}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="tutorial-modal-wrapper" style={{ position: 'relative', display: 'inline-block' }}>
-              {/* 닫기 버튼 */}
-              <img
-                  src={closeIcon}
-                  alt="닫기"
-                  onClick={() => setModalType(null)}
-                  style={{
-                    position: 'absolute',
-                    top: '15%',      // 모달 내부에서 위쪽 위치
-                    right: '16%',  // 모달 내부에서 오른쪽 위치
-                    width: '50px',  // 크게
-                    height: '50px',
-                    cursor: 'pointer',
-                    zIndex: 10
-                  }}
-              />
-
-              {/* 기존 모달 이미지 */}
-              <img src={tutorialModal} alt="튜토리얼 모달" className="tutorial-modal-image" />
-
-              {/* 기존 오버레이 텍스트 (크기 변경 X) */}
-              <div className="tutorial-modal-text">
-                🥊 모션을 따라 건물을 파괴하라!<br /><br />
-                화면 상단에 뜨는 <strong style={{ color: 'black' }}>콤보 스택(잽, 어퍼컷, 회피)</strong>에 맞춰<br />
-                정확한 모션을 취하세요.<br /><br />
-                올바른 동작을 하면 건물 HP가 깎이고,<br />
-                💥HP가 0이 되면 건물이 철거됩니다!<br /><br />
-                ⏱ 건물을 철거하면 추가 시간이 주어집니다.<br /><br />
-                제한 시간이 모두 끝나기 전에 더 많은 건물을 철거해보세요!
-              </div>
-            </div>
+            {modalType === 'lank' && (
+              <RankingModal onClose={() => setModalType(null)} />
+            )}
+            
+            {modalType === 'tutorial' && (
+                <div className="tutorial-modal-wrapper" style={{ position: 'relative', display: 'inline-block' }}>
+                  {/* 닫기 버튼 */}
+                  <img
+                      src={closeIcon}
+                      alt="닫기"
+                      onClick={() => setModalType(null)}
+                      style={{
+                        position: 'absolute',
+                        top: '15%',
+                        right: '16%',
+                        width: '50px',
+                        height: '50px',
+                        cursor: 'pointer',
+                        zIndex: 10
+                      }}
+                  />
+                  {/* 모달 이미지 */}
+                  <img src={tutorialModal} alt="튜토리얼 모달" className="tutorial-modal-image" />
+                  {/* 텍스트 */}
+                  <div className="tutorial-modal-text">
+                    🥊 모션을 따라 건물을 파괴하라!<br /><br />
+                    화면 상단에 뜨는 <strong style={{ color: 'black' }}>콤보 스택(잽, 어퍼컷, 회피)</strong>에 맞춰<br />
+                    정확한 모션을 취하세요.<br /><br />
+                    올바른 동작을 하면 건물 HP가 깎이고,<br />
+                    💥HP가 0이 되면 건물이 철거됩니다!<br /><br />
+                    ⏱ 건물을 철거하면 추가 시간이 주어집니다.<br /><br />
+                    제한 시간이 모두 끝나기 전에 더 많은 건물을 철거해보세요!
+                  </div>
+                </div>
+            )}
 
 
             {modalType === 'mypage' && (
@@ -1110,6 +1504,44 @@ function MainPage() {
                       className={`mypage-edit-btn ${isEditing ? 'disabled' : ''}`}
                       onClick={() => setIsEditing(!isEditing)}>정보수정
                     </button>
+                    {isEditing && (
+                      <button
+                        className="mypage-edit-btn"
+                        onClick={async () => {
+                          await fetchProfileOptions();
+                          setIsPickingProfile(true);
+                        }}
+                      >
+                        프로필 변경
+                      </button>
+                    )}
+                    {/* 프로필 선택 팝업 */}
+                    {isPickingProfile && (
+                      <div className="modal-overlay" onClick={() => setIsPickingProfile(false)}>
+                        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                          <h3>프로필 선택</h3>
+
+                          <div className="character-grid1">
+                            {profileOptions.map((p) => (
+                              <div
+                                key={p.profileSeq}
+                                className={`character-item ${tempProfileSeq === p.profileSeq ? 'selected' : ''}`}
+                                onClick={() => setTempProfileSeq(p.profileSeq)}
+                              >
+                                <img src={p.image} alt={`profile-${p.profileSeq}`} />
+                              </div>
+                            ))}
+                          </div>
+
+                          <div style={{ marginTop: 16, display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                            <button className="cancel-btn" onClick={() => setIsPickingProfile(false)}>취소</button>
+                            <button className="save-btn" onClick={saveProfileSelection} disabled={!tempProfileSeq || savingProfile}>
+                              {savingProfile ? '저장 중...' : '저장'}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     <button
                       className="mypage-logout-btn"
                       onClick={() => setShowLogoutModal(true)}>
@@ -1143,9 +1575,29 @@ function MainPage() {
                       </button>
                     </div>
 
-                    {/* ✅ 통계 탭 내용 */}
+                    {/* 통계 탭 내용 */}
                     {activeTab === '통계' && !isEditing && (
                       <>
+                        <div className="medal-section">
+                          <div className="play-label">나의 메달</div>
+
+                          {/* 메달 표시 영역 */}
+                          <div className="medal-row-section">
+                            <div className="medal-item">
+                              <img src={goldImg} alt="금메달" />
+                              <span className="medal-count">{medals.gold}</span>
+                            </div>
+                            <div className="medal-item">
+                              <img src={silverImg} alt="은메달" />
+                              <span className="medal-count">{medals.silver}</span>
+                            </div>
+                            <div className="medal-item">
+                              <img src={bronzeImg} alt="동메달" />
+                              <span className="medal-count">{medals.bronze}</span>
+                            </div>
+                          </div>
+                        </div>
+
                         {/* 플레이 시간 부분 */}
                         <div className="playtime-section">
                           {/* 총 플레이 시간 */}
@@ -1163,9 +1615,9 @@ function MainPage() {
                             <div className="play-label1">오늘의 플레이 시간</div>
                             <div className="bar-with-text">
                               <div className="bar-bg">
-                                <div className="bar-fill red" style={{ width: `${(playStats.todayPlayTime / 240) * 100}%` }}></div>
+                                <div className="bar-fill red" style={{ width: `${(playStats.todayPlayTime / 120) * 100}%` }}></div>
                               </div>
-                              <span className="time-text">{playStats.todayPlayTime}분</span>
+                              <span className="time-text">{playStats.todayPlayTime}분 / 권장 2시간 기준</span>
                             </div>
                           </div>
                         </div>
@@ -1197,11 +1649,15 @@ function MainPage() {
                         </div>
 
                         {/* 캘린더 */}
+                        <div className="weekly-chart-label">칼로리를 조회해보세요!</div>
+                        <div className="weekly-chart-label1">시작일과 종료일을 선택하세요</div>
                         <div className="calendar-section">
                           <Calendar
                             onChange={setDateRange}
                             value={dateRange}
                             selectRange={true}
+                            locale="ko-KR"
+                            calendarType="US"
                             tileDisabled={({ date, view }) =>
                               view === 'month' &&
                               dateRange[0] &&
@@ -1225,21 +1681,26 @@ function MainPage() {
                           </div>
                         </div>
 
-                        {/* 칼로리 그래프 */}
-                        {selectedCalorieData.length > 0 && (
-                          <div className="calorie-graph-section">
-                            <h3>소모 칼로리 기록</h3>
-                            <ResponsiveContainer width="100%" height={200}>
-                              <LineChart data={selectedCalorieData}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="date" />
-                                <YAxis />
-                                <Tooltip />
-                                <Line type="monotone" dataKey="calorie" stroke="#8884d8" />
-                              </LineChart>
-                            </ResponsiveContainer>
-                          </div>
-                        )}
+{/* 상태 표시 */}
+{kcalLoading && <div className="calorie-status">불러오는 중…</div>}
+{kcalErr && <div className="calorie-status error">{kcalErr}</div>}
+
+{/* 칼로리 그래프 */}
+{!kcalLoading && !kcalErr && selectedCalorieData.length > 0 && (
+  <div className="calorie-graph-section">
+    <h3>소모 칼로리 기록</h3>
+    <ResponsiveContainer width="100%" height={200}>
+      <LineChart data={selectedCalorieData}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="date" />
+        <YAxis />
+        <Tooltip />
+        <Line type="monotone" dataKey="calorie" stroke="#8884d8" />
+      </LineChart>
+    </ResponsiveContainer>
+  </div>
+)}
+
                       </>
                     )}
 
@@ -1270,6 +1731,74 @@ function MainPage() {
                               }}>비밀번호 변경
                             </button>
                           </div>
+                          <div className="delete-account-wrapper">
+                            <button
+                              className="delete-account-btn"
+                              onClick={() => {
+                                setIsDeletingAccount(true);  // ❗ 폼 열기
+                                setWithdrawPassword('');     // 입력 초기화
+                              }}
+                            >
+                              회원탈퇴
+                            </button>
+                          </div>
+
+                          {/* ✅ 회원탈퇴 폼 */}
+{isDeletingAccount && (
+  <div className="withdraw-form">
+    <div className="password-form-header">
+      <button
+        className="close-password-btn"
+        onClick={() => {
+          setIsDeletingAccount(false);
+          setWithdrawPassword('');
+        }}
+      >
+        닫기 ❌
+      </button>
+    </div>
+
+                              {/* 에러 메시지 */}
+{withdrawError && (
+  <p className="withdraw-error-text">
+    {withdrawError}
+  </p>
+)}
+
+    <input
+  type="password"
+  value={withdrawPassword}
+  onChange={(e) => {
+    setWithdrawPassword(e.target.value);
+    if (withdrawError) setWithdrawError(''); // ⬅️ 타이핑 하면 에러 제거
+  }}
+  placeholder="본인 확인용 비밀번호 입력"
+/>
+
+
+    <div className="password-change-buttons">
+      <button className="cancel-btn" onClick={() => setIsDeletingAccount(false)}>취소</button>
+      <button className="save-btn" onClick={handleWithdraw} disabled={!withdrawPassword}>
+        회원탈퇴
+      </button>
+    </div>
+
+    {/* ✅ 커스텀 확인 모달 */}
+    {showWithdrawConfirm && (
+      <div className="modal-overlay" onClick={() => setShowWithdrawConfirm(false)}>
+        <div className="delete-modal" onClick={(e) => e.stopPropagation()}>
+          <p>정말 탈퇴하시겠습니까? <br />이 작업은 되돌릴 수 없습니다.</p>
+          <div className="modal-buttons">
+            <button onClick={confirmWithdrawNow}>확인</button>
+            <button onClick={() => setShowWithdrawConfirm(false)}>취소</button>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
+)}
+
+
 
                           {/* ✅ 비밀번호 변경 폼 표시 조건 */}
                           {isChangingPassword && (
@@ -1390,6 +1919,7 @@ function MainPage() {
                                 <img
                                   src={src}
                                   alt={`건물 ${filename}`}
+                                  loading="lazy"
                                   className={`building-image ${isUnlocked ? 'unlocked' : ''}`}
                                 />
                               </div>
@@ -1452,11 +1982,16 @@ function MainPage() {
             )}
 
             {modalType === 'multi' && (
-              <div className="multi-mode-buttons">
-                <button><img src={roomMake} alt="방 만들기" /></button>
-                <button><img src={roomParticipation} alt="방 참가하기" /></button>
-              </div>
-            )}
+            <div className="multi-mode-buttons">
+              <button onClick={goToMultiLobby}>
+                <img src={roomMake} alt="방 만들기" />
+              </button>
+              <button>
+                <img src={roomParticipation} alt="방 참가하기" />
+              </button>
+            </div>
+          )}
+
           </div>
         </div>
       )}

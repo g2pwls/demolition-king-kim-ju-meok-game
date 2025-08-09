@@ -9,79 +9,26 @@ import "../styles/SingleTestPage.css";
 /*
   소주 땡기노 인생 별거 있나.. 해보자
   2025.08.09 : 콤보 깨는거 협업필요해서 일단 보류 일요일 진행
-
-#init
-  0. 초기 세팅
-    - 카메라 세팅 (완)       
-    - mediaPipe 세팅 (완)   
-    - 브금 세팅            ************ 이거 유빈이가 알아본다 해서 보류 여기다 해줘 Cntrl + F #init01
-#001
-  1. 게임 시작 전
-    - 건물 리스트 뽑아오기 (완)                        
-    - AccessToken 으로 사용자 skin 가져오기 (완)       
-      >> 캔버스에 할당[output] (완)                    
-      >> 플레이어 스킨 하드 코딩 연동하기 (시간 부족으로 하드코딩 하기로 협의 함) (완)
-    - 콤보 할당 받기 (완)
-      >> 백개가 들어오는데 순환 하기
-    
-      
-
-#002
-  2. 게임 플레이
-    - 미디어 파이프 이식 (완) 
-    - 건물 적용 (완) 
-    - 건물 hp 적용 
-    - 스킨 적용
-    - quit 만들기 해줘.. 
-    - 흠..
-    - (캔버스에)[input] { action, buildingIndex, buildingList, playerSkin, onBuildingDestroyed, kcal, setKcal, combo }
-    - combo 100개 다 끝나면 인덱스 초기화 
-    - 빌딩 부술때 마다 배열에 빌딩 키 추가 
-    - 플레이 시간 계산 추가
-    
-  
-#003
-  3. 게임 종료
-    - 최신 화 정보 갱신
-      - GAMEOVER 페이지에 뿌려주기
-    - 사용자 리포트 최신화
-      - singleTopBuilding : 싱글 넣어주기 (싱글)? : 0
-      - multiTopBuilding  : 멀티 넣어주기 (멀티)? : 0
-      - goldMedal         : 골드 메달     (멀티)? : 0
-      - silverMedal       : 실버 메달    (멀티)? : 0
-      - bronzeMedal       : 브론즈 메달  (멀티)? : 0
-      - playTime          : 플레이 시간  (토탈)
-    - 빌딩 키 배열 최신화
-      - 빌딩 키 seq 배열 
-    - 사용자 일일 리포트 최신화
-      - kcal
-      - playTimeDate      : 플레이 시간
-    - 사용자 골드 정보 최신화
-      - goldCnt           : 골드 갯수
 */
-
 
 const SingleTestPage = () => {
   const canvasRef = useRef(null);
   const videoRef = useRef(null);
 
-  const [userUuid, setUserUuid] = useState("");             // 사용자 UUID
+  const [userUuid, setUserUuid] = useState("");
 
   // 게임
-  const [action, setAction] = useState('idle');             // ?
-  const [timeover, setTimeover] = useState(100);            // 시간이였음
-  const [kcal, setKcal] = useState(0);                      // 칼로리
-  const [coinCount, setCoinCount] = useState(0);            // 코인 수
-  const [destroyedCount, setDestroyedCount] = useState(0);  // 부순 건물 수
+  const [action, setAction] = useState('idle');
+  const [timeover, setTimeover] = useState(100);
+  const [kcal, setKcal] = useState(0);
+  const [coinCount, setCoinCount] = useState(0);
+  const [destroyedCount, setDestroyedCount] = useState(0);
 
-  // 빌딩
-  const [buildingIndex, setBuildingIndex] = useState(0);    // 빌딩 인덱스
-  const [combo, setCombo] = useState([]);                   // 유저 콤보
-  const [isGameOver, setIsGameOver] = useState(false);      // 게임오버 트리거
-  // 추가: 부순 건물 seq 리스트
+  // 빌딩/콤보
+  const [buildingIndex, setBuildingIndex] = useState(0);
+  const [combo, setCombo] = useState([]);
+  const [isGameOver, setIsGameOver] = useState(false);
   const [destroyedSeqs, setDestroyedSeqs] = useState([]);
-  // const currentBuilding = buildingList[buildingIndex] ?? null;
-
   const COIN_PER_BUILDING = 1;
 
   // 콤보(패턴)
@@ -89,35 +36,35 @@ const SingleTestPage = () => {
   const [stepIdx, setStepIdx] = useState(0);
   const advanceLockRef = useRef(false);
 
-  /* ================== [ADDED] 미디어파이프 감지용 공용 ref/상수 ================== */
-  const audioRef = useRef(null);                 // [ADDED] 상단으로 이동 (startCamera 전에 필요)
-  const mediaStreamRef = useRef(null);           // [ADDED]
-  const mediapipeCameraRef = useRef(null);       // [ADDED]
+  // === 미디어/포즈 공용 ref ===
+  const audioRef = useRef(null);
+  const mediaStreamRef = useRef(null);
+  const mediapipeCameraRef = useRef(null);
 
-  const fsmStateRef = useRef('get_ready');       // [ADDED] 'get_ready' | 'action' | 'cooldown'
-  const startPosRef = useRef({ left: null, right: null });            // [ADDED] 손목 시작 좌표
-  const startShoulderRef = useRef({ left: null, right: null });       // [ADDED] 어깨 기준 좌표
-  const lastActionAtRef = useRef(0);                                    // [ADDED]
+  // FSM & 좌표/필터
+  const fsmStateRef = useRef('get_ready');          // 'get_ready' | 'action' | 'cooldown'
+  const startPosRef = useRef({ left: null, right: null });
+  const startShoulderRef = useRef({ left: null, right: null });
+  const lastActionAtRef = useRef(0);
 
-  // 속도/안정화 필터
-  const lPrevRef = useRef({ x: 0, y: 0, init: false });    // [ADDED]
-  const rPrevRef = useRef({ x: 0, y: 0, init: false });    // [ADDED]
-  const lFiltRef = useRef({ x: 0, y: 0, init: false });    // [ADDED]
-  const rFiltRef = useRef({ x: 0, y: 0, init: false });    // [ADDED]
-  const lOverCntRef = useRef(0);                           // [ADDED]
-  const rOverCntRef = useRef(0);                           // [ADDED]
-  const lastTsRef = useRef(0);                             // [ADDED]
+  const lPrevRef = useRef({ x: 0, y: 0, init: false });
+  const rPrevRef = useRef({ x: 0, y: 0, init: false });
+  const lFiltRef = useRef({ x: 0, y: 0, init: false });
+  const rFiltRef = useRef({ x: 0, y: 0, init: false });
+  const lOverCntRef = useRef(0);
+  const rOverCntRef = useRef(0);
+  const lastTsRef = useRef(0);
 
   // 튜닝 포인트
-  const EMA_ALPHA = 0.5;       // [ADDED] 0.5~0.7 추천
-  const HIT_MIN_FRAMES = 3;    // [ADDED] 연속 프레임 확증
-  const COOLDOWN_SEC = 0.6;    // [ADDED] 감지 후 쿨다운
+  const EMA_ALPHA = 0.5;
+  const HIT_MIN_FRAMES = 3;
+  const COOLDOWN_SEC = 0.6;
 
-  // Mediapipe 인덱스 (정규화 좌표)
-  const NOSE = 0, LS = 11, RS = 12, LE = 13, RE = 14, LW = 15, RW = 16; // [ADDED]
+  // Mediapipe 인덱스
+  const NOSE = 0, LS = 11, RS = 12, LE = 13, RE = 14, LW = 15, RW = 16;
 
   // 가드 자세 판정(정규화 y)
-  function isReadyPoseNorm(lm) {                                   // [ADDED]
+  function isReadyPoseNorm(lm) {
     const noseY = lm[NOSE].y;
     const LwY = lm[LW].y;
     const RwY = lm[RW].y;
@@ -134,19 +81,16 @@ const SingleTestPage = () => {
 
     return handInGuard && elbowsDown;
   }
-  const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);  // [ADDED]
-  /* ================================================================================ */
+  const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 
-  /*=====================================================================================
-    #init 게임 시작 초기 세팅
-  =====================================================================================*/
+  /* ================================ #init ================================ */
 
   // 카메라 시작
   const startCamera = async () => {
-    if (mediapipeCameraRef.current || (videoRef.current && videoRef.current.srcObject)) { // [ADDED] 중복 가드
+    if (mediapipeCameraRef.current || (videoRef.current && videoRef.current.srcObject)) {
       return;
     }
-    // 1) 로컬 카메라 열기
+    // 1) 로컬 카메라
     const stream = await navigator.mediaDevices.getUserMedia({
       video: { width: 640, height: 480, facingMode: 'user' },
       audio: false,
@@ -157,15 +101,15 @@ const SingleTestPage = () => {
     videoEl.srcObject = stream;
     videoEl.muted = true;
     videoEl.playsInline = true;
-    await new Promise(res => videoEl.onloadedmetadata = res);                // [MOD] 메타 로드 보장
-    const canvasEl = canvasRef.current;                                      // [MOD]
+    await new Promise(res => videoEl.onloadedmetadata = res);
+    const canvasEl = canvasRef.current;
     if (canvasEl) {
-      canvasEl.width = videoEl.videoWidth || 640;                            // [MOD]
-      canvasEl.height = videoEl.videoHeight || 480;                          // [MOD]
+      canvasEl.width = videoEl.videoWidth || 640;
+      canvasEl.height = videoEl.videoHeight || 480;
     }
-    await videoEl.play().catch(() => { /* 자동재생 차단 시 버튼 한번 더 눌러야 할 수 있음 */ });
+    await videoEl.play().catch(() => {});
 
-    // 2) MediaPipe Pose 설정
+    // 2) MediaPipe Pose
     const pose = new Pose({
       locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`,
     });
@@ -177,10 +121,10 @@ const SingleTestPage = () => {
       minTrackingConfidence: 0.5,
     });
 
-    /* =================== [MOD] 감지 로직 전면 교체 (안정화 + 잽/어퍼) =================== */
+    // ── 감지 로직: 잽/어퍼 구분 → action = 'left_jab' | 'right_uppercut' 등 ──
     pose.onResults((results) => {
-      const videoEl = videoRef.current;
       const canvasEl = canvasRef.current;
+      if (!canvasEl) return;
       const ctx = canvasEl.getContext('2d');
       ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
 
@@ -191,7 +135,8 @@ const SingleTestPage = () => {
         return;
       }
 
-      // (원하면 켜기) drawLandmarks(ctx, lm, { color: '#FF0000', radius: 3 }); // [KEPT OFF]
+      // (원하면 시각화) 
+      // drawLandmarks(ctx, lm, { color: '#FF0000', radius: 3 });
 
       const nowSec = performance.now() / 1000;
 
@@ -285,7 +230,7 @@ const SingleTestPage = () => {
         const rWS  = dist(rNow,   rSh0);
 
         // 왼손 판정
-        let lHit = false;
+        let lHitKind = null;
         const lJabCand   = (Math.abs(ldx) > JAB_X_TH || (lWS - lWS0) > JAB_DIST_GAIN)
                             && Math.abs(ldy) < JAB_FLAT_Y_MAX
                             && Math.abs(lvx) > VEL_X_TH;
@@ -294,13 +239,15 @@ const SingleTestPage = () => {
                             && (-lvy) > VEL_Y_TH;
         if (lJabCand || lUpperCand) {
           lOverCntRef.current++;
-          if (lOverCntRef.current >= Math.max(2, HIT_MIN_FRAMES - 1)) lHit = true;
+          if (lOverCntRef.current >= Math.max(2, HIT_MIN_FRAMES - 1)) {
+            lHitKind = lJabCand ? 'left_jab' : (lUpperCand ? 'left_uppercut' : null);
+          }
         } else {
           lOverCntRef.current = Math.max(0, lOverCntRef.current - 1);
         }
 
         // 오른손 판정
-        let rHit = false;
+        let rHitKind = null;
         const rJabCand   = (Math.abs(rdx) > JAB_X_TH || (rWS - rWS0) > JAB_DIST_GAIN)
                             && Math.abs(rdy) < JAB_FLAT_Y_MAX
                             && Math.abs(rvx) > VEL_X_TH;
@@ -309,14 +256,18 @@ const SingleTestPage = () => {
                             && (-rvy) > VEL_Y_TH;
         if (rJabCand || rUpperCand) {
           rOverCntRef.current++;
-          if (rOverCntRef.current >= Math.max(2, HIT_MIN_FRAMES - 1)) rHit = true;
+          if (rOverCntRef.current >= Math.max(2, HIT_MIN_FRAMES - 1)) {
+            rHitKind = rJabCand ? 'right_jab' : (rUpperCand ? 'right_uppercut' : null);
+          }
         } else {
           rOverCntRef.current = Math.max(0, rOverCntRef.current - 1);
         }
 
         // 트리거
-        if (lHit || rHit) {
-          setAction('punch');                       // [MOD] 기존 로직과 호환 유지 (자세히 쓰려면 여기서 매핑)
+        if (lHitKind || rHitKind) {
+          const motion = lHitKind || rHitKind;
+          setAction(motion);
+          // 다음 프레임에 idle로 복귀 (PixiCanvas 내부 애니메 재생 후 종료용)
           setTimeout(() => setAction('idle'), 0);
 
           lastActionAtRef.current = nowSec;
@@ -337,16 +288,13 @@ const SingleTestPage = () => {
         return;
       }
     });
-    /* =================== 감지 로직 전면 교체 끝 =================== */
 
-    // 3) MediaPipe Camera로 비디오 프레임 처리
+    // 3) MediaPipe Camera
     const cam = new Camera(videoEl, {
       onFrame: async () => {
         try {
           await pose.send({ image: videoEl });
-        } catch (e) {
-          // 처리 에러 무시
-        }
+        } catch {}
       },
       width: 640,
       height: 480,
@@ -359,12 +307,10 @@ const SingleTestPage = () => {
   const stopCamera = () => {
     mediapipeCameraRef.current?.stop();
     mediapipeCameraRef.current = null;
-
     if (mediaStreamRef.current) {
       mediaStreamRef.current.getTracks().forEach((t) => t.stop());
       mediaStreamRef.current = null;
     }
-
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
@@ -372,25 +318,10 @@ const SingleTestPage = () => {
 
   // 화면 들어오면 카메라 켜기
   useEffect(() => {
-    let mounted = true;
     (async () => {
-      try {
-        await startCamera();
-      } catch (e) {
-        console.error('카메라 시작 실패:', e);
-      }
+      try { await startCamera(); } catch (e) { console.error('카메라 시작 실패:', e); }
     })();
-    return () => {
-      mounted = false;
-      stopCamera();
-    };
-  }, []);
-
-  // 컴포넌트 언마운트 시 정리
-  useEffect(() => {
-    return () => {
-      stopCamera();
-    };
+    return () => { stopCamera(); };
   }, []);
 
   // #init01 BGM
@@ -398,28 +329,15 @@ const SingleTestPage = () => {
     if (audioRef.current) {
       audioRef.current.volume = 0.5;
       audioRef.current.loop = true;
-      audioRef.current.play().catch(() => { });
+      audioRef.current.play().catch(() => {});
     }
   }, []);
 
-  /*=====================================================================================
-    #init 게임 시작 초기 세팅 END
-  =====================================================================================*/
- 
-  /*=====================================================================================
-    #001 게임 시작 전
-  =====================================================================================*/
+  /* ============================ #001 게임 시작 전 ============================ */
 
-  //  빌딩 리스트 가져오기
   const [buildingList, setBuildingList] = useState([]);
-
   const currentBuilding = buildingList[buildingIndex] ?? null;
-
   const [playerSkin, setPlayerSkin] = useState("");
-
-  // const audioRef = useRef(null);            // [REMOVED] 중복 선언 방지 (상단으로 이동)
-  // const mediaStreamRef = useRef(null);      // [REMOVED]
-  // const mediapipeCameraRef = useRef(null);  // [REMOVED]
 
   useEffect(() => {
     const fetchBuildings = async () => {
@@ -427,9 +345,7 @@ const SingleTestPage = () => {
         const { data, status } = await api.get('/constructures/generate', {
           params: { count: 50 },
         });
-        if (status !== 200 || !data.isSuccess) {
-          throw new Error(data.message || `HTTP ${status}`);
-        }
+        if (status !== 200 || !data.isSuccess) throw new Error(data.message || `HTTP ${status}`);
         setBuildingList(data.result);
       } catch (err) {
         console.error('건물 리스트 로드 실패:', err);
@@ -488,8 +404,7 @@ const SingleTestPage = () => {
         return res.json();
       })
       .then((data) => {
-        console.log("✅ userInfo 결과", data);
-        if (data?.result?.userUuid && data?.result?.userNickname) {
+        if (data?.result?.userUuid) {
           setUserUuid(data.result.userUuid);
         } else {
           throw new Error("데이터 형식 오류");
@@ -501,18 +416,9 @@ const SingleTestPage = () => {
       });
   }, []);
 
-  useEffect(() => {
-    console.log('buildingList updated:', buildingList);
-  }, [buildingList]);
+  /* ============================ #002 게임 중 ============================ */
 
-  /*=====================================================================================
-    #001 게임 시작 전 END
-  =====================================================================================*/
-
-  /*=====================================================================================
-    #002 게임 중 
-  =====================================================================================*/
-
+  // 타이머(펀치 중이 아닐 때 감소) — action이 *_jab/*_uppercut이어도 감소시킬 거면 아래 조건 유지
   useEffect(() => {
     const interval = setInterval(() => {
       if (action !== 'punch') {
@@ -522,6 +428,7 @@ const SingleTestPage = () => {
     return () => clearInterval(interval);
   }, [action]);
 
+  // 콤보 새로 불러오면 인덱스 초기화
   useEffect(() => {
     if (Array.isArray(combo) && combo.length > 0) {
       setPatternIdx(0);
@@ -529,9 +436,14 @@ const SingleTestPage = () => {
     }
   }, [combo]);
 
+  // 액션에 따라 스텝 진행: punch 뿐 아니라 *_jab/*_uppercut도 허용
   const lastActionRef = useRef('idle');
   useEffect(() => {
-    if (action === 'punch' && lastActionRef.current !== 'punch') {
+    const isHit =
+      action === 'punch' ||
+      (typeof action === 'string' && (action.endsWith('_jab') || action.endsWith('_uppercut')));
+
+    if (isHit && lastActionRef.current !== action) {
       advanceStepOnce();
     }
     lastActionRef.current = action;
@@ -567,81 +479,9 @@ const SingleTestPage = () => {
     );
   }
 
-  // === 기존 상태/함수 (그대로 유지) ===
-  const STATE = useRef('get_ready');
-  const lastActionTime = useRef(0);
-  const cooldownSec = 1.0;
-  const startPositions = useRef({ left: null, right: null });
-  const motionTextRef = useRef(null);
-
-  function getLandmarkXY(lm, idx, width, height) {
-    const p = lm[idx];
-    return [Math.round(p.x * width), Math.round(p.y * height)];
-  }
-
-  function isReadyPose(lm, width, height, mpPose) {
-    const [, , , , , , , , , , , , R_SHOULDER, , , , R_WRIST] = Object.values(mpPose.PoseLandmark);
-    const L_WRIST = mpPose.PoseLandmark.LEFT_WRIST;
-    const R_WRIST_IDX = mpPose.PoseLandmark.RIGHT_WRIST;
-    const L_ELBOW = mpPose.PoseLandmark.LEFT_ELBOW;
-    const R_ELBOW = mpPose.PoseLandmark.RIGHT_ELBOW;
-    const L_SHOULDER = mpPose.PoseLandmark.LEFT_SHOULDER;
-    const R_SHOULDER_IDX = mpPose.PoseLandmark.RIGHT_SHOULDER;
-    const NOSE = mpPose.PoseLandmark.NOSE;
-
-    const [, noseY] = getLandmarkXY(lm, NOSE, width, height);
-    const [, lwY] = getLandmarkXY(lm, L_WRIST, width, height);
-    const [, rwY] = getLandmarkXY(lm, R_WRIST_IDX, width, height);
-    const [, leY] = getLandmarkXY(lm, L_ELBOW, width, height);
-    const [, reY] = getLandmarkXY(lm, R_ELBOW, width, height);
-    const [, lsY] = getLandmarkXY(lm, L_SHOULDER, width, height);
-    const [, rsY] = getLandmarkXY(lm, R_SHOULDER_IDX, width, height);
-
-    const hand_in_guard_range =
-      (noseY < lwY && lwY < lsY + 40) &&
-      (noseY < rwY && rwY < rsY + 40);
-
-    const elbows_down = (leY > lsY) && (reY > rsY);
-
-    return hand_in_guard_range && elbows_down;
-  }
-
-  function detectMotion(startXY, nowXY, axis = 'x', threshold = 60) {
-    if (!startXY || !nowXY) return [0, false];
-    const diff = axis === 'x' ? (nowXY[0] - startXY[0]) : (nowXY[1] - startXY[1]);
-    return [diff, Math.abs(diff) > threshold];
-  }
-
-  function classifyMotion(startXY, nowXY, hand = 'left') {
-    const dx = nowXY[0] - startXY[0];
-    const dy = nowXY[1] - startXY[1];
-    return Math.abs(dy) > Math.abs(dx) ? `${hand} uppercut` : `${hand} jab`;
-  }
-
-  function handleUserMove(moveCode) {
-    const current = combo[patternIdx];
-    if (!current || !Array.isArray(current.moves)) return;
-
-    const expected = current.moves[stepIdx];
-
-    if (moveCode === expected) {
-      setStepIdx(prev => prev + 1);
-
-      if (stepIdx + 1 >= current.moves.length) {
-        setDestroyedCount(c => c + 1);
-        setCoinCount(c => c + COIN_PER_BUILDING);
-        setPatternIdx(prev => (prev + 1) % combo.length);
-        setStepIdx(0);
-      }
-    } else {
-      // 페널티 원하면 여기서 처리
-    }
-  }
-
   function advanceStepOnce() {
     if (!Array.isArray(combo) || combo.length === 0) return;
     if (advanceLockRef.current) return;
-
     advanceLockRef.current = true;
 
     const current = combo[patternIdx];
@@ -650,6 +490,8 @@ const SingleTestPage = () => {
     setStepIdx(prev => {
       const next = prev + 1;
       if (next >= total) {
+        setDestroyedCount(c => c + 1);
+        setCoinCount(c => c + COIN_PER_BUILDING);
         setPatternIdx(p => (p + 1) % combo.length);
         return 0;
       }
@@ -659,23 +501,15 @@ const SingleTestPage = () => {
     setTimeout(() => { advanceLockRef.current = false; }, 250);
   }
 
-  /*=====================================================================================
-    #002 게임 중 END
-  =====================================================================================*/
-
-  /*=====================================================================================
-    #003 게임 종료
-  =====================================================================================*/
+  /* ============================ #003 게임 종료 ============================ */
 
   useEffect(() => {
-    if (timeover === 0) {
-      setIsGameOver(true);
-    }
+    if (timeover === 0) setIsGameOver(true);
   }, [timeover]);
 
-  /*=====================================================================================
-    #003 게임 종료 END
-  =====================================================================================*/
+  /* ============================ Render ============================ */
+
+  const [buildingListState] = [buildingList]; // (디버깅 로깅 원하면 사용)
 
   return (
     <div className="page-container">
@@ -693,9 +527,9 @@ const SingleTestPage = () => {
             <div className="progress-bar">
               <div className="progress-fill" style={{ width: `${timeover}%` }}></div>
             </div>
-            <div className="overlay-ui">
-              {renderCommandSequence()}
-            </div>
+
+            {/* 동적 콤보 시퀀스 표시 */}
+            {renderCommandSequence()}
           </div>
 
           <PixiCanvas
@@ -704,7 +538,7 @@ const SingleTestPage = () => {
             playerSkin={playerSkin}
             combo={combo}
             onBuildingDestroyed={(seq) => {
-              if (seq) setDestroyedSeqs(prev => [...prev, seq]);  // seq 저장
+              if (seq) setDestroyedSeqs(prev => [...prev, seq]);
               setBuildingIndex((prev) =>
                 buildingList.length === 0 ? 0 : (prev + 1) % buildingList.length
               );

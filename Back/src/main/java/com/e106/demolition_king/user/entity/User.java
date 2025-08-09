@@ -36,7 +36,7 @@ public class User implements UserDetails {
     @Column(name = "kakao_access_token", length = 500, unique = true)
     private String kakaoAccessToken;
     @Column(name = "google_access", length = 500, unique = true)
-    private String googleAccess;
+    private String googleSub;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "profile_seq")

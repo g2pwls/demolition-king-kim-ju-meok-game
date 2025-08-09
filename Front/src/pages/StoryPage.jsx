@@ -24,7 +24,14 @@ function StoryPage() {
   return (
     <AnimatedPage>
     <div className="story-background">
-      <TypewriterText text={storyText} speed={40} />
+      <TypewriterText text={storyText} speed={40} 
+      onDone={() => {
+            // ✅ 5초 뒤에 자동 이동
+            setTimeout(() => {
+              navigate('/main');
+            }, 1000);
+          }} />
+      
 
       <button
         className="skip-button"

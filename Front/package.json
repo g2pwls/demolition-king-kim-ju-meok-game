@@ -21,9 +21,9 @@
     "node-fetch": "^3.3.2",
     "openvidu-browser": "^2.31.0",
     "pixi.js": "^7.4.3",
-    "react": "^18.3.1",
-    "react-calendar": "^6.0.0",
-    "react-dom": "^18.3.1",
+    "react": "^18.2.0",
+    "react-calendar": "^3.7.0",
+    "react-dom": "^18.2.0",
     "react-router-dom": "^7.7.0",
     "recharts": "^3.1.0",
     "zustand": "^5.0.7"

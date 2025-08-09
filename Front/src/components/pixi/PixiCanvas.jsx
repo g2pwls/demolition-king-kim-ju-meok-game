@@ -7,22 +7,34 @@ import buildingDust1 from '../../assets/images/effects/building_dust_1.png';
 import buildingDust2 from '../../assets/images/effects/building_dust_2.png';
 import buildingDust3 from '../../assets/images/effects/building_dust_3.png';
 import crackTexture from '../../assets/images/effects/building_break.png';
+
+// 잽 프레임 이미지 (02, 04는 미사용이라 제거)
 import karina_final_anim_01 from '../../assets/images/karina/karina_final_anim_01.png';
 import karina_final_anim_03 from '../../assets/images/karina/karina_final_anim_03.png';
 import karina_final_anim_05 from '../../assets/images/karina/karina_final_anim_05.png';
 
-// [REMOVED] karina_final_anim_02, _04 import (미사용이라 삭제해도 됨)
+// 어퍼컷 전용 이미지
+import karina_upper from '../../assets/images/karina/karina_upper.png';
 
-const karinaFrames = [
+// 잽/어퍼컷 각각의 애니메이션 시퀀스
+const jabFrames = [
   karina_final_anim_01,
   karina_final_anim_03,
   karina_final_anim_05,
   karina_final_anim_05,
   karina_final_anim_03,
-  karina_final_anim_01
+  karina_final_anim_01,
 ];
 
-// [REMOVED] const buildingImages = [building1, building2, building3];  // API 이미지 사용으로 변경
+const uppercutFrames = [
+  karina_final_anim_01,
+  karina_final_anim_03,
+  karina_upper,
+  karina_upper,
+  karina_final_anim_03,
+  karina_final_anim_01,
+];
+
 const dustFrames = [buildingDust1, buildingDust2, buildingDust3, buildingDust2, buildingDust1];
 
 // ✅ building 객체를 받아서 imageUrl / hp를 사용
@@ -45,7 +57,7 @@ const PixiCanvas = ({
   const crackSpritesRef = useRef([]);
 
   const destroyedLock = useRef(false);
-  const [buildingHP, setBuildingHP] = useState(building?.hp ?? 100); // 초기 HP를 building에서
+  const [buildingHP, setBuildingHP] = useState(building?.hp ?? 100);
 
   const [isBuildingFalling, setIsBuildingFalling] = useState(false);
   const [isNewBuildingDropping, setIsNewBuildingDropping] = useState(false);
@@ -67,7 +79,7 @@ const PixiCanvas = ({
     pixiRef.current.appendChild(app.view);
     app.stage.sortableChildren = true;
 
-    loadAssets(app);
+    loadAssets();
 
     const handleResize = () => {
       app.renderer.resize(pixiRef.current.clientWidth, pixiRef.current.clientHeight);
@@ -171,28 +183,43 @@ const PixiCanvas = ({
     setBuildingHP(building.hp ?? 100);
   }, [building]);
 
-  // 펀치 애니메이션 트리거
+  // 🔥 액션별 애니메이션 선택 (jab vs uppercut) + 데미지 적용
   useEffect(() => {
     if (!boxerRef.current) return;
-    if (action === 'punch' && prevActionRef.current !== 'punch' && !isBuildingFalling && !isNewBuildingDropping) {
+
+    const isJab = typeof action === 'string' && (action === 'punch' || action.endsWith('_jab'));
+    const isUppercut = typeof action === 'string' && action.endsWith('_uppercut');
+
+    // 동일 action 중복 재생 방지 + 이동/붕괴 중 무시
+    if ((isJab || isUppercut) &&
+        prevActionRef.current !== action &&
+        !isBuildingFalling &&
+        !isNewBuildingDropping) {
+
+      const frames = isUppercut ? uppercutFrames : jabFrames;
       let i = 0;
       const interval = setInterval(() => {
-        if (i < karinaFrames.length) {
-          boxerRef.current.texture = PIXI.Texture.from(karinaFrames[i]);
+        if (!boxerRef.current) {
+          clearInterval(interval);
+          return;
+        }
+        if (i < frames.length) {
+          boxerRef.current.texture = PIXI.Texture.from(frames[i]);
           i++;
         } else {
           clearInterval(interval);
         }
       }, 80);
 
-      // [CHANGED] 데미지 조절: 기본 25 -> 100 예시
-      setBuildingHP((prev) => Math.max(prev - 100, 0));
+      const damage = isUppercut ? 100 : 25;
+      setBuildingHP((prev) => Math.max(prev - damage, 0));
       setKcal((prev) => prev + 1);
     }
-    prevActionRef.current = action;
-  }, [action, isNewBuildingDropping, isBuildingFalling]);
 
-  // HP 변화
+    prevActionRef.current = action;
+  }, [action, isNewBuildingDropping, isBuildingFalling, setKcal]);
+
+  // HP 변화 반영 (체력바/크랙/붕괴 트리거)
   useEffect(() => {
     if (healthBarRef.current) {
       const newWidth = (buildingHP / 100) * 200;
@@ -212,9 +239,9 @@ const PixiCanvas = ({
     if (buildingHP <= 0 && !isBuildingFalling) {
       setIsBuildingFalling(true);
     }
-  }, [buildingHP]);
+  }, [buildingHP, isBuildingFalling]);
 
-  // 건물 붕괴 → 먼지
+  // 건물 붕괴 → 먼지 → 콜백 → 신규 드랍 시작
   useEffect(() => {
     const b = buildingRef.current;
     const dust = dustSpriteRef.current;
@@ -228,6 +255,7 @@ const PixiCanvas = ({
       b.visible = false;
 
       interval = setInterval(() => {
+        if (!dust) return;
         if (frameIndex < dustFrames.length) {
           dust.texture = PIXI.Texture.from(dustFrames[frameIndex]);
           frameIndex++;
@@ -247,9 +275,9 @@ const PixiCanvas = ({
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isBuildingFalling, building]);
+  }, [isBuildingFalling, building, onBuildingDestroyed]);
 
-  // 새 건물 드랍
+  // 새 건물 드랍 애니메이션
   useEffect(() => {
     const app = appRef.current;
     const b = buildingRef.current;
