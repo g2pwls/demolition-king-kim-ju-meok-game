@@ -271,5 +271,10 @@ public class GameController {
 
         return BaseResponse.of(gameService.getGold(userUuid));
     }
+    @Operation(summary = "게임 콤보 생성", description = "게임 콤보 세트 100개를 생성합니다.")
+    @GetMapping("/generate/numeric")
+    public ResponseEntity<PatternNumericResponse> generateNumeric() {
+        return ResponseEntity.ok(gameService.generateNumeric());
+    }
 
 }

@@ -11,9 +11,7 @@ import com.e106.demolition_king.game.entity.ReportPerDate;
 import com.e106.demolition_king.game.repository.GoldRepository;
 import com.e106.demolition_king.game.repository.ReportPerDateRepository;
 import com.e106.demolition_king.game.repository.ReportRepository;
-import com.e106.demolition_king.game.vo.out.KcalPerDayResponseVo;
-import com.e106.demolition_king.game.vo.out.ReportUpdateResponseVo;
-import com.e106.demolition_king.game.vo.out.WeeklyReportVo;
+import com.e106.demolition_king.game.vo.out.*;
 import com.e106.demolition_king.user.dto.SignupRequestDto;
 import com.e106.demolition_king.user.entity.User;
 import com.e106.demolition_king.user.repository.UserRepository;
@@ -39,10 +37,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -208,5 +203,24 @@ public class GameServiceImpl implements GameService {
         gold.setGoldCnt(currentGold - spendGold);
         goldRepository.save(gold);
         return "정상처리 되었습니다.";
+    }
+
+    @Override
+    public PatternNumericResponse generateNumeric() {
+        var rnd = java.util.concurrent.ThreadLocalRandom.current();
+        List<PatternNumericSetVo> result = new ArrayList<>(100);
+
+        for (int i = 0; i < 100; i++) {
+            List<Integer> seq = new ArrayList<>(8);
+            int prev = -1, streak = 0; // 같은 값 3연속 방지(원하면 제거)
+            for (int j = 0; j < 8; j++) {
+                int pick;
+                do { pick = rnd.nextInt(3); } while (pick == prev && streak >= 2);
+                seq.add(pick);
+                if (pick == prev) streak++; else { prev = pick; streak = 1; }
+            }
+            result.add(new PatternNumericSetVo(i + 1, seq));
+        }
+        return new PatternNumericResponse(result);
     }
 }
