@@ -14,7 +14,8 @@
   border-bottom: 2px solid #ddd;
   width: 100%;
   max-width: 1280px;
-  position: fixed; top: 0;
+  position: fixed;
+  top: 0;
 }
 
 .top-controls h1 {
@@ -218,9 +219,11 @@
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  width: 650px; /* 필요에 따라 조절 */
+  width: 650px;
+  /* 필요에 따라 조절 */
   z-index: 1;
-  pointer-events: none; /* 마우스 이벤트 방지 */
+  pointer-events: none;
+  /* 마우스 이벤트 방지 */
 }
 
 .combo-overlay {
@@ -229,6 +232,16 @@
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 2;
+}
+
+.command-circle.current {
+  outline: 6px solid #ffd400;
+  transform: scale(1.06);
+}
+
+.command-circle.done {
+  opacity: .35;
+  filter: grayscale(40%);
 }
 .command-circle {
   display: flex;
