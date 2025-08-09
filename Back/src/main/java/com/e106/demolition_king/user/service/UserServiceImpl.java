@@ -318,4 +318,8 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         user.setProfile(profile);
     }
 
+    @Transactional
+    public void deleteByEmail(String email) {
+        userRepository.findByUserEmail(email).ifPresent(userRepository::delete);
+    }
 }

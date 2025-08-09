@@ -1,5 +1,7 @@
 package com.e106.demolition_king.config;
 
+import com.e106.demolition_king.social.controller.CustomAuthorizationRequestResolver;
+import com.e106.demolition_king.social.controller.OAuth2SuccessHandler;
 import com.e106.demolition_king.util.JwtAuthenticationFilter;
 import com.e106.demolition_king.util.JwtFilter;
 import jakarta.servlet.http.HttpSession;
@@ -28,13 +30,18 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+    private final OAuth2SuccessHandler successHandler;
+
+    private final CustomAuthorizationRequestResolver customAuthorizationRequestResolver;
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     private final JwtFilter jwtFilter;
 
     @Lazy
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, JwtFilter jwtFilter) {
+    public SecurityConfig(OAuth2SuccessHandler successHandler, CustomAuthorizationRequestResolver customAuthorizationRequestResolver, JwtAuthenticationFilter jwtAuthenticationFilter, JwtFilter jwtFilter) {
+        this.successHandler = successHandler;
+        this.customAuthorizationRequestResolver = customAuthorizationRequestResolver;
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;       // JwtFilter는 이미 빈으로 등록됨
         this.jwtFilter = jwtFilter;
     }
@@ -82,6 +89,16 @@ public class SecurityConfig {
                 .sessionManagement(sm ->                           // 세션도 사용 안 함
                         sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
+                .authorizeHttpRequests(auth -> auth
+                        // 이 한 줄이면 모든 엔드포인트를 인증 없이 허용합니다
+                        .anyRequest().permitAll()
+                )
+                .oauth2Login(oauth -> oauth
+                        .authorizationEndpoint(a -> a.authorizationRequestResolver(customAuthorizationRequestResolver))
+                        // 시작: /oauth2/authorization/google
+                        // 콜백: /login/oauth2/code/google
+                        .successHandler(successHandler)
+                )
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login")
@@ -92,11 +109,7 @@ public class SecurityConfig {
                         .logoutSuccessHandler((request, response, authentication) ->
                                 response.sendRedirect("/login"))
                         .deleteCookies("JSESSIONID", "refresh_token"))
-                .authorizeHttpRequests(auth ->
-                        auth
-                                // 이 한 줄이면 모든 엔드포인트를 인증 없이 허용합니다
-                                .anyRequest().permitAll()
-                );
+                ;
         return http.build();
     }
     /* 일단 모든 경로 허용해둠
