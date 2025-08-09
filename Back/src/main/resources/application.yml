@@ -2,6 +2,19 @@
 spring:
   application:
     name: demolition_king
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: "924162530362-nserdscd1mbh7r01u76upukkfrfon7mo.apps.googleusercontent.com"
+            client-secret: "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"
+            scope: [ openid, email, profile ]
+            redirect-uri: "https://i13e106.p.ssafy.io/login/oauth2/code/google"
+          provider:
+            google:
+              issuer-uri: https://accounts.google.com
+
 
   datasource:
     #001
@@ -42,6 +55,7 @@ spring:
 
 server:
   port: 8080
+  forward-headers-strategy: framework
 
 springdoc:
   swagger-ui:
