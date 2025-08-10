@@ -1,6 +1,12 @@
-// ✅ MultiLobbyPage.jsx
+// ✅ src/pages/MultiLobbyPage.jsx
 import React, { useEffect, useState, useRef } from "react";
-import { createLocalAudioTrack, Room, RoomEvent } from "livekit-client";
+import {
+  createLocalAudioTrack,
+  createLocalVideoTrack,
+  Room,
+  RoomEvent,
+  Track,
+} from "livekit-client";
 import { useNavigate } from "react-router-dom";
 import awaitroomBg from "../assets/images/awaitroom/awaitroom.png";
 import characterBack from "../assets/images/awaitroom/awaitroom.png"; // 안 쓰면 삭제해도 됨
@@ -16,12 +22,41 @@ const NEXT_GAME_PATH = "/multiplay";
 // 👉 시작 신호 페이로드(충돌 방지를 위해 특이한 문자열 사용)
 const GAME_START_SIGNAL = "__GAME_START__";
 
+// --- LiveKit 비디오 타일 (트랙 attach 전용) ---
+function LKVideoTile({ track, muted }) {
+  const vref = useRef(null);
+  useEffect(() => {
+    if (!track || !vref.current) return;
+    track.attach(vref.current);
+    return () => {
+      try {
+        track.detach(vref.current);
+      } catch {}
+    };
+  }, [track]);
+  return (
+      <video
+          ref={vref}
+          autoPlay
+          playsInline
+          muted={!!muted}
+          className="slot-video"
+      />
+  );
+}
+
 function MultiLobbyPage() {
   const navigate = useNavigate();
 
   const [participants, setParticipants] = useState([]); // 원격 참가자 identity 리스트
   const [room, setRoom] = useState(undefined);
+
+  // 원격 비디오 트랙들: [{ sid, participantIdentity, track }]
   const [remoteTracks, setRemoteTracks] = useState([]);
+
+  // 내 비디오 트랙
+  const [localVideoTrack, setLocalVideoTrack] = useState(null);
+
   const [roomName, setRoomName] = useState("Test Room");
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState("");
@@ -57,7 +92,6 @@ function MultiLobbyPage() {
           return res.json();
         })
         .then((data) => {
-          console.log("✅ userInfo 결과", data);
           if (data?.result?.userUuid && data?.result?.userNickname) {
             const name = data.result.userNickname;
             setUserUuid(data.result.userUuid);
@@ -83,24 +117,37 @@ function MultiLobbyPage() {
     const newRoom = new Room();
     setRoom(newRoom);
 
-    // 원격 트랙 구독/해제
-    newRoom.on(RoomEvent.TrackSubscribed, (_track, publication, participant) => {
-      setRemoteTracks((prev) => [
-        ...prev,
-        { trackPublication: publication, participantIdentity: participant.identity },
-      ]);
-    });
+    // 원격 트랙 구독
+    newRoom.on(
+        RoomEvent.TrackSubscribed,
+        (track, publication, participant) => {
+          // 비디오만 관리
+          if (track.kind !== Track.Kind.Video) return;
+          setRemoteTracks((prev) => [
+            ...prev,
+            {
+              sid: publication.trackSid,
+              participantIdentity: participant.identity,
+              track,
+            },
+          ]);
+        }
+    );
 
-    newRoom.on(RoomEvent.TrackUnsubscribed, (_track, publication) => {
-      setRemoteTracks((prev) =>
-          prev.filter((t) => t.trackPublication.trackSid !== publication.trackSid)
-      );
-    });
+    // 원격 트랙 해제
+    newRoom.on(
+        RoomEvent.TrackUnsubscribed,
+        (_track, publication /* , participant */) => {
+          if (publication.kind !== Track.Kind.Video) return;
+          setRemoteTracks((prev) =>
+              prev.filter((t) => t.sid !== publication.trackSid)
+          );
+        }
+    );
 
     // 참가/퇴장 이벤트로 participants(원격만) 갱신
     newRoom.on(RoomEvent.ParticipantConnected, (participant) => {
       setParticipants((prev) => {
-        // 중복 방지
         if (prev.includes(participant.identity)) return prev;
         return [...prev, participant.identity];
       });
@@ -108,7 +155,13 @@ function MultiLobbyPage() {
     });
 
     newRoom.on(RoomEvent.ParticipantDisconnected, (participant) => {
-      setParticipants((prev) => prev.filter((id) => id !== participant.identity));
+      setParticipants((prev) =>
+          prev.filter((id) => id !== participant.identity)
+      );
+      // 해당 참가자의 비디오 트랙도 정리
+      setRemoteTracks((prev) =>
+          prev.filter((t) => t.participantIdentity !== participant.identity)
+      );
       console.log("참가자 퇴장:", participant.identity);
     });
 
@@ -131,12 +184,17 @@ function MultiLobbyPage() {
     try {
       const token = await getToken(roomName, nickName, userUuid);
       await newRoom.connect(LIVEKIT_URL, token);
-      const audioTrack = await createLocalAudioTrack();
-      await newRoom.localParticipant.publishTrack(audioTrack);
 
-      // 로컬은 별도 관리(슬롯에는 userUuid를 고정 사용)
-      // 필요 시 participants에 로컬 identity를 넣지 않도록 유지
-      // setParticipants((prev) => [...prev]); // 로컬 별도 표기니까 추가 안 함
+      // ✅ 로컬 오디오/비디오 퍼블리시
+      const audioTrack = await createLocalAudioTrack();
+      const videoTrack = await createLocalVideoTrack();
+
+      await newRoom.localParticipant.publishTrack(audioTrack);
+      await newRoom.localParticipant.publishTrack(videoTrack);
+
+      setLocalVideoTrack(videoTrack); // 내 슬롯에 표시용
+
+      // participants 배열은 원격만 관리(로컬은 userUuid로 슬롯 고정)
     } catch (error) {
       console.log("❌ 연결 오류:", error.message);
       await leaveRoom();
@@ -150,6 +208,7 @@ function MultiLobbyPage() {
       setRoom(undefined);
       setRemoteTracks([]);
       setParticipants([]);
+      setLocalVideoTrack(null);
     }
   }
 
@@ -175,8 +234,13 @@ function MultiLobbyPage() {
   async function sendMessage() {
     if (!room || !chatInput.trim()) return;
     const encoder = new TextEncoder();
-    await room.localParticipant.publishData(encoder.encode(chatInput), { reliable: true });
-    setChatMessages((prev) => [...prev, { sender: nickName, message: chatInput }]);
+    await room.localParticipant.publishData(encoder.encode(chatInput), {
+      reliable: true,
+    });
+    setChatMessages((prev) => [
+      ...prev,
+      { sender: nickName, message: chatInput },
+    ]);
     setChatInput("");
   }
 
@@ -206,6 +270,20 @@ function MultiLobbyPage() {
       replace: true,
     });
   }
+
+  // 슬롯마다 트랙 찾아 꽂기
+  const renderSlotContent = (uuid) => {
+    if (!uuid) return null;
+    if (uuid === userUuid) {
+      // 내 슬롯
+      return localVideoTrack ? (
+          <LKVideoTile track={localVideoTrack} muted />
+      ) : null;
+    }
+    // 친구 슬롯
+    const remote = remoteTracks.find((t) => t.participantIdentity === uuid);
+    return remote?.track ? <LKVideoTile track={remote.track} /> : null;
+  };
 
   return (
       <>
@@ -274,20 +352,24 @@ function MultiLobbyPage() {
                           key={idx}
                           className={`character-slot ${uuid ? "filled" : "empty"}`}
                           data-uuid={uuid || ""}
-                      />
+                      >
+                        {renderSlotContent(uuid)}
+                      </div>
                   ))}
                 </div>
 
                 {/* ✅ 시작 버튼(슬롯 아래 배치) */}
                 <div className="start-area">
-                  <div className="player-count">
-                    인원: {filledCount} / 4
-                  </div>
+                  <div className="player-count">인원: {filledCount} / 4</div>
                   <button
                       className="start-button"
                       disabled={!isRoomFull}
                       onClick={startGame}
-                      title={isRoomFull ? "게임을 시작합니다" : "4명이 모이면 시작할 수 있어요"}
+                      title={
+                        isRoomFull
+                            ? "게임을 시작합니다"
+                            : "4명이 모이면 시작할 수 있어요"
+                      }
                   >
                     게임 시작
                   </button>
