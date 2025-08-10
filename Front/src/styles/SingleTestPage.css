@@ -89,7 +89,7 @@
 
 .command-sequence {
   display: flex;
-  gap: 5px;
+  gap: 15px;
 }
 
 .command-circle {
@@ -102,6 +102,19 @@
   font-size: 14px;
   font-weight: bold;
   color: white;
+  border: 2px solid #333;
+}
+
+.command-circle.red {
+  background-color: #ff4444;
+}
+
+.command-circle.green {
+  background-color: #44ff44;
+}
+
+.command-circle.black {
+  background-color: #333333;
 }
 
 .right-panel {
@@ -220,10 +233,10 @@
   left: 50%;
   transform: translateX(-50%);
   width: 650px;
-  /* 필요에 따라 조절 */
+  /* 필요에 따라 조절 /
   z-index: 1;
   pointer-events: none;
-  /* 마우스 이벤트 방지 */
+  / 마우스 이벤트 방지 */
 }
 
 .combo-overlay {
@@ -242,29 +255,4 @@
 .command-circle.done {
   opacity: .35;
   filter: grayscale(40%);
-}
-.command-circle {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 60px; /* 이미지 크기에 맞게 조정 */
-  height: 60px; /* 이미지 크기에 맞게 조정 */
-  border-radius: 50%;
-  margin: 5px;
-  background-size: contain; /* 이미지 비율에 맞게 크기 조정 */
-  background-repeat: no-repeat; /* 이미지 반복 안 함 */
-  background-position: center; /* 이미지 중앙 배치 */
-}
-.combob-bg {
-  position: relative;
-  width: 100%;
-  height: 70px;  /* 적절한 높이 조정 */
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-position: center;
-}
-.character-grid1 {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr); /* 가로 2칸 */
-  grid-template-rows: repeat(3, auto);  /* 세로 3칸 */
 }
