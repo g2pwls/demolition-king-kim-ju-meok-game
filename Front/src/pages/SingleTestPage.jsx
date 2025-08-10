@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Pose } from '@mediapipe/pose';
+// import { Pose } from '@mediapipe/pose';
+import * as mpPose from '@mediapipe/pose';
 import { Camera } from '@mediapipe/camera_utils';
 import { drawLandmarks } from '@mediapipe/drawing_utils';
 import PixiCanvas from '../components/pixi/PixiCanvas';
@@ -35,7 +36,7 @@ import "../styles/SingleTestPage.css";
     - 스킨 적용  (userSkin은 가져왔지만 skin 적용 후 작업 해주기) 애니메이션 작업해주기 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> (작업 필요)
     - quit 버튼 경로 작업 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> (작업 필요)
     - combo 100개 다 끝나면 인덱스 초기화 (완)
-    - 빌딩 부술때 마다 배열에 빌딩 키 추가 
+    - 빌딩 부술때 마다 배열에 빌딩 키 추가 (완)
     - 플레이 시간 계산 추가 (완)
     
 #003
@@ -187,9 +188,17 @@ const SingleTestPage = () => {
     await videoEl.play().catch(() => { /* 자동재생 차단 시 버튼 한번 더 눌러야 할 수 있음 */ });
 
     // 2) MediaPipe Pose 설정
-    const pose = new Pose({
-      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`,
-    });
+
+    // const pose = new Pose({
+    //   locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`,
+    // });
+
+   const pose = new mpPose.Pose({
+    locateFile: (file) =>
+ //    `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`,
+     `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/${file}`, // ✅ 버전 고정
+  });
+
     pose.setOptions({
       modelComplexity: 0,
       smoothLandmarks: true,
