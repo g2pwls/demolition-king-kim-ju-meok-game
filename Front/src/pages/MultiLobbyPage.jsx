@@ -1,6 +1,7 @@
 // ✅ MultiLobbyPage.jsx
 import React, { useEffect, useState, useRef } from "react";
 import { createLocalAudioTrack, Room, RoomEvent } from "livekit-client";
+import { useNavigate } from "react-router-dom";
 import awaitroomBg from "../assets/images/awaitroom/awaitroom.png";
 import characterBack from "../assets/images/awaitroom/awaitroom.png"; // 안 쓰면 삭제해도 됨
 import api from "../utils/api"; // 안 쓰면 삭제해도 됨
@@ -9,15 +10,23 @@ import "../styles/MultiLobbyPage.css";
 const APPLICATION_SERVER_URL = "http://localhost:6080/";
 const LIVEKIT_URL = "ws://localhost:7880/";
 
+// 👉 게임 페이지 라우트 경로(원하는 경로로 바꿔도 됨)
+const NEXT_GAME_PATH = "/multiplay";
+
+// 👉 시작 신호 페이로드(충돌 방지를 위해 특이한 문자열 사용)
+const GAME_START_SIGNAL = "__GAME_START__";
+
 function MultiLobbyPage() {
-  const [participants, setParticipants] = useState([]);
+  const navigate = useNavigate();
+
+  const [participants, setParticipants] = useState([]); // 원격 참가자 identity 리스트
   const [room, setRoom] = useState(undefined);
   const [remoteTracks, setRemoteTracks] = useState([]);
   const [roomName, setRoomName] = useState("Test Room");
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState("");
 
-  const chatListRef = useRef(null); // ✅ 채팅 리스트 ref
+  const chatListRef = useRef(null);
   const [nickName, setNickName] = useState("");
   const [userUuid, setUserUuid] = useState("");
 
@@ -25,52 +34,56 @@ function MultiLobbyPage() {
   useEffect(() => {
     const el = chatListRef.current;
     if (!el) return;
-    // 레이아웃 반영 후 스크롤 (이미지/폰트 로딩 보정)
     requestAnimationFrame(() => {
       el.scrollTop = el.scrollHeight;
     });
   }, [chatMessages]);
 
   // ✅ 유저 정보 불러오기
-  // ✅ 유저 정보 불러오기
-useEffect(() => {
-  const accessToken = localStorage.getItem("accessToken"); // 🔹 저장된 토큰 불러오기
+  useEffect(() => {
+    const accessToken = localStorage.getItem("accessToken");
 
-  if (!accessToken) {
-    alert("로그인이 필요합니다.");
-    return;
-  }
+    if (!accessToken) {
+      alert("로그인이 필요합니다.");
+      return;
+    }
 
-  fetch("https://i13e106.p.ssafy.io/api/user/auth/getUserInfo", {
-    method: "GET",
-    headers: { Authorization: `Bearer ${accessToken}` },
-  })
-    .then((res) => {
-      if (!res.ok) throw new Error("응답 오류 " + res.status);
-      return res.json();
+    fetch("https://i13e106.p.ssafy.io/api/user/auth/getUserInfo", {
+      method: "GET",
+      headers: { Authorization: `Bearer ${accessToken}` },
     })
-    .then((data) => {
-      console.log("✅ userInfo 결과", data);
-      if (data?.result?.userUuid && data?.result?.userNickname) {
-        const name = data.result.userNickname;
-        setUserUuid(data.result.userUuid);
-        setNickName(name);
-        setRoomName(`${name}의방`);
-      } else {
-        throw new Error("데이터 형식 오류");
-      }
-    })
-    .catch((err) => {
-      console.error("❌ 유저 정보 조회 실패", err);
-      alert("유저 정보를 가져오는 데 실패했습니다.");
-    });
-}, []);
+        .then((res) => {
+          if (!res.ok) throw new Error("응답 오류 " + res.status);
+          return res.json();
+        })
+        .then((data) => {
+          console.log("✅ userInfo 결과", data);
+          if (data?.result?.userUuid && data?.result?.userNickname) {
+            const name = data.result.userNickname;
+            setUserUuid(data.result.userUuid);
+            setNickName(name);
+            setRoomName(`${name}의방`);
+          } else {
+            throw new Error("데이터 형식 오류");
+          }
+        })
+        .catch((err) => {
+          console.error("❌ 유저 정보 조회 실패", err);
+          alert("유저 정보를 가져오는 데 실패했습니다.");
+        });
+  }, []);
 
+  // 👉 2x2 슬롯 채우기용 배열 & 현재 인원 수
+  const displayUuids = [userUuid, ...participants].slice(0, 4);
+  while (displayUuids.length < 4) displayUuids.push(null);
+  const filledCount = displayUuids.filter(Boolean).length;
+  const isRoomFull = filledCount === 4;
 
   async function joinRoom() {
     const newRoom = new Room();
     setRoom(newRoom);
 
+    // 원격 트랙 구독/해제
     newRoom.on(RoomEvent.TrackSubscribed, (_track, publication, participant) => {
       setRemoteTracks((prev) => [
         ...prev,
@@ -80,12 +93,17 @@ useEffect(() => {
 
     newRoom.on(RoomEvent.TrackUnsubscribed, (_track, publication) => {
       setRemoteTracks((prev) =>
-        prev.filter((track) => track.trackPublication.trackSid !== publication.trackSid)
+          prev.filter((t) => t.trackPublication.trackSid !== publication.trackSid)
       );
     });
 
+    // 참가/퇴장 이벤트로 participants(원격만) 갱신
     newRoom.on(RoomEvent.ParticipantConnected, (participant) => {
-      setParticipants((prev) => [...prev, participant.identity]);
+      setParticipants((prev) => {
+        // 중복 방지
+        if (prev.includes(participant.identity)) return prev;
+        return [...prev, participant.identity];
+      });
       console.log("참가자 입장:", participant.identity);
     });
 
@@ -94,9 +112,20 @@ useEffect(() => {
       console.log("참가자 퇴장:", participant.identity);
     });
 
+    // 데이터 채널 수신(채팅 + 게임 시작 신호)
     newRoom.on(RoomEvent.DataReceived, (payload, participant) => {
       const message = new TextDecoder().decode(payload);
-      setChatMessages((prev) => [...prev, { sender: participant.identity, message }]);
+
+      if (message === GAME_START_SIGNAL) {
+        // ✅ 누가 눌러도 모든 클라이언트가 동시에 이동
+        goToGame();
+        return;
+      }
+
+      setChatMessages((prev) => [
+        ...prev,
+        { sender: participant?.identity ?? "system", message },
+      ]);
     });
 
     try {
@@ -104,7 +133,10 @@ useEffect(() => {
       await newRoom.connect(LIVEKIT_URL, token);
       const audioTrack = await createLocalAudioTrack();
       await newRoom.localParticipant.publishTrack(audioTrack);
-      setParticipants((prev) => [...prev, newRoom.localParticipant.identity]);
+
+      // 로컬은 별도 관리(슬롯에는 userUuid를 고정 사용)
+      // 필요 시 participants에 로컬 identity를 넣지 않도록 유지
+      // setParticipants((prev) => [...prev]); // 로컬 별도 표기니까 추가 안 함
     } catch (error) {
       console.log("❌ 연결 오류:", error.message);
       await leaveRoom();
@@ -112,9 +144,13 @@ useEffect(() => {
   }
 
   async function leaveRoom() {
-    await room?.disconnect();
-    setRoom(undefined);
-    setRemoteTracks([]);
+    try {
+      await room?.disconnect();
+    } finally {
+      setRoom(undefined);
+      setRemoteTracks([]);
+      setParticipants([]);
+    }
   }
 
   async function getToken(roomName, nickName, userUuid) {
@@ -144,112 +180,164 @@ useEffect(() => {
     setChatInput("");
   }
 
-  const displayUuids = [userUuid, ...participants].slice(0, 4);
-  while (displayUuids.length < 4) displayUuids.push(null);
+  // ✅ 게임 시작 브로드캐스트 + 즉시 이동
+  async function startGame() {
+    if (!room || !isRoomFull) return;
+    const encoder = new TextEncoder();
+    try {
+      await room.localParticipant.publishData(
+          encoder.encode(GAME_START_SIGNAL),
+          { reliable: true }
+      );
+    } catch (e) {
+      console.warn("게임 시작 신호 전송 실패(무시 가능):", e);
+    }
+    goToGame();
+  }
+
+  function goToGame() {
+    // 필요하면 state에 방 정보/멤버 전달
+    navigate(NEXT_GAME_PATH, {
+      state: {
+        roomName,
+        // 멤버 식별: 로컬은 userUuid, 원격은 identity(닉네임)로 전달 중
+        members: displayUuids.filter(Boolean),
+      },
+      replace: true,
+    });
+  }
 
   return (
-    <>
-      {!room ? (
-        <div
-          id="join"
-          style={{
-            width: "100vw",
-            height: "100vh",
-            backgroundImage: `url(${awaitroomBg})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            backgroundRepeat: "no-repeat",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <div id="join-dialog">
-            <h2>Join a Room</h2>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                joinRoom();
-              }}
-            >
-              <div id="roombox">
-                <label htmlFor="room-name">방제목</label>
-                <input
-                  id="room-name"
-                  type="text"
-                  value={roomName}
-                  onChange={(e) => setRoomName(e.target.value)}
-                  required
-                />
-              </div>
-              <button type="submit" disabled={!roomName || !nickName}>
-                입장하기
-              </button>
-            </form>
-          </div>
-        </div>
-      ) : (
-        <div
-          id="room"
-          style={{
-            width: "100vw",
-            height: "100vh",
-            backgroundImage: `url(${awaitroomBg})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            backgroundRepeat: "no-repeat",
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "flex-start",
-            gap: 24,
-            padding: 20,
-          }}
-        >
-          {/* ⬅ 슬롯 래퍼 */}
-          <div className="slot-wrapper">
-            <div className="character-grid">
-              {displayUuids.map((uuid, idx) => (
-                <div
-                  key={idx}
-                  className={`character-slot ${uuid ? "filled" : "empty"}`}
-                  data-uuid={uuid || ""}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* ⬅ 채팅 래퍼 */}
-          <div className="chat-wrapper">
-            <div id="chat-section" className="chat-box">
-              <div id="chat-title">CHAT</div>
-              <div id="chat-messages" ref={chatListRef}>
-                {chatMessages.map((msg, idx) => (
-                  <div className="chat-message" key={idx}>
-                    <span className="chat-sender">{msg.sender}:</span> {msg.message}
-                  </div>
-                ))}
-              </div>
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  sendMessage();
+      <>
+        {!room ? (
+            <div
+                id="join"
+                style={{
+                  width: "100vw",
+                  height: "100vh",
+                  backgroundImage: `url(${awaitroomBg})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  backgroundRepeat: "no-repeat",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
-                id="chat-input-container"
-              >
-                <input
-                  type="text"
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  placeholder="채팅을 입력하세요..."
-                />
-                <button type="submit">전송</button>
-              </form>
+            >
+              <div id="join-dialog">
+                <h2>Join a Room</h2>
+                <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      joinRoom();
+                    }}
+                >
+                  <div id="roombox">
+                    <label htmlFor="room-name">방제목</label>
+                    <input
+                        id="room-name"
+                        type="text"
+                        value={roomName}
+                        onChange={(e) => setRoomName(e.target.value)}
+                        required
+                    />
+                  </div>
+                  <button type="submit" disabled={!roomName || !nickName}>
+                    입장하기
+                  </button>
+                </form>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
-    </>
+        ) : (
+            <div
+                id="room"
+                style={{
+                  width: "100vw",
+                  height: "100vh",
+                  backgroundImage: `url(${awaitroomBg})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  backgroundRepeat: "no-repeat",
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "flex-start",
+                  gap: 24,
+                  padding: 20,
+                }}
+            >
+              {/* ⬅ 슬롯 래퍼 */}
+              <div className="slot-wrapper">
+                <div className="character-grid">
+                  {displayUuids.map((uuid, idx) => (
+                      <div
+                          key={idx}
+                          className={`character-slot ${uuid ? "filled" : "empty"}`}
+                          data-uuid={uuid || ""}
+                      />
+                  ))}
+                </div>
+
+                {/* ✅ 시작 버튼(슬롯 아래 배치) */}
+                <div className="start-area">
+                  <div className="player-count">
+                    인원: {filledCount} / 4
+                  </div>
+                  <button
+                      className="start-button"
+                      disabled={!isRoomFull}
+                      onClick={startGame}
+                      title={isRoomFull ? "게임을 시작합니다" : "4명이 모이면 시작할 수 있어요"}
+                  >
+                    게임 시작
+                  </button>
+                </div>
+              </div>
+
+              {/* ⬅ 채팅 래퍼 */}
+              <div className="chat-wrapper">
+                <div id="chat-section" className="chat-box">
+                  <div id="chat-title">CHAT</div>
+                  <div id="chat-messages" ref={chatListRef}>
+                    {chatMessages.map((msg, idx) => (
+                        <div
+                            className={`chat-message ${
+                                msg.sender === nickName ? "me" : "other"
+                            }`}
+                            key={idx}
+                        >
+                          {/* 아바타 자리(원하면 이미지 연결) */}
+                          <div className="avatar" />
+                          <div className="bubble">
+                            {msg.message}
+                            <div className="meta">
+                              <span className="name">{msg.sender}</span>
+                              {/* 시간 찍고 싶으면 여기서 포맷팅해서 추가 */}
+                            </div>
+                          </div>
+                        </div>
+                    ))}
+                  </div>
+                  <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        sendMessage();
+                      }}
+                      id="chat-input-container"
+                  >
+                    <input
+                        type="text"
+                        value={chatInput}
+                        onChange={(e) => setChatInput(e.target.value)}
+                        placeholder="채팅을 입력하세요..."
+                    />
+                    <button type="submit">전송</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+        )}
+      </>
   );
 }
 

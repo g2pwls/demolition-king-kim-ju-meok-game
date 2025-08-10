@@ -22,6 +22,7 @@ import ResetPasswordPage from "./pages/ResetPasswordPage";
 import SingleTestPage from "./pages/SingleTestPage";
 import MultiLobbyPage from "./pages/MultiLobbyPage";         // ✅ 추가
 import MultiModeEntryPage from "./pages/MultiModeEntryPage"; // ✅ 추가
+import MultiPlayPage from "./pages/MultiPlayPage";
 
 // 컴포넌트 import
 import AppLayout from "./components/AppLayout";
@@ -39,6 +40,7 @@ function AppRoutes() {
         <Route path="/signup" element={<AppLayout><SignupPage /></AppLayout>} />
         <Route path="/password" element={<AppLayout><PasswordPage /></AppLayout>} />
         <Route path="/resetpassword" element={<AppLayout><ResetPasswordPage /></AppLayout>} />
+        <Route path="/multiplay" element={<MultiPlayPage />} />
 
         {/* Protected Routes */}
         <Route
