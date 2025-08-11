@@ -1,10 +1,13 @@
 // src/pages/StoryPage.jsx
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import '../styles/StoryPage.css';
 import TypewriterText from '../components/TypewriterText';
 import { useNavigate, useLocation } from 'react-router-dom';
 import AnimatedPage from '../components/AnimatedPage';
 import api from '../utils/api';
+
+// 🔊 타이핑 효과음(BGM처럼 루프)
+import keyboardBgm from '../assets/sounds/keyboard_bgm.wav';
 
 function StoryPage() {
   const navigate = useNavigate();
@@ -43,6 +46,7 @@ function StoryPage() {
     })();
   }, []);
   const storyText = `
+
   한때, 그는 대한민국 복싱계를 뒤흔든 레전드였다.
 하지만 세월은 흘렀고, 
 지금 그는 낡은 철거 건물들을 부수는 일용직 노동자로 살아간다. 
@@ -56,25 +60,58 @@ function StoryPage() {
 
 다시, 주먹 하나로 모든 걸 무너뜨릴 시간이다.`;
 
+  // ⏹ 타이핑 종료 시 효과음 멈춤 후 이동
+  const handleDone = () => {
+    const audio = audioRef.current;
+    if (audio) {
+      try {
+        audio.pause();
+        audio.currentTime = 0;
+      } catch {}
+    }
+    setTimeout(() => navigate('/main'), 1000);
+  };
+
+  // ⏹ SKIP 시도 시에도 효과음 정지
+  const handleSkip = () => {
+    const audio = audioRef.current;
+    if (audio) {
+      try {
+        audio.pause();
+        audio.currentTime = 0;
+      } catch {}
+    }
+    navigate('/main');
+  };
+
   return (
     <AnimatedPage>
-    <div className="story-background">
-      <TypewriterText text={storyText} speed={40} 
-      onDone={() => {
-            // ✅ 5초 뒤에 자동 이동
-            setTimeout(() => {
-              navigate('/main');
-            }, 1000);
-          }} />
-      
+      <div className="story-background">
+        {/* 🔊 루프 BGM (타이핑 중만 재생) */}
+        <audio ref={audioRef} src={keyboardBgm} preload="auto" />
 
-      <button
-        className="skip-button"
-        onClick={() => navigate('/main')}
-      >
-        SKIP →
-      </button>
-    </div>
+        {/* 자동재생 차단 해제 버튼 */}
+        {soundLocked && (
+          <button
+            onClick={() =>
+              audioRef.current?.play().then(() => setSoundLocked(false)).catch(() => {})
+            }
+            style={{
+              position: 'fixed', top: 16, right: 16, zIndex: 9999,
+              padding: '8px 12px', borderRadius: 8, border: '1px solid #ccc',
+              background: '#111', color: '#fff', cursor: 'pointer'
+            }}
+          >
+            🔊 사운드 켜기
+          </button>
+        )}
+
+        <TypewriterText text={storyText} speed={40} onDone={handleDone} />
+
+        <button className="skip-button" onClick={handleSkip}>
+          SKIP →
+        </button>
+      </div>
     </AnimatedPage>
   );
 }
