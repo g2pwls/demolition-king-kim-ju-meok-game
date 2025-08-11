@@ -11,6 +11,7 @@ import AnimatedPage from '../components/AnimatedPage';
 import timerIcon from '../assets/images/singlemode/timer.png';
 import singleBgm from '../assets/sounds/single_bgm.wav';
 
+
 /*
 // 시간상 관계로 코드 하드코딩 세팅 이용해야함. Cntrl + F
 - #TIMERSETTING : 타이머 값 수정 #TIMERSETTING
@@ -280,7 +281,7 @@ const SingleTestPage = () => {
         try {
           drawing.drawLandmarks(lm);
           // 연결선은 버전/타입 이슈 있으면 주석
-          drawing.drawConnectors(lm, PoseLandmarker.POSE_CONNECTIONS);
+          // drawing.drawConnectors(lm, PoseLandmarker.POSE_CONNECTIONS);
         } catch (e) {
           // 안전 로그
           console.warn('[MP] drawing error', e);
@@ -476,12 +477,12 @@ const SingleTestPage = () => {
     };
   }, []);
 
-  // // #BGM
+  // #BGM
   // useEffect(() => {
   //   if (audioRef.current) {
   //     audioRef.current.volume = 0.5;
   //     audioRef.current.loop = true;
-  //     audioRef.current.play().catch(() => { });
+  //     audioRef.current.play().catch(() => {});
   //   }
   // }, []);
 
@@ -750,7 +751,8 @@ const SingleTestPage = () => {
       setIsGameOver(true);
     }
   }, [elapsedTime]);
-useEffect(() => {
+
+  useEffect(() => {
   console.log("부서진 빌딩 배열 : " ,destroyedSeqs);
 }, [destroyedSeqs]);
 
@@ -778,9 +780,7 @@ useEffect(() => {
     try { audio.currentTime = 0; } catch (_) {}
   }
 }, [isPlaying, isGameOver]);
-  /*=====================================================================================
-    #002 게임 중 END
-  =====================================================================================*/
+
   /*=====================================================================================
     #003 게임 종료
   =====================================================================================*/
@@ -972,137 +972,107 @@ useEffect(() => {
     #003 게임 종료 END
   =====================================================================================*/
 
-  return (
-    <AnimatedPage>
-{soundLocked && isPlaying && !isGameOver && (
-  <button
-    onClick={() => {
-      audioRef.current?.play()
-        .then(() => setSoundLocked(false))
-        .catch(() => {/* 여전히 차단되면 무시 */});
-    }}
-    style={{
-      position: 'fixed', top: 16, right: 16, zIndex: 9999,
-      padding: '8px 12px', borderRadius: 8, border: '1px solid #ccc',
-      background: '#111', color: '#fff', cursor: 'pointer'
-    }}
-  >
-    🔊 사운드 켜기
-  </button>
-)}
+ return (
+  <AnimatedPage>
+    {/* 사운드 언락 버튼 */}
+    {soundLocked && isPlaying && !isGameOver && (
+      <button
+        onClick={() => {
+          audioRef.current?.play()
+            .then(() => setSoundLocked(false))
+            .catch(() => {}); // 주석 제거
+        }}
+        style={{
+          position: 'fixed', top: 16, right: 16, zIndex: 9999,
+          padding: '8px 12px', borderRadius: 8, border: '1px solid #ccc',
+          background: '#111', color: '#fff', cursor: 'pointer'
+        }}
+      >
+        🔊 사운드 켜기
+      </button>
+    )}
 
-{/* [PRESTART] 준비 카운트다운 오버레이 */}
-{!isGameOver && !isPlaying && (
-  <div className="prestart-overlay">
-    <div className="countdown">{readyLeft}</div>
-  </div>
-)}
+    {/* [PRESTART] 준비 카운트다운 오버레이 */}
+    {!isGameOver && !isPlaying && (
+      <div className="prestart-overlay">
+        <div className="countdown">{readyLeft}</div>
+      </div>
+    )}
 
     <div className="page-container">
       <audio ref={audioRef} src={singleBgm} preload="auto" />
+
       {isGameOver && (
         <div className="game-over-overlay">
           <div className="gameover">
-          <h1>GAME OVER</h1>
-          {/* [PLAYTIME] 별도 플레이 시간 표기 */}
-          <div className="gamediv">
-          {playTime !== null && <div className="gameovertext">플레이 시간: {playTime}초</div>}
-          {destroyedCount !== null && <div className="gameovertext">부순 건물 수: {destroyedCount}개</div>}
-          {kcal !== null && <div className="gameovertext">소모 칼로리: {kcal}KCAL</div>}
-          {coinCount !== null && <div className="gameovertext">오늘의 일당: <img 
-      src={coinImg} 
-      alt="coin" 
-      style={{ height: '20px', margin: '0 5px', verticalAlign: 'middle' }} 
-    />{coinCount}개</div>}
-          </div>
-          <div className="playbutton">
-          <button className="playagain" onClick={() => window.location.reload()}>다시 시작</button>
-          <button className="playagain" onClick={() => window.location.href = '/main'}>나가기</button>
-          </div>
+            <h1>GAME OVER</h1>
+            <div className="gamediv">
+              {playTime !== null && <div className="gameovertext">플레이 시간: {playTime}초</div>}
+              {destroyedCount !== null && <div className="gameovertext">부순 건물 수: {destroyedCount}개</div>}
+              {kcal !== null && <div className="gameovertext">소모 칼로리: {kcal}KCAL</div>}
+              {coinCount !== null && (
+                <div className="gameovertext">
+                  오늘의 일당: <img src={coinImg} alt="coin" style={{ height: 20, margin: '0 5px', verticalAlign: 'middle' }} />
+                  {coinCount}개
+                </div>
+              )}
+            </div>
+            <div className="playbutton">
+              <button className="playagain" onClick={() => window.location.reload()}>다시 시작</button>
+              <button className="playagain" onClick={() => (window.location.href = '/main')}>나가기</button>
+            </div>
           </div>
         </div>
       )}
 
-      <div className="page-container">
-        <audio ref={audioRef} src="/sounds/bgm.mp3" />
-        {isGameOver && (
-          <div className="game-over-overlay">
-            <div className="gameover">
-              <h1>GAME OVER</h1>
-              {/* [PLAYTIME] 별도 플레이 시간 표기 */}
-              <div className="gamediv">
-                {playTime !== null && <div className="gameovertext">플레이 시간: {playTime}초</div>}
-                {destroyedCount !== null && <div className="gameovertext">부순 건물 수: {destroyedCount}개</div>}
-                {kcal !== null && <div className="gameovertext">소모 칼로리: {kcal}KCAL</div>}
-                {coinCount !== null && <div className="gameovertext">오늘의 일당: <img 
-                  src={coinImg} 
-                  alt="coin" 
-                  style={{ height: '20px', margin: '0 5px', verticalAlign: 'middle' }} 
-                />{coinCount}개</div>}
-              </div>
-              <div className="playbutton">
-                <button className="playagain" onClick={() => window.location.reload()}>다시 시작</button>
-                <button className="playagain" onClick={() => window.location.href = '/main'}>나가기</button>
-              </div>
+      <div className="game-layout">
+        <div className="left-game">
+          <div className="overlay-ui">
+            <img src={timerIcon} alt="Timer" className="timer-icon" />
+            <div className="progress-bar">
+              <div className="progress-fill" style={{ width: `${(timeover / TIME_LIMIT_SEC) * 100}%` }} />
             </div>
-          </div>
-        )}
-
-        <div className="game-layout">
-          <div className="left-game">
-            <div className="overlay-ui">
-              <img src={timerIcon} alt="Timer" className="timer-icon" />
-              <div className="progress-bar">
-                {/* [TIMER SEP] TIME_LIMIT_SEC 기준 */}
-                <div className="progress-fill" style={{ width: `${(timeover / TIME_LIMIT_SEC) * 100}%` }}></div>
-              </div>
-              <div className="overlay-ui1">
-                {renderCommandSequence()}
-              </div>
-            </div>
-
-            <PixiCanvas
-              action={action}
-              building={currentBuilding}
-              playerSkin={playerSkin}
-              combo={combo}
-              onBuildingDestroyed={(seq) => {
-                if (isGameOverRef.current) return;
-                if (seq) setDestroyedSeqs(prev => [...prev, seq]);
-                setBuildingIndex((prev) =>
-                  buildingList.length === 0 ? 0 : (prev + 1) % buildingList.length
-                );
-                setDestroyedCount((c) => c + 1);
-                setCoinCount((c) => c + COIN_PER_BUILDING);
-                if (startTimeRef.current) {
-                  startTimeRef.current += addTime; //#TIMERSETTING
-                }
-              }}
-              setKcal={(val) => {
-                if (isGameOverRef.current) return;
-                setKcal(val);
-              }}
-              showBuildingHp={true}
-            />
+            <div className="overlay-ui1">{renderCommandSequence()}</div>
           </div>
 
-          <div className="right-panel">
-            <div className="kcal-display">{kcal} KCAL</div>
-            <div className="building-status">🏢 부순 건물: {destroyedCount}</div>
-            <div className="coin-status">💰 코인: {coinCount}</div>
+          <PixiCanvas
+            action={action}
+            building={currentBuilding}
+            playerSkin={playerSkin}
+            combo={combo}
+            onBuildingDestroyed={(seq) => {
+              if (isGameOverRef.current) return;
+              if (seq) setDestroyedSeqs((prev) => [...prev, seq]);
+              setBuildingIndex((prev) => (buildingList.length === 0 ? 0 : (prev + 1) % buildingList.length));
+              setDestroyedCount((c) => c + 1);
+              setCoinCount((c) => c + COIN_PER_BUILDING);
+              if (startTimeRef.current) startTimeRef.current += addTime;
+            }}
+            setKcal={(val) => {
+              if (isGameOverRef.current) return;
+              setKcal(val);
+            }}
+            showBuildingHp
+          />
+        </div>
 
-            {/* [GAMEOVER] QUIT 버튼 */}
-            <button className="quit-button" onClick={() => setIsGameOver(true)}>QUIT</button> {/* [GAMEOVER] */}
+        <div className="right-panel">
+          <div className="kcal-display">{kcal} KCAL</div>
+          <div className="building-status">🏢 부순 건물: {destroyedCount}</div>
+          <div className="coin-status">💰 코인: {coinCount}</div>
 
-            <div className="webcam-container mirror">
-              <video ref={videoRef} autoPlay muted className="webcam-video" />
-              <canvas ref={canvasRef} className="webcam-canvas" width="640" height="480"></canvas>
-            </div>
+          <button className="quit-button" onClick={() => setIsGameOver(true)}>QUIT</button>
+
+          <div className="webcam-container mirror">
+            <video ref={videoRef} autoPlay muted className="webcam-video" />
+            <canvas ref={canvasRef} className="webcam-canvas" width="640" height="480" />
           </div>
         </div>
       </div>
-    </AnimatedPage>
-  );
+    </div>
+  </AnimatedPage>
+);
 };
+
 
 export default SingleTestPage;
