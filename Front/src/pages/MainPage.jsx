@@ -1,5 +1,5 @@
 // StartPage.jsx
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useEffect } from 'react';
 import api from '../utils/api';
 import axios from 'axios';
@@ -25,6 +25,7 @@ import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import closeIcon from '../assets/images/mypage/close.png';
 import { useLocation } from "react-router-dom";
+import mainBgm from '../assets/sounds/main_bgm.wav';
 
 import {
   LineChart,
@@ -1399,11 +1400,75 @@ const [token, setToken] = useState(null);
       sessionStorage.getItem('accessToken');
     setToken(t);
   }, []);
+  // --- BGM 제어용 ---
+  const audioRef = useRef(null);
+  const [soundLocked, setSoundLocked] = useState(false);
+
+  // 최초 진입 시 자동재생 시도 + 사용자 제스처로 해제
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    audio.volume = 0.4;
+    audio.loop = true;
+
+    const tryPlay = () =>
+      audio.play()
+        .then(() => {
+          setSoundLocked(false);
+          removeListeners();
+        })
+        .catch(() => {
+          // 자동재생 차단 → 버튼 또는 다음 사용자 제스처로 재시도
+          setSoundLocked(true);
+        });
+
+    const removeListeners = () => {
+      document.removeEventListener('click', onUserGesture);
+      document.removeEventListener('keydown', onUserGesture);
+    };
+
+    const onUserGesture = () => {
+      tryPlay();
+    };
+
+    // 1) 즉시 시도
+    tryPlay();
+
+    // 2) 막히면 다음 사용자 제스처에서 재시도
+    document.addEventListener('click', onUserGesture, { once: true });
+    document.addEventListener('keydown', onUserGesture, { once: true });
+
+    // 언마운트/라우팅 이탈 시 정리
+    return () => {
+      removeListeners();
+      try {
+        audio.pause();
+        audio.currentTime = 0;
+      } catch {}
+    };
+  }, []);
 
 
   return (
     <div className="main-page-background">
       <FriendNotification token={token} />
+      <audio ref={audioRef} src={mainBgm} preload="auto" />
+      {/* (옵션) 자동재생 차단 시 노출되는 작은 버튼 */}
+      {soundLocked && (
+        <button
+          onClick={() => {
+            audioRef.current?.play().then(() => setSoundLocked(false)).catch(() => {});
+          }}
+          style={{
+            position: 'fixed', top: 16, right: 16, zIndex: 9999,
+            padding: '8px 12px', borderRadius: 8, border: '1px solid #ccc',
+            background: '#111', color: '#fff', cursor: 'pointer'
+          }}
+        >
+          🔊 사운드 켜기
+        </button>
+      )}
       <div className="main-fixed-wrapper">
         <div className="top-right-buttons">
           <button className="top-icon-button" onClick={() => setModalType('lank')}>
