@@ -873,10 +873,16 @@ width: 100vw;  /* 화면 너비에 맞춤 */
   color: black;
   padding: 20px;
   justify-content: space-between;
+  width: 100%; 
 }
 
 .friend-nickname {
   font-size: 23px;
+  min-width: 0;             /* ★ 중요 */
+  overflow: hidden;
+  /* white-space: nowrap; */ /* 친구 닉네임 너무 길면 자르기 */
+  /* width: 170px; */
+  text-overflow: ellipsis;
 }
 
 .friend-divider {
@@ -906,6 +912,7 @@ width: 100vw;  /* 화면 너비에 맞춤 */
   border-radius: 50%;
   margin-right: 10px;
   border: 1px solid #444;
+  flex: 0 0 auto; 
 }
 
 .friend-request-item {
@@ -1217,6 +1224,7 @@ width: 100vw;  /* 화면 너비에 맞춤 */
   color: red;
   font-weight: bold;
   font-size: 14px;
+  flex: 0 0 auto; 
 }
 .friend-delete-btn:hover {
   text-decoration: underline;
@@ -1225,6 +1233,8 @@ width: 100vw;  /* 화면 너비에 맞춤 */
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 /* 비밀번호 변경 폼과 동일하게 보이도록 */
@@ -1290,6 +1300,7 @@ width: 100vw;  /* 화면 너비에 맞춤 */
   margin: 0;
   padding: 0;
   display: grid;
+  overflow: hidden;
 }
 
 .left-top3-item {

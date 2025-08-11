@@ -46,7 +46,7 @@ function AppRoutes() {
                 {/* Protected */}
                 <Route path="/main" element={<ProtectedRoute><MainPage /></ProtectedRoute>} />
                 <Route path="/game" element={<ProtectedRoute><AppLayout><GamePage /></AppLayout></ProtectedRoute>} />
-                <Route path="/story" element={<ProtectedRoute><AppLayout><StoryPage /></AppLayout></ProtectedRoute>} />
+                <Route path="/story" element={<AppLayout><StoryPage /></AppLayout>} />
                 <Route path="/event" element={<ProtectedRoute><AppLayout><EventPage /></AppLayout></ProtectedRoute>} />
                 <Route path="/singletest" element={<ProtectedRoute><SingleTestPage /></ProtectedRoute>} />
 

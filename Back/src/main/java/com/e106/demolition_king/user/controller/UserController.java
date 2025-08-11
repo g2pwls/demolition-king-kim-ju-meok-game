@@ -11,9 +11,11 @@ import com.e106.demolition_king.util.JwtUtil;
 import com.fasterxml.jackson.databind.ser.Serializers;
 import io.swagger.v3.oas.annotations.Parameter;import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -83,9 +85,29 @@ public class UserController {
             tags = {"회원&권한"}
     )
     @PostMapping("/login")
-    public BaseResponse<TokenResponseVo> login(@ParameterObject LoginRequestVo vo) {
-        return BaseResponse.of(userService.login(vo));
+    public ResponseEntity<BaseResponse<TokenResponseVo>> login(
+            @ParameterObject LoginRequestVo vo,
+            HttpServletResponse response
+    ) {
+        TokenResponseVo tokens = userService.login(vo);
+
+        // ✅ REFRESH_TOKEN을 HttpOnly 쿠키로 세팅
+        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", tokens.getRefreshToken())
+                .httpOnly(true)
+                .secure(true)     // 로컬: false, 배포: true
+                .sameSite("None")   // 배포에서 크로스 오리진이면 "None" + secure(true)
+                .path("/")
+                .maxAge(31 * 24 * 60 * 60)
+                .build();
+        response.addHeader("Set-Cookie", refreshCookie.toString());
+
+        // ✅ 응답 본문에는 accessToken만 내려주기
+        TokenResponseVo body = TokenResponseVo.builder()
+                .accessToken(tokens.getAccessToken())
+                .build();
+        return ResponseEntity.ok(BaseResponse.of(body));
     }
+
     @Operation(
             summary = "비밀번호 검증",
             description = "올바른 비밀번호를 입력했는지 검증합니다."
@@ -119,7 +141,8 @@ public class UserController {
     )
     @PostMapping("/logout")
     public BaseResponse<Void> logout(
-            @RequestHeader("Authorization") String authHeader
+            @RequestHeader("Authorization") String authHeader,
+            HttpServletResponse response
     ) {
         // 1) Authorization 헤더 검증
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -134,6 +157,17 @@ public class UserController {
         String userUuid = jwtUtil.getUserUuid(token);
         // 4) 서비스 호출
         userService.logout(userUuid);
+
+        // ✅ REFRESH_TOKEN 쿠키 삭제(속성은 심을 때와 동일해야 브라우저가 확실히 덮어씀)
+        ResponseCookie delete = ResponseCookie.from("refreshToken", "")
+                .httpOnly(true)
+                .secure(false)   // 배포에선 true
+                .sameSite("Lax") // 배포에선 None
+                .path("/")
+                .maxAge(0)
+                .build();
+        response.addHeader("Set-Cookie", delete.toString());
+
         // 5) 응답
         return BaseResponse.ok();
     }

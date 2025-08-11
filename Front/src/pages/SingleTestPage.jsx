@@ -9,6 +9,8 @@ import "../styles/SingleTestPage.css";
 import coinImg from '../assets/images/main/coin.png';
 import AnimatedPage from '../components/AnimatedPage';
 import timerIcon from '../assets/images/singlemode/timer.png';
+import singleBgm from '../assets/sounds/single_bgm.wav';
+
 /*
 // 시간상 관계로 코드 하드코딩 세팅 이용해야함. Cntrl + F
 - #TIMERSETTING : 타이머 값 수정 #TIMERSETTING
@@ -474,14 +476,14 @@ const SingleTestPage = () => {
     };
   }, []);
 
-  // #BGM
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = 0.5;
-      audioRef.current.loop = true;
-      audioRef.current.play().catch(() => { });
-    }
-  }, []);
+  // // #BGM
+  // useEffect(() => {
+  //   if (audioRef.current) {
+  //     audioRef.current.volume = 0.5;
+  //     audioRef.current.loop = true;
+  //     audioRef.current.play().catch(() => { });
+  //   }
+  // }, []);
 
   // [GAMEOVER] 게임오버 시 정지
   useEffect(() => {
@@ -748,11 +750,37 @@ const SingleTestPage = () => {
       setIsGameOver(true);
     }
   }, [elapsedTime]);
+useEffect(() => {
+  console.log("부서진 빌딩 배열 : " ,destroyedSeqs);
+}, [destroyedSeqs]);
 
-  useEffect(() => {
-    console.log("부서진 빌딩 배열 : " ,destroyedSeqs);
-  }, [destroyedSeqs]);
+  // 자동재생 차단 해제용 상태 (선택)
+const [soundLocked, setSoundLocked] = useState(false);
 
+// BGM: 게임 시작(isPlaying=true) 때 재생, 종료/일시에는 정지
+useEffect(() => {
+  const audio = audioRef.current;
+  if (!audio) return;
+
+  audio.volume = 0.5;
+  audio.loop = true;
+
+  if (isPlaying && !isGameOver) {
+    const p = audio.play();
+    if (p && typeof p.catch === 'function') {
+      p.catch((err) => {
+        console.warn('🔇 자동재생이 차단되었습니다. 버튼을 눌러 사운드를 켜세요.', err);
+        setSoundLocked(true); // 버튼 표시
+      });
+    }
+  } else {
+    audio.pause();
+    try { audio.currentTime = 0; } catch (_) {}
+  }
+}, [isPlaying, isGameOver]);
+  /*=====================================================================================
+    #002 게임 중 END
+  =====================================================================================*/
   /*=====================================================================================
     #003 게임 종료
   =====================================================================================*/
@@ -946,10 +974,52 @@ const SingleTestPage = () => {
 
   return (
     <AnimatedPage>
-      {/* [PRESTART] 준비 카운트다운 오버레이 */}
-      {!isGameOver && !isPlaying && (
-        <div className="prestart-overlay">
-          <div className="countdown">{readyLeft}</div>
+{soundLocked && isPlaying && !isGameOver && (
+  <button
+    onClick={() => {
+      audioRef.current?.play()
+        .then(() => setSoundLocked(false))
+        .catch(() => {/* 여전히 차단되면 무시 */});
+    }}
+    style={{
+      position: 'fixed', top: 16, right: 16, zIndex: 9999,
+      padding: '8px 12px', borderRadius: 8, border: '1px solid #ccc',
+      background: '#111', color: '#fff', cursor: 'pointer'
+    }}
+  >
+    🔊 사운드 켜기
+  </button>
+)}
+
+{/* [PRESTART] 준비 카운트다운 오버레이 */}
+{!isGameOver && !isPlaying && (
+  <div className="prestart-overlay">
+    <div className="countdown">{readyLeft}</div>
+  </div>
+)}
+
+    <div className="page-container">
+      <audio ref={audioRef} src={singleBgm} preload="auto" />
+      {isGameOver && (
+        <div className="game-over-overlay">
+          <div className="gameover">
+          <h1>GAME OVER</h1>
+          {/* [PLAYTIME] 별도 플레이 시간 표기 */}
+          <div className="gamediv">
+          {playTime !== null && <div className="gameovertext">플레이 시간: {playTime}초</div>}
+          {destroyedCount !== null && <div className="gameovertext">부순 건물 수: {destroyedCount}개</div>}
+          {kcal !== null && <div className="gameovertext">소모 칼로리: {kcal}KCAL</div>}
+          {coinCount !== null && <div className="gameovertext">오늘의 일당: <img 
+      src={coinImg} 
+      alt="coin" 
+      style={{ height: '20px', margin: '0 5px', verticalAlign: 'middle' }} 
+    />{coinCount}개</div>}
+          </div>
+          <div className="playbutton">
+          <button className="playagain" onClick={() => window.location.reload()}>다시 시작</button>
+          <button className="playagain" onClick={() => window.location.href = '/main'}>나가기</button>
+          </div>
+          </div>
         </div>
       )}
 
