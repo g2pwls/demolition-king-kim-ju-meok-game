@@ -24,6 +24,7 @@ import { useNavigate } from 'react-router-dom';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import closeIcon from '../assets/images/mypage/close.png';
+import { useLocation } from "react-router-dom";
 
 import {
   LineChart,
@@ -384,6 +385,27 @@ function MainPage() {
   });
 };
 
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.openMulti) {
+      setModalType('multi');                      // 네 모달 열기
+      // 뒤로가기할 때 또 자동으로 열리는 문제 방지
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [location.state]);
+
+// 방 만들기
+  const goToCreate = () => {
+    setModalType(null);
+    navigate("/multilobby", { state: { action: "create" } });
+  };
+
+// 방 참가하기
+  const goToJoin = () => {
+    setModalType(null);
+    navigate("/multilobby", { state: { action: "join" } });
+  };
    // 'tutorial' 또는 'mypage' 또는 null
   const [isFriendPopupOpen, setIsFriendPopupOpen] = useState(false); // ✅ 반드시 함수 컴포넌트 내부에
   const [activeTab, setActiveTab] = useState('통계');
@@ -2044,15 +2066,16 @@ const [token, setToken] = useState(null);
             )}
 
             {modalType === 'multi' && (
-            <div className="multi-mode-buttons">
-              <button onClick={goToMultiLobby}>
-                <img src={roomMake} alt="방 만들기" />
-              </button>
-              <button>
-                <img src={roomParticipation} alt="방 참가하기" />
-              </button>
-            </div>
-          )}
+                <div className="multi-mode-buttons">
+                  <button onClick={goToCreate}>
+                    <img src={roomMake} alt="방 만들기" />
+                  </button>
+                  <button onClick={goToJoin}>
+                    <img src={roomParticipation} alt="방 참가하기" />
+                  </button>
+                </div>
+            )}
+
 
           </div>
         </div>
