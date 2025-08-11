@@ -129,7 +129,7 @@ function SignUp() {
           className="character-select-box"
           style={{ backgroundImage: `url(${profileBack})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
         >
-          <div className="character-grid">
+          <div className="character-grid1">
             {profileList.map((profile, index) => (
               <div
                 key={index}

@@ -97,7 +97,7 @@
   background-color: #debf0f;
 }
 
-.character-grid {
+.character-grid1 {
   display: grid;
   grid-template-columns: repeat(2, 1fr); /* 가로 2칸 */
   grid-template-rows: repeat(3, auto);  /* 세로 3칸 */

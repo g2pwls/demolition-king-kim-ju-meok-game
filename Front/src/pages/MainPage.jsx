@@ -1342,12 +1342,46 @@ useEffect(() => {
   }
 }, [dateRange]);
 
+// ▶ 프리스타트 안내 모달 (카운트다운/건너뛰기 제거)
+const [prestartOpen, setPrestartOpen] = useState(false);
+const [dontShowAgain, setDontShowAgain] = useState(false);
+const PRESTART_KEY = 'single_prestart_dismissed';
 
+// 싱글 버튼 클릭 시 (로컬스토리지 체크)
+const openPrestart = () => {
+  if (localStorage.getItem(PRESTART_KEY) === '1') {
+    navigate('/singletest');
+    return;
+  }
+  setPrestartOpen(true);
+  setDontShowAgain(false);
+};
+
+// 준비 완료 → 즉시 시작
+const startNow = () => {
+  if (dontShowAgain) localStorage.setItem(PRESTART_KEY, '1');
+  setPrestartOpen(false);
+  navigate('/singletest');
+};
+
+// 취소
+const cancelPrestart = () => setPrestartOpen(false);
+
+const [token, setToken] = useState(null);
+
+  useEffect(() => {
+    // 실제 앱에서 쓰는 키로 교체하세요: 'accessToken' 또는 'token' 등
+    const t =
+      localStorage.getItem('accessToken') ||
+      localStorage.getItem('token') ||
+      sessionStorage.getItem('accessToken');
+    setToken(t);
+  }, []);
 
 
   return (
     <div className="main-page-background">
-      {/* <FriendNotification token={token} /> */}
+      <FriendNotification token={token} />
       <div className="main-fixed-wrapper">
         <div className="top-right-buttons">
           <button className="top-icon-button" onClick={() => setModalType('lank')}>
@@ -1396,9 +1430,37 @@ useEffect(() => {
           <button className="bottom-icon-button" onClick={() => navigate('/event')}>
             <img src={modeEvent} alt="이벤트 모드" />
           </button>
-          <button className="bottom-icon-button" onClick={() => navigate('/singletest')}>
+          <button className="bottom-icon-button" onClick={openPrestart}>
             <img src={modeSingle} alt="싱글 모드" />
           </button>
+          {prestartOpen && (
+            <div className="modal-overlay">
+              <div className="prestart-modal" onClick={(e) => e.stopPropagation()}>
+                <div className="prestart-title">시작 전, 가드 자세를 취해 주세요</div>
+                <ul className="prestart-tips">
+                  <li>카메라가 상체를 잘 인식하도록 <b>정면</b>에 서세요.</li>
+                  <li>양손을 볼 근처로 올리고 <b>가드 자세</b>를 유지하세요.</li>
+                  <li>배경이 어둡거나 복잡하면 인식률이 떨어질 수 있어요.</li>
+                </ul>
+
+                <div className="prestart-actions">
+                  <label className="prestart-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={dontShowAgain}
+                      onChange={(e) => setDontShowAgain(e.target.checked)}
+                    />
+                    다시 보지 않기
+                  </label>
+                  <div className="prestart-buttons">
+                    <button className="ps-btn ghost" onClick={cancelPrestart}>취소</button>
+                    <button className="ps-btn primary" onClick={startNow}>숙지 완료</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <button className="bottom-icon-button" onClick={() => setModalType('multi')}>
             <img src={modeMulti} alt="멀티 모드" />
           </button>
@@ -1464,13 +1526,13 @@ useEffect(() => {
                       src={closeIcon}
                       alt="닫기"
                       onClick={() => setModalType(null)}
+                      className="tuclose"
                       style={{
                         position: 'absolute',
                         top: '15%',
                         right: '16%',
                         width: '50px',
                         height: '50px',
-                        cursor: 'pointer',
                         zIndex: 10
                       }}
                   />

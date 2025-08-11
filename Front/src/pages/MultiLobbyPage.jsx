@@ -5,6 +5,7 @@ import awaitroomBg from "../assets/images/awaitroom/awaitroom.png";
 import characterBack from "../assets/images/awaitroom/awaitroom.png"; // 안 쓰면 삭제해도 됨
 import api from "../utils/api"; // 안 쓰면 삭제해도 됨
 import "../styles/MultiLobbyPage.css";
+import AnimatedPage from '../components/AnimatedPage';
 
 const APPLICATION_SERVER_URL = "http://localhost:6080/";
 const LIVEKIT_URL = "ws://localhost:7880/";
@@ -147,7 +148,7 @@ useEffect(() => {
   const displayUuids = [userUuid, ...participants].slice(0, 4);
   while (displayUuids.length < 4) displayUuids.push(null);
 
-  return (
+  return (<AnimatedPage>
     <>
       {!room ? (
         <div
@@ -250,6 +251,7 @@ useEffect(() => {
         </div>
       )}
     </>
+    </AnimatedPage>
   );
 }
 
