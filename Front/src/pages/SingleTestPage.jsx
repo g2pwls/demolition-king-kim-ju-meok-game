@@ -101,6 +101,7 @@ const SingleTestPage = () => {
   const audioRef = useRef(null);                                      // 상단으로 이동 (startCamera 전에 필요)
   const mediaStreamRef = useRef(null);           
   const mediapipeCameraRef = useRef(null);       
+  const poseRef = useRef(null);                       // [ADDED][MP] Pose 인스턴스 보관(중복생성/정리)
 
   const fsmStateRef = useRef('get_ready');                            // 'get_ready' | 'action' | 'cooldown'
   const startPosRef = useRef({ left: null, right: null });            //  손목 시작 좌표
@@ -188,27 +189,31 @@ const SingleTestPage = () => {
     await videoEl.play().catch(() => { /* 자동재생 차단 시 버튼 한번 더 눌러야 할 수 있음 */ });
 
     // 2) MediaPipe Pose 설정
+    // ======= [CHANGED][MP] Pose 인스턴스 생성부 시작 =======
+    if (!poseRef.current) {
+      const cdnBase = 'https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404'; // [PINNED][MP]
+      // const localBase = '/mediapipe/pose'; // [OPTIONAL][MP] public/mediapipe/pose/* 로 복사 시 사용
+      const assetBase = cdnBase; // 필요시 localBase 로 전환
 
-    // const pose = new Pose({
-    //   locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`,
-    // });
+      const pose = new mpPose.Pose({
+        locateFile: (file) => `${assetBase}/${file}`,                      // [CHANGED][MP]
+      });
 
-   const pose = new mpPose.Pose({
-    locateFile: (file) =>
- //    `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`,
-     `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/${file}`, // ✅ 버전 고정
-  });
+      pose.setOptions({
+        modelComplexity: 0,
+        smoothLandmarks: true,
+        enableSegmentation: false,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5,
+        selfieMode: true,                                                  // [ADDED][MP] 전면카메라 좌우 일관성
+      });
 
-    pose.setOptions({
-      modelComplexity: 0,
-      smoothLandmarks: true,
-      enableSegmentation: false,
-      minDetectionConfidence: 0.5,
-      minTrackingConfidence: 0.5,
-    });
+      poseRef.current = pose;                                              // [ADDED][MP]
+    }
+    // ======= [CHANGED][MP] Pose 인스턴스 생성부 끝 =======
 
     /* =================== 감지 로직 전면 교체 (안정화 + 잽/어퍼) =================== */
-    pose.onResults((results) => {
+    poseRef.current.onResults((results) => {                               // [CHANGED][MP] poseRef 사용
       // [GAMEOVER] 게임오버면 더 이상 프레임 처리/상태 업데이트 하지 않음
       if (isGameOverRef.current) return; 
 
@@ -383,7 +388,9 @@ const SingleTestPage = () => {
         // [GAMEOVER] 게임오버면 더 이상 pose 처리 안 함
         if (isGameOverRef.current) return; 
         try {
-          await pose.send({ image: videoEl });
+          if (poseRef.current) {                                      // [CHANGED][MP]
+            await poseRef.current.send({ image: videoEl });           // [CHANGED][MP]
+          }
         } catch (e) {
           // 처리 에러 무시
         }
@@ -407,6 +414,12 @@ const SingleTestPage = () => {
 
     if (videoRef.current) {
       videoRef.current.srcObject = null;
+    }
+
+    // Pose 정리
+    if (poseRef.current) {                                           // [ADDED][MP]
+      try { poseRef.current.close(); } catch {}                      // [ADDED][MP]
+      poseRef.current = null;                                        // [ADDED][MP]
     }
   };
 
