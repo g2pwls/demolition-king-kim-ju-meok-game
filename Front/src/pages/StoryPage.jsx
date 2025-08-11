@@ -11,6 +11,35 @@ import keyboardBgm from '../assets/sounds/keyboard_bgm.wav';
 
 function StoryPage() {
   const navigate = useNavigate();
+  const audioRef = useRef(null);
+  const [soundLocked, setSoundLocked] = useState(false);
+
+  // ▶ 효과음 시작 (루프), 자동재생 차단 시 버튼 표시
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    audio.loop = true;
+    audio.volume = 0.45;
+
+    const tryPlay = () =>
+      audio.play().then(
+        () => setSoundLocked(false),
+        () => setSoundLocked(true) // 차단되면 버튼 보여줌
+      );
+
+    // 첫 시도
+    tryPlay();
+
+    // 언마운트 시 정지/리셋
+    return () => {
+      try {
+        audio.pause();
+        audio.currentTime = 0;
+      } catch {}
+    };
+  }, []);
+
   const location = useLocation();
 
   // 1) 해시로 온 access 토큰 저장 + 해시 제거
