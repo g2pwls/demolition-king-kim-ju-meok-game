@@ -7,22 +7,47 @@ import {
     createLocalAudioTrack,
     createLocalVideoTrack,
 } from "livekit-client";
+import * as mpPose from "@mediapipe/pose";
+import { Camera } from "@mediapipe/camera_utils";
+import { drawLandmarks, drawConnectors } from "@mediapipe/drawing_utils";
+
 import PixiCanvas from "../components/pixi/PixiCanvas";
 import api from "../utils/api";
 import "../styles/MultiPlayPage.css";
 
-// LiveKit 접속 정보 (로비와 동일)
 const APPLICATION_SERVER_URL = "http://localhost:6080/";
 const LIVEKIT_URL = "ws://localhost:7880/";
 
-// --- LiveKit 비디오 타일 (트랙 attach 전용) ---
+// ✅ Pose 랜드마크 인덱스를 숫자로 고정(빌드 환경에 따라 PoseLandmark 미노출 이슈 방지)
+const LM = {
+    NOSE: 0,
+    LEFT_SHOULDER: 11,
+    RIGHT_SHOULDER: 12,
+    LEFT_ELBOW: 13,
+    RIGHT_ELBOW: 14,
+    LEFT_WRIST: 15,
+    RIGHT_WRIST: 16,
+    LEFT_HIP: 23,
+    RIGHT_HIP: 24,
+};
+
+const MOVE_META = {
+    0: { label: "왼잽", color: "red" },
+    1: { label: "오잽", color: "red" },
+    2: { label: "왼어퍼", color: "black" },
+    3: { label: "오어퍼", color: "black" },
+};
+
+/* ---------- 공용 비디오 타일 ---------- */
 function LKVideoTile({ track, muted, className = "" }) {
     const vref = useRef(null);
     useEffect(() => {
         if (!track || !vref.current) return;
         track.attach(vref.current);
         return () => {
-            try { track.detach(vref.current); } catch {}
+            try {
+                track.detach(vref.current);
+            } catch {}
         };
     }, [track]);
     return (
@@ -36,7 +61,7 @@ function LKVideoTile({ track, muted, className = "" }) {
     );
 }
 
-// 좌측 친구 타일 (LiveKit 구독 트랙)
+/* ---------- 좌측 원격 타일 ---------- */
 function RemotePeerTile({ track, nickname = "대기 중...", uuid }) {
     const on = !!track;
     return (
@@ -50,24 +75,28 @@ function RemotePeerTile({ track, nickname = "대기 중...", uuid }) {
     );
 }
 
-// 좌하단 내 PIP (getUserMedia 스트림 사용)
-function LocalPIP({ stream }) {
-    const vref = useRef(null);
-    useEffect(() => {
-        if (!vref.current) return;
-        vref.current.srcObject = stream || null;
-        if (stream) vref.current.play().catch(() => {});
-    }, [stream]);
+/* ---------- 콤보 HUD ---------- */
+function CommandSequence({ combo, patternIdx, stepIdx }) {
+    const current = combo?.[patternIdx];
+    const moves = current?.moves || [];
     return (
-        <div className="local-pip">
-            <video ref={vref} autoPlay playsInline muted className="mirror" />
+        <div className="command-sequence">
+            {moves.map((m, i) => {
+                const meta = MOVE_META[m] || { label: "?", color: "black" };
+                const stateClass = i < stepIdx ? "done" : i === stepIdx ? "current" : "";
+                const colorClass = meta.color === "red" ? "red" : "black";
+                return (
+                    <div key={i} className={`command-circle ${colorClass} ${stateClass}`}>
+                        {meta.label}
+                    </div>
+                );
+            })}
         </div>
     );
 }
 
-// 우상단 채팅/로그
-function ChatLog({ messages, onSend }) {
-    const [text, setText] = useState("");
+/* ---------- 로그 패널(읽기 전용) ---------- */
+function LogPanel({ messages }) {
     return (
         <div className="mp-chat">
             <div className="mp-chat-title">LOG</div>
@@ -75,55 +104,67 @@ function ChatLog({ messages, onSend }) {
                 {messages.map((m, i) => (
                     <div key={i} className="mp-chat-item">
                         <span className="nick">{m.sender}</span>
-                        <span className="msg">{m.message}</span>
+                        <span className="msg"> {m.message}</span>
                     </div>
                 ))}
             </div>
-            <form
-                className="mp-chat-input"
-                onSubmit={(e) => {
-                    e.preventDefault();
-                    const t = text.trim();
-                    if (!t) return;
-                    onSend(t);
-                    setText("");
-                }}
-            >
-                <input
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                    placeholder="메시지 입력..."
-                />
-                <button type="submit">전송</button>
-            </form>
+        </div>
+    );
+}
+
+/* ---------- 우측: 내 카메라 + Mediapipe 오버레이 ---------- */
+function MyCamera({ stream, overlayRef }) {
+    const vref = useRef(null);
+    useEffect(() => {
+        if (!vref.current) return;
+        vref.current.srcObject = stream || null;
+        if (stream) vref.current.play().catch(() => {});
+    }, [stream]);
+
+    return (
+        <div className="local-pip">
+            {/* contain으로 크롭 방지 */}
+            <video
+                ref={vref}
+                autoPlay
+                playsInline
+                muted
+                className="mirror"
+                style={{ width: "100%", height: "100%", objectFit: "contain" }}
+            />
+            {/* Mediapipe 오버레이 */}
+            <canvas
+                ref={overlayRef}
+                className="overlay mirror"
+                style={{ width: "100%", height: "100%" }}
+            />
         </div>
     );
 }
 
 export default function MultiPlayPage() {
     const navigate = useNavigate();
-    const { state } = useLocation(); // { roomName, members }
+    const { state } = useLocation(); // { roomName }
     const roomName = state?.roomName ?? "unknown-room";
-    const members = state?.members ?? [];
 
-    // 유저
+    /* ===== 사용자 ===== */
     const [userUuid, setUserUuid] = useState("");
     const [nickname, setNickname] = useState("");
 
-    // LiveKit
+    /* ===== LiveKit ===== */
     const [room, setRoom] = useState(null);
-    const [remoteTracks, setRemoteTracks] = useState([]); // [{sid, participantIdentity, track}]
+    const [remoteTracks, setRemoteTracks] = useState([]);
     const [localVideoTrack, setLocalVideoTrack] = useState(null);
 
-    // 채팅
-    const [chat, setChat] = useState([]);
+    /* ===== 게임 로그(채팅 대신) ===== */
+    const [log, setLog] = useState([]);
 
-    // Mediapipe 입력용 로컬 스트림 + 비디오
+    /* ===== 내 카메라(미리보기 & Mediapipe 입력) ===== */
     const [localStream, setLocalStream] = useState(null);
-    const inputVideoRef = useRef(null);
-    const overlayCanvasRef = useRef(null); // 원하면 랜드마크 오버레이에 사용
+    const inputVideoRef = useRef(null); // Mediapipe 입력용(숨김)
+    const overlayCanvasRef = useRef(null); // 내 PIP 위에 그리는 캔버스
 
-    // ===== 게임 상태(싱글 로직 재사용) =====
+    /* ===== 싱글플레이 로직 이식: 상태 ===== */
     const [action, setAction] = useState("idle");
     const [timeover, setTimeover] = useState(100);
     const [kcal, setKcal] = useState(0);
@@ -136,12 +177,21 @@ export default function MultiPlayPage() {
     const [playerSkin, setPlayerSkin] = useState("");
     const [combo, setCombo] = useState([]);
 
-    // 콤보 진행
     const [patternIdx, setPatternIdx] = useState(0);
     const [stepIdx, setStepIdx] = useState(0);
     const advanceLockRef = useRef(false);
 
-    // ── 유저 정보
+    /* ===== 타이머/게임오버(간단 모드) ===== */
+    const TIME_LIMIT_SEC = 100;
+    const startTimeRef = useRef(null);
+    const [elapsedTime, setElapsedTime] = useState(0);
+    const [isGameOver, setIsGameOver] = useState(false);
+    const isGameOverRef = useRef(false);
+    useEffect(() => {
+        isGameOverRef.current = isGameOver;
+    }, [isGameOver]);
+
+    /* ───────── 유저 정보 ───────── */
     useEffect(() => {
         const token = localStorage.getItem("accessToken");
         if (!token) {
@@ -161,7 +211,7 @@ export default function MultiPlayPage() {
             .catch(() => {});
     }, [navigate]);
 
-    // ── 리소스 로드
+    /* ───────── 리소스 로드 ───────── */
     useEffect(() => {
         (async () => {
             try {
@@ -201,34 +251,196 @@ export default function MultiPlayPage() {
         }
     }, [combo]);
 
-    // ── getUserMedia (Mediapipe/내 PIP용)
+    /* ───────── Mediapipe (내 화면만) ───────── */
     useEffect(() => {
-        let s;
+        let stream;
+        let cam = null;
+        let pose = null;
+
         (async () => {
             try {
-                s = await navigator.mediaDevices.getUserMedia({
+                // 1) 로컬 카메라
+                stream = await navigator.mediaDevices.getUserMedia({
                     video: { width: 640, height: 480, facingMode: "user" },
                     audio: false,
                 });
-                setLocalStream(s);
+                setLocalStream(stream);
+
+                // 입력용(숨김) 비디오에 연결
                 if (inputVideoRef.current) {
-                    inputVideoRef.current.srcObject = s;
+                    inputVideoRef.current.srcObject = stream;
+                    inputVideoRef.current.muted = true;
+                    inputVideoRef.current.playsInline = true;
+                    await new Promise((res) => (inputVideoRef.current.onloadedmetadata = res));
                     await inputVideoRef.current.play().catch(() => {});
                 }
-                if (overlayCanvasRef.current && inputVideoRef.current) {
-                    overlayCanvasRef.current.width = inputVideoRef.current.videoWidth || 640;
-                    overlayCanvasRef.current.height = inputVideoRef.current.videoHeight || 480;
-                }
+
+                // 2) Pose 초기화 (버전 고정)
+                pose = new mpPose.Pose({
+                    locateFile: (file) =>
+                        `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/${file}`,
+                });
+                pose.setOptions({
+                    modelComplexity: 0,
+                    smoothLandmarks: true,
+                    minDetectionConfidence: 0.5,
+                    minTrackingConfidence: 0.5,
+                });
+
+                // 내부 상태
+                const LW = LM.LEFT_WRIST;
+                const RW = LM.RIGHT_WRIST;
+                const LS = LM.LEFT_SHOULDER;
+                const RS = LM.RIGHT_SHOULDER;
+                const LH = LM.LEFT_HIP;
+                const RH = LM.RIGHT_HIP;
+
+                let startL = null,
+                    startR = null;
+                let armed = false;
+                let lastTs = 0;
+
+                // 3) 결과 콜백
+                pose.onResults((res) => {
+                    if (isGameOverRef.current) return;
+
+                    const lm = res.poseLandmarks;
+                    const cvs = overlayCanvasRef.current;
+
+                    // 오버레이 캔버스를 PIP 크기로 동기화
+                    if (cvs) {
+                        const cw = cvs.clientWidth || 0;
+                        const ch = cvs.clientHeight || 0;
+                        if (cw && ch && (cvs.width !== cw || cvs.height !== ch)) {
+                            cvs.width = cw;
+                            cvs.height = ch;
+                        }
+                    }
+
+                    const ctx = cvs?.getContext("2d");
+                    if (ctx) ctx.clearRect(0, 0, cvs.width, cvs.height);
+
+                    if (!lm) {
+                        setAction("idle");
+                        armed = false;
+                        return;
+                    }
+
+                    // === 점/선 스켈레톤 ===
+                    if (ctx) {
+                        drawConnectors(ctx, lm, mpPose.POSE_CONNECTIONS, { lineWidth: 2 });
+                        drawLandmarks(ctx, lm, { radius: 2 });
+                    }
+
+                    // === 간단 동작 인식 ===
+                    const now = performance.now() / 1000;
+                    const dt = Math.max(0.016, Math.min(0.2, now - (lastTs || now)));
+                    lastTs = now;
+
+                    const shoulderDx = Math.abs(lm[LS].x - lm[RS].x);
+                    const torsoDy =
+                        Math.abs((lm[LH].y + lm[RH].y) / 2 - (lm[LS].y + lm[RS].y) / 2);
+
+                    const JAB_X_TH = 0.22 * shoulderDx;
+                    const VEL_X_TH = 0.04 * shoulderDx / dt;
+
+                    const UPPER_Y_TH = 0.25 * torsoDy;
+                    const VEL_Y_TH = 0.06 * torsoDy / dt;
+
+                    const L = { x: lm[LW].x, y: lm[LW].y };
+                    const R = { x: lm[RW].x, y: lm[RW].y };
+
+                    if (!armed) {
+                        startL = L;
+                        startR = R;
+                        armed = true;
+                        return;
+                    }
+
+                    const ldx = L.x - startL.x,
+                        ldy = L.y - startL.y;
+                    const rdx = R.x - startR.x,
+                        rdy = R.y - startR.y;
+
+                    const lvx = ldx / dt,
+                        lvy = ldy / dt;
+                    const rvx = rdx / dt,
+                        rvy = rdy / dt;
+
+                    const leftJab =
+                        Math.abs(ldx) > JAB_X_TH &&
+                        Math.abs(lvx) > VEL_X_TH &&
+                        Math.abs(ldy) < UPPER_Y_TH * 0.6;
+                    const rightJab =
+                        Math.abs(rdx) > JAB_X_TH &&
+                        Math.abs(rvx) > VEL_X_TH &&
+                        Math.abs(rdy) < UPPER_Y_TH * 0.6;
+
+                    const leftUpper = ldy < -UPPER_Y_TH && lvy < -VEL_Y_TH;
+                    const rightUpper = rdy < -UPPER_Y_TH && rvy < -VEL_Y_TH;
+
+                    let moveIdx = null; // 0:왼잽 1:오잽 2:왼어퍼 3:오어퍼
+                    if (leftJab) moveIdx = 0;
+                    else if (rightJab) moveIdx = 1;
+                    else if (leftUpper) moveIdx = 2;
+                    else if (rightUpper) moveIdx = 3;
+
+                    if (moveIdx !== null) {
+                        setAction("punch");
+                        setTimeout(() => setAction("idle"), 0);
+
+                        const curr = combo?.[patternIdx];
+                        const need = curr?.moves?.[stepIdx];
+                        if (need === moveIdx) advanceStepOnce();
+
+                        if (ctx) {
+                            const labels = ["왼잽", "오잽", "왼어퍼", "오어퍼"];
+                            const text = labels[moveIdx];
+                            ctx.save();
+                            ctx.font = "bold 24px sans-serif";
+                            const w = ctx.measureText(text).width + 16;
+                            ctx.fillStyle = "rgba(0,0,0,.65)";
+                            ctx.fillRect(12, 12, w, 34);
+                            ctx.fillStyle = "#ffd54a";
+                            ctx.fillText(text, 20, 38);
+                            ctx.restore();
+                        }
+
+                        startL = L;
+                        startR = R;
+                    }
+                });
+
+                // 4) Mediapipe 카메라 루프
+                cam = new Camera(inputVideoRef.current, {
+                    onFrame: async () => {
+                        if (isGameOverRef.current) return;
+                        try {
+                            await pose.send({ image: inputVideoRef.current });
+                        } catch {}
+                    },
+                    width: 640,
+                    height: 480,
+                });
+                cam.start();
             } catch (e) {
-                console.error("getUserMedia 실패:", e);
+                console.error("getUserMedia / Mediapipe 실패:", e);
             }
         })();
-        return () => {
-            s?.getTracks()?.forEach((t) => t.stop());
-        };
-    }, []);
 
-    // ── LiveKit 연결 (로비와 동일 패턴)
+        // 정리
+        return () => {
+            try { cam?.stop?.(); } catch {}
+            cam = null;
+            try { pose?.close?.(); } catch {}
+            pose = null;
+            try {
+                stream?.getTracks?.().forEach((t) => t.stop());
+            } catch {}
+        };
+    }, [combo, patternIdx, stepIdx]);
+
+    /* ───────── LiveKit 연결 ───────── */
     useEffect(() => {
         if (!roomName || !userUuid) return;
 
@@ -238,26 +450,17 @@ export default function MultiPlayPage() {
             if (track.kind !== Track.Kind.Video) return;
             setRemoteTracks((prev) => [
                 ...prev.filter((t) => t.sid !== publication.trackSid),
-                {
-                    sid: publication.trackSid,
-                    participantIdentity: participant.identity,
-                    track,
-                },
+                { sid: publication.trackSid, participantIdentity: participant.identity, track },
             ]);
         };
-
-        const onTrackUnsubscribed = (_track, publication, participant) => {
+        const onTrackUnsubscribed = (_track, publication) => {
             if (publication.kind !== Track.Kind.Video) return;
-            setRemoteTracks((prev) =>
-                prev.filter((t) => t.sid !== publication.trackSid)
-            );
+            setRemoteTracks((prev) => prev.filter((t) => t.sid !== publication.trackSid));
         };
 
         (async () => {
-            // 방/토큰
             const token = await getToken(roomName, nickname || "player", userUuid);
 
-            // 룸 생성 및 이벤트 바인딩
             const r = new Room();
             currentRoom = r;
             setRoom(r);
@@ -269,69 +472,100 @@ export default function MultiPlayPage() {
                 try {
                     const text = new TextDecoder().decode(payload);
                     const obj = JSON.parse(text);
-                    const sender =
-                        obj?.sender || from?.identity || (from?.name ?? "player");
-                    setChat((prev) => [...prev, { sender, message: obj?.message ?? "" }]);
-                } catch {
-                    // 평문도 허용
-                    const text = new TextDecoder().decode(payload);
-                    setChat((prev) => [...prev, { sender: from?.identity ?? "player", message: text }]);
-                }
+                    if (obj?.type === "log") {
+                        const sender = obj.sender || from?.identity || "player";
+                        setLog((prev) => [...prev, { sender, message: obj.text || "" }]);
+                    }
+                } catch {}
             });
 
-            // 접속
             await r.connect(LIVEKIT_URL, token);
 
-            // 로컬 트랙 퍼블리시(오디오/비디오)
             const audio = await createLocalAudioTrack().catch(() => null);
             const video = await createLocalVideoTrack().catch(() => null);
             if (audio) await r.localParticipant.publishTrack(audio);
             if (video) {
                 await r.localParticipant.publishTrack(video);
-                setLocalVideoTrack(video); // 필요하면 메인에서도 attach 가능
+                setLocalVideoTrack(video);
             }
+
+            // 시딩
+            const remotes = Array.from(r.remoteParticipants?.values?.() || []);
+            remotes.forEach((p) => {
+                p.videoTracks?.forEach?.((pub) => {
+                    const t = pub.track;
+                    if (t) {
+                        setRemoteTracks((prev) => [
+                            ...prev.filter((x) => x.sid !== pub.trackSid),
+                            { sid: pub.trackSid, participantIdentity: p.identity, track: t },
+                        ]);
+                    }
+                });
+            });
         })().catch((e) => {
             console.error("LiveKit connect error:", e);
         });
 
         return () => {
-            try { currentRoom?.disconnect(); } catch {}
+            try {
+                currentRoom?.disconnect();
+            } catch {}
             setRoom(null);
             setRemoteTracks([]);
             setLocalVideoTrack(null);
         };
     }, [roomName, userUuid, nickname]);
 
-    // ── 채팅 전송 (LiveKit data)
-    const sendChat = (text) => {
-        if (!room || !text.trim()) return;
-        const payload = JSON.stringify({ sender: nickname || "me", message: text });
-        room.localParticipant
-            .publishData(new TextEncoder().encode(payload), { reliable: true })
-            .catch(() => {});
-        setChat((prev) => [...prev, { sender: nickname || "me", message: text }]);
-    };
+    async function getToken(roomName, nickName, userUuid) {
+        const res = await fetch(`${APPLICATION_SERVER_URL}token`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ roomName, nickName, userUuid }),
+        });
+        const text = await res.text();
+        if (!res.ok) throw new Error(`token api ${res.status}: ${text}`);
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch {
+            throw new Error(`token non-json: ${text}`);
+        }
+        if (!data?.token) throw new Error(`token missing: ${text}`);
+        return data.token;
+    }
 
-    // ── 게임 타이머
+    /* ───────── 게임 타이머 ───────── */
     useEffect(() => {
+        if (isGameOver) return;
+        if (!startTimeRef.current) startTimeRef.current = Date.now();
         const it = setInterval(() => {
-            if (action !== "punch") setTimeover((p) => Math.max(p - 1, 0));
-        }, 1000);
+            const now = Date.now();
+            setElapsedTime(Math.floor((now - startTimeRef.current) / 1000));
+        }, 250);
         return () => clearInterval(it);
-    }, [action]);
+    }, [isGameOver]);
 
-    // 콤보 진행 (간단 모드)
+    useEffect(() => {
+        const remaining = Math.max(TIME_LIMIT_SEC - elapsedTime, 0);
+        setTimeover(remaining);
+        if (remaining === 0 && !isGameOverRef.current) setIsGameOver(true);
+    }, [elapsedTime]);
+
+    const timePercent = Math.max(
+        0,
+        Math.min(100, Math.round(((TIME_LIMIT_SEC - elapsedTime) / TIME_LIMIT_SEC) * 100))
+    );
+
+    /* ───────── 콤보 진행(간략) ───────── */
     const lastActionRef = useRef("idle");
     useEffect(() => {
-        const isHit =
-            action === "punch" ||
-            (typeof action === "string" &&
-                (action.endsWith("_jab") || action.endsWith("_uppercut")));
+        if (isGameOver) return;
+        const isHit = action === "punch";
         if (isHit && lastActionRef.current !== action) {
             advanceStepOnce();
         }
         lastActionRef.current = action;
-    }, [action]);
+    }, [action, isGameOver]);
 
     function advanceStepOnce() {
         if (!Array.isArray(combo) || combo.length === 0) return;
@@ -344,8 +578,6 @@ export default function MultiPlayPage() {
         setStepIdx((prev) => {
             const next = prev + 1;
             if (next >= total) {
-                setDestroyedCount((c) => c + 1);
-                setCoinCount((c) => c + 1);
                 setPatternIdx((p) => (p + 1) % combo.length);
                 return 0;
             }
@@ -355,46 +587,57 @@ export default function MultiPlayPage() {
         setTimeout(() => (advanceLockRef.current = false), 250);
     }
 
-    // 좌측 사이드바 표시 순서 (로비에서 넘긴 members 기준, 내 uuid 제외)
+    /* ───────── 파괴 로그 브로드캐스트 ───────── */
+    const broadcastDestroyLog = (buildingObj) => {
+        if (!room) return;
+        const name =
+            buildingObj?.name ||
+            buildingObj?.title ||
+            buildingObj?.imageName ||
+            buildingObj?.filename ||
+            "건물";
+        const text = `${nickname || "플레이어"}님이 "${name}"를 부쉈습니다.`;
+        const payload = JSON.stringify({ type: "log", text, sender: nickname || "me" });
+        room.localParticipant
+            .publishData(new TextEncoder().encode(payload), { reliable: true })
+            .catch(() => {});
+        setLog((prev) => [...prev, { sender: nickname || "me", message: text }]);
+    };
+
+    /* ───────── UI ───────── */
     const sidebarPeers = useMemo(() => {
-        const order = members.filter((u) => u && u !== userUuid);
-        // uuid -> track 매핑
+        const ids = Array.from(
+            new Set(remoteTracks.map((t) => t.participantIdentity))
+        ).filter((u) => u && u !== userUuid);
         const map = new Map(remoteTracks.map((t) => [t.participantIdentity, t.track]));
-        const arr = order.slice(0, 3).map((uuid) => ({
+        const arr = ids.slice(0, 3).map((uuid) => ({
             uuid,
             track: map.get(uuid) || null,
             nickname: "대기 중",
         }));
         while (arr.length < 3) arr.push({ uuid: null, track: null, nickname: "대기 중" });
         return arr;
-    }, [members, userUuid, remoteTracks]);
-
-    // LiveKit 토큰 요청
-    async function getToken(roomName, nickName, userUuid) {
-        const res = await fetch(`${APPLICATION_SERVER_URL}token`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ roomName, nickName, userUuid }),
-        });
-        const text = await res.text();
-        if (!res.ok) throw new Error(`token api ${res.status}: ${text}`);
-        let data;
-        try { data = JSON.parse(text); } catch { throw new Error(`token non-json: ${text}`); }
-        if (!data?.token) throw new Error(`token missing: ${text}`);
-        return data.token;
-    }
+    }, [userUuid, remoteTracks]);
 
     return (
         <div className="mp-root">
-            {/* 좌측: 친구 3명 (전체폭의 1/7은 CSS에서) */}
+            {/* 좌: 원격 참가자 3명 */}
             <aside className="mp-sidebar">
                 {sidebarPeers.map((p, idx) => (
                     <RemotePeerTile key={idx} track={p.track} uuid={p.uuid} />
                 ))}
             </aside>
 
-            {/* 메인 게임 */}
+            {/* 가운데: 게임 */}
             <main className="mp-main">
+                {/* === HUD: 타이머바 + 콤보 시퀀스 === */}
+                <div className="mp-hud">
+                    <div className="timer-bar">
+                        <div className="timer-fill" style={{ width: `${timePercent}%` }} />
+                    </div>
+                    <CommandSequence combo={combo} patternIdx={patternIdx} stepIdx={stepIdx} />
+                </div>
+
                 <div className="mp-game">
                     <PixiCanvas
                         action={action}
@@ -407,27 +650,31 @@ export default function MultiPlayPage() {
                             );
                             setDestroyedCount((c) => c + 1);
                             setCoinCount((c) => c + 1);
+                            broadcastDestroyLog(currentBuilding);
                         }}
                         setKcal={setKcal}
                         showBuildingHp={false}
                     />
                 </div>
 
-                {/* 내 카메라 PIP */}
-                <LocalPIP stream={localStream} />
-
-                {/* Mediapipe 입력용 (숨김) + 오버레이(옵션) */}
-                <video ref={inputVideoRef} className="mp-hidden-input" muted playsInline autoPlay />
-                <canvas ref={overlayCanvasRef} className="mp-hidden-input" />
+                {/* Mediapipe 입력 전용(숨김) */}
+                <video
+                    ref={inputVideoRef}
+                    className="mp-hidden-input"
+                    muted
+                    playsInline
+                    autoPlay
+                />
             </main>
 
-            {/* 우상단: 채팅/로그 */}
-            <div className="mp-chat-wrap">
-                <ChatLog messages={chat} onSend={sendChat} />
-                <div style={{ marginTop: 8, color: "#e9ecf1", fontSize: 12 }}>
-                    ⏱ {timeover}% · 🔥 {kcal} KCAL · 💰 {coinCount} · 🏢 {destroyedCount}
+            {/* 우: 로그 + 내 카메라(오버레이 포함) + 스탯 */}
+            <aside className="mp-right">
+                <LogPanel messages={log} />
+                <MyCamera stream={localStream} overlayRef={overlayCanvasRef} />
+                <div className="mp-stats">
+                    ⏱ {timeover}s · 🔥 {kcal} KCAL · 💰 {coinCount} · 🏢 {destroyedCount}
                 </div>
-            </div>
+            </aside>
         </div>
     );
 }
