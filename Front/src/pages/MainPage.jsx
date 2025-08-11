@@ -116,8 +116,6 @@ import eventw11 from '../assets/images/building/eventw11.png';
 import eventw12 from '../assets/images/building/eventw12.png';
 import eventw13 from '../assets/images/building/eventw13.png';
 import eventw14 from '../assets/images/building/eventw14.png';
-import eventw15 from '../assets/images/building/eventw15.png';
-import eventw16 from '../assets/images/building/eventw16.png';
 
 import arrowLeft from "../assets/images/main/left.png";
 import arrowRight from "../assets/images/main/right.png";
@@ -373,8 +371,6 @@ function MainPage() {
     { src: eventw12, filename: 'eventw12.png' },
     { src: eventw13, filename: 'eventw13.png' },
     { src: eventw14, filename: 'eventw14.png' },
-    { src: eventw15, filename: 'eventw15.png' },
-    { src: eventw16, filename: 'eventw16.png' },
   ];
 
   const navigate = useNavigate();
