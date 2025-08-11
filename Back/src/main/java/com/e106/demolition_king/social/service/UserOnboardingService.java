@@ -9,6 +9,7 @@ import com.e106.demolition_king.user.entity.User;
 import com.e106.demolition_king.user.repository.ProfileRepository;
 import jakarta.transaction.Transactional;
 import com.e106.demolition_king.user.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -23,10 +24,12 @@ public class UserOnboardingService {
     private final UserRepository userRepository;
     private final Random random = new Random();
     private final ProfileRepository profileRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserOnboardingService(UserRepository userRepository, ProfileRepository profileRepository) {
+    public UserOnboardingService(UserRepository userRepository, ProfileRepository profileRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.profileRepository = profileRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     /** User + 기본 리소스(Report/Gold/PlayerSkin) 초기화 저장 */
@@ -35,9 +38,12 @@ public class UserOnboardingService {
         Profile defaultprofile = profileRepository.findById(1)
                 .orElseThrow(() -> new RuntimeException("Default profile (seq=1) not found"));
 
+        String randomEncoded = passwordEncoder.encode(UUID.randomUUID().toString());
+
         User user = User.builder()
                 .userUuid(UUID.randomUUID().toString())
                 .userEmail(email)
+                .password(randomEncoded)
                 .userNickname(generateUniqueNickname(googleName)) // User1234
                 .googleSub(googleSubOrNull)             // 구글이면 sub 세팅, 아니면 null
                 .profile(defaultprofile)

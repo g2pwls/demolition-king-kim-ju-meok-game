@@ -260,7 +260,6 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         // 3. Access + Refresh 토큰 재발급
         return TokenResponseVo.builder()
                 .accessToken(newAccessToken)
-                .refreshToken(newRefreshToken)
                 .build();
     }
 

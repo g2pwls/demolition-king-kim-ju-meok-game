@@ -1,7 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
-  Room, RoomEvent, Track,
-  createLocalAudioTrack, createLocalVideoTrack,
+  Room,
+  RoomEvent,
+  Track,
+  createLocalAudioTrack,
+  createLocalVideoTrack,
 } from "livekit-client";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import awaitroomBg from "../assets/images/awaitroom/awaitroom.png";
@@ -18,9 +21,15 @@ function LKVideoTile({ track, muted }) {
   useEffect(() => {
     if (!track || !vref.current) return;
     track.attach(vref.current);
-    return () => { try { track.detach(vref.current); } catch {} };
+    return () => {
+      try {
+        track.detach(vref.current);
+      } catch {}
+    };
   }, [track]);
-  return <video ref={vref} autoPlay playsInline muted={!!muted} className="slot-video" />;
+  return (
+      <video ref={vref} autoPlay playsInline muted={!!muted} className="slot-video" />
+  );
 }
 
 export default function MultiLobbyPage() {
@@ -41,9 +50,6 @@ export default function MultiLobbyPage() {
   const [chatInput, setChatInput] = useState("");
   const chatListRef = useRef(null);
 
-  // ❌ 여기서 roomId 없다고 바로 메인으로 보내던 가드를 제거/완화
-  // (라우터가 /lobby/:roomId 아닌 경우 아예 이 페이지가 렌더되지 않으므로 불필요)
-
   // 유저 정보
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
@@ -63,7 +69,9 @@ export default function MultiLobbyPage() {
   useEffect(() => {
     const el = chatListRef.current;
     if (!el) return;
-    requestAnimationFrame(() => { el.scrollTop = el.scrollHeight; });
+    requestAnimationFrame(() => {
+      el.scrollTop = el.scrollHeight;
+    });
   }, [chatMessages]);
 
   // 슬롯 계산
@@ -79,7 +87,8 @@ export default function MultiLobbyPage() {
       body: JSON.stringify({ roomName, nickName: nick, userUuid: uuid }),
     });
     const data = await res.json();
-    if (!res.ok || !data?.token) throw new Error(data?.errorMessage || "token failed");
+    if (!res.ok || !data?.token)
+      throw new Error(data?.errorMessage || "token failed");
     return data.token;
   }
 
@@ -107,7 +116,10 @@ export default function MultiLobbyPage() {
     });
     r.on(RoomEvent.DataReceived, (payload, p) => {
       const msg = new TextDecoder().decode(payload);
-      if (msg === GAME_START_SIGNAL) { goToGame(); return; }
+      if (msg === GAME_START_SIGNAL) {
+        goToGame();
+        return;
+      }
       const sender = p?.name || p?.identity || "system";
       setChatMessages((prev) => [...prev, { sender, message: msg }]);
     });
@@ -119,7 +131,10 @@ export default function MultiLobbyPage() {
       const audio = await createLocalAudioTrack().catch(() => null);
       const video = await createLocalVideoTrack().catch(() => null);
       if (audio) await r.localParticipant.publishTrack(audio);
-      if (video) { await r.localParticipant.publishTrack(video); setLocalVideoTrack(video); }
+      if (video) {
+        await r.localParticipant.publishTrack(video);
+        setLocalVideoTrack(video);
+      }
 
       const remotes = Array.from(r.remoteParticipants?.values?.() || []);
       setParticipants((prev) => {
@@ -139,19 +154,25 @@ export default function MultiLobbyPage() {
       });
     } catch (e) {
       console.error("connect failed:", e);
-      try { await r.disconnect(); } catch {}
+      try {
+        await r.disconnect();
+      } catch {}
       setRoom(null);
     }
   }
 
-  // 유저/roomId 준비되면 자동 입장 (원치 않으면 이 블록 삭제)
+  // 유저/roomId 준비되면 자동 입장
   const joiningRef = useRef(false);
   useEffect(() => {
     if (joiningRef.current) return;
     if (room || !roomId || !userUuid) return;
     joiningRef.current = true;
     (async () => {
-      try { await joinRoom(); } finally { joiningRef.current = false; }
+      try {
+        await joinRoom();
+      } finally {
+        joiningRef.current = false;
+      }
     })();
   }, [room, roomId, userUuid]);
 
@@ -166,7 +187,9 @@ export default function MultiLobbyPage() {
     if (!room || !isRoomFull) return;
     const enc = new TextEncoder();
     try {
-      await room.localParticipant.publishData(enc.encode(GAME_START_SIGNAL), { reliable: true });
+      await room.localParticipant.publishData(enc.encode(GAME_START_SIGNAL), {
+        reliable: true,
+      });
     } catch {}
     goToGame();
   }
@@ -174,20 +197,29 @@ export default function MultiLobbyPage() {
   async function sendMessage() {
     if (!room || !chatInput.trim()) return;
     const enc = new TextEncoder();
-    await room.localParticipant.publishData(enc.encode(chatInput), { reliable: true });
-    setChatMessages((prev) => [...prev, { sender: nickName || "me", message: chatInput }]);
+    await room.localParticipant.publishData(enc.encode(chatInput), {
+      reliable: true,
+    });
+    setChatMessages((prev) => [
+      ...prev,
+      { sender: nickName || "me", message: chatInput },
+    ]);
     setChatInput("");
   }
 
   const renderSlot = (uuid) => {
     if (!uuid) return null;
-    if (uuid === userUuid) return localVideoTrack ? <LKVideoTile track={localVideoTrack} muted /> : null;
+    if (uuid === userUuid)
+      return localVideoTrack ? <LKVideoTile track={localVideoTrack} muted /> : null;
     const remote = remoteTracks.find((t) => t.participantIdentity === uuid);
     return remote?.track ? <LKVideoTile track={remote.track} /> : null;
   };
 
   return (
-      <div className="lobby-root" style={{ backgroundImage: `url(${awaitroomBg})` }}>
+      <div
+          className="lobby-root"
+          style={{ backgroundImage: `url(${awaitroomBg})` }}
+      >
         {!room ? (
             <div className="join-card">
               <h2>Join a Room</h2>
@@ -214,14 +246,21 @@ export default function MultiLobbyPage() {
               <div className="slot-wrapper">
                 <div className="character-grid">
                   {displayUuids.map((uuid, i) => (
-                      <div key={i} className={`character-slot ${uuid ? "filled" : "empty"}`}>
+                      <div
+                          key={i}
+                          className={`character-slot ${uuid ? "filled" : "empty"}`}
+                      >
                         {renderSlot(uuid)}
                       </div>
                   ))}
                 </div>
                 <div className="start-area">
                   <div className="player-count">인원: {filledCount} / 4</div>
-                  <button className="btn start" onClick={startGame} disabled={!isRoomFull}>
+                  <button
+                      className="btn start"
+                      onClick={startGame}
+                      disabled={!isRoomFull}
+                  >
                     게임 시작
                   </button>
                 </div>
@@ -232,21 +271,34 @@ export default function MultiLobbyPage() {
                   <div className="chat-title">CHAT</div>
                   <div className="chat-list" ref={chatListRef}>
                     {chatMessages.map((m, idx) => (
-                        <div key={idx} className={`chat-row ${m.sender === nickName ? "me" : "other"}`}>
+                        <div
+                            key={idx}
+                            className={`chat-row ${m.sender === nickName ? "me" : "other"}`}
+                        >
                           <div className="bubble">
                             {m.message}
-                            <div className="meta"><span className="name">{m.sender}</span></div>
+                            <div className="meta">
+                              <span className="name">{m.sender}</span>
+                            </div>
                           </div>
                         </div>
                     ))}
                   </div>
-                  <form className="chat-input" onSubmit={(e) => { e.preventDefault(); sendMessage(); }}>
+                  <form
+                      className="chat-input"
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        sendMessage();
+                      }}
+                  >
                     <input
                         value={chatInput}
                         onChange={(e) => setChatInput(e.target.value)}
                         placeholder="메시지 입력..."
                     />
-                    <button type="submit" className="btn send">전송</button>
+                    <button type="submit" className="btn send">
+                      전송
+                    </button>
                   </form>
                 </div>
               </div>

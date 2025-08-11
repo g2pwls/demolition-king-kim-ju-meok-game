@@ -2,43 +2,49 @@
 import React, { useEffect, useRef, useState } from 'react';
 import '../styles/StoryPage.css';
 import TypewriterText from '../components/TypewriterText';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import AnimatedPage from '../components/AnimatedPage';
+import api from '../utils/api';
 
 // 🔊 타이핑 효과음(BGM처럼 루프)
 import keyboardBgm from '../assets/sounds/keyboard_bgm.wav';
 
 function StoryPage() {
   const navigate = useNavigate();
-  const audioRef = useRef(null);
-  const [soundLocked, setSoundLocked] = useState(false);
+  const location = useLocation();
 
-  // ▶ 효과음 시작 (루프), 자동재생 차단 시 버튼 표시
+  // 1) 해시로 온 access 토큰 저장 + 해시 제거
   useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
+    try {
+      const hash = location.hash?.slice(1) || ''; // "access=..."
+      if (!hash) return;
+      const params = new URLSearchParams(hash);
+      const at = params.get('access');
+      if (at) {
+        localStorage.setItem('accessToken', at);
+        // URL 정리: 해시 제거 (히스토리 오염 방지)
+        navigate(location.pathname + location.search, { replace: true });
+      }
+    } catch (e) {
+      console.error('[Story] hash parse failed', e);
+    }
+  }, [location, navigate]);
 
-    audio.loop = true;
-    audio.volume = 0.45;
-
-    const tryPlay = () =>
-      audio.play().then(
-        () => setSoundLocked(false),
-        () => setSoundLocked(true) // 차단되면 버튼 보여줌
-      );
-
-    // 첫 시도
-    tryPlay();
-
-    // 언마운트 시 정지/리셋
-    return () => {
+  // 2) 혹시 해시가 없고, localStorage도 비어있다면 (새로고침 등)
+  //    refresh 쿠키로 교환 API를 한 번 시도 (선택사항)
+  useEffect(() => {
+    (async () => {
+      if (localStorage.getItem('accessToken')) return;
       try {
-        audio.pause();
-        audio.currentTime = 0;
-      } catch {}
-    };
+        const { data } = await api.post('/user/auth/tokenrefresh'); // 쿠키 동봉됨
+        const at = data?.result?.accessToken ?? data?.accessToken;
+        if (at) localStorage.setItem('accessToken', at);
+      } catch {
+        // 교환도 실패하면 로그인으로
+        // 여기서 바로 튕기지 않고, 아래 onDone에서 /main 가기 전에 체크해도 OK
+      }
+    })();
   }, []);
-
   const storyText = `
 
   한때, 그는 대한민국 복싱계를 뒤흔든 레전드였다.

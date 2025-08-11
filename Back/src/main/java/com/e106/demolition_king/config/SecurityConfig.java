@@ -5,9 +5,11 @@ import com.e106.demolition_king.social.controller.OAuth2SuccessHandler;
 import com.e106.demolition_king.util.JwtAuthenticationFilter;
 import com.e106.demolition_king.util.JwtFilter;
 import jakarta.servlet.http.HttpSession;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -18,10 +20,12 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 
 import java.util.List;
 
@@ -37,6 +41,7 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     private final JwtFilter jwtFilter;
+
 
     @Lazy
     public SecurityConfig(OAuth2SuccessHandler successHandler, CustomAuthorizationRequestResolver customAuthorizationRequestResolver, JwtAuthenticationFilter jwtAuthenticationFilter, JwtFilter jwtFilter) {
@@ -86,6 +91,7 @@ public class SecurityConfig {
                 .cors(withDefaults())
                 .csrf(csrf -> csrf.disable())                      // CSRF 비활성화
                 .httpBasic(AbstractHttpConfigurer::disable)         // 기본 BasicAuth 비활성화
+                .formLogin(AbstractHttpConfigurer::disable)
                 .sessionManagement(sm ->                           // 세션도 사용 안 함
                         sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
@@ -108,8 +114,8 @@ public class SecurityConfig {
                         })
                         .logoutSuccessHandler((request, response, authentication) ->
                                 response.sendRedirect("/login"))
-                        .deleteCookies("JSESSIONID", "refresh_token"))
-                ;
+                        .deleteCookies("JSESSIONID", "refreshToken")
+                );
         return http.build();
     }
     /* 일단 모든 경로 허용해둠
