@@ -11,40 +11,102 @@ import karina_final_anim_01 from '../../assets/images/karina/karina_final_anim_0
 import karina_final_anim_03 from '../../assets/images/karina/karina_final_anim_03.png';
 import karina_final_anim_05 from '../../assets/images/karina/karina_final_anim_05.png';
 
-// 펀치 데미지 조절  #damage
+// ========= 애니메이션 프레임 =========
 const karinaFrames = [
   karina_final_anim_01,
   karina_final_anim_03,
   karina_final_anim_05,
   karina_final_anim_05,
   karina_final_anim_03,
-  karina_final_anim_01
+  karina_final_anim_01,
 ];
 
-// [REMOVED] const buildingImages = [building1, building2, building3];  // API 이미지 사용으로 변경
 const dustFrames = [buildingDust1, buildingDust2, buildingDust3, buildingDust2, buildingDust1];
 
-// ✅ building 객체를 받아서 imageUrl / hp를 사용
+// ========= 상수 =========
+const HP_BAR_WIDTH = 180;
+const HP_BAR_HEIGHT = 12;
+const HP_BAR_OFFSET_Y = 18;
+
+// 건물 들어갈 고정 박스(비율 유지) — “박스 바닥”에 건물 바닥을 붙임
+const BOX_W_RATIO = 0.33;
+const BOX_H_RATIO = 0.55;
+const BOX_POS_X_RATIO = 0.63;
+const BOX_POS_Y_RATIO = 0.63;
+
+const computeBox = (app) => {
+  const w = app.renderer.width * BOX_W_RATIO;
+  const h = app.renderer.height * BOX_H_RATIO;
+  const cx = app.renderer.width * BOX_POS_X_RATIO;
+  const cy = app.renderer.height * BOX_POS_Y_RATIO;
+  const bottomY = cy + h / 2; // 박스 바닥 라인
+  return { w, h, cx, cy, bottomY };
+};
+
+// 비율 유지 스케일
+const fitSpriteToBox = (sprite, boxW, boxH, mode = 'fit') => {
+  const doResize = () => {
+    const texW = sprite.texture.width || 1;
+    const texH = sprite.texture.height || 1;
+    const sx = boxW / texW;
+    const sy = boxH / texH;
+    const s = mode === 'cover' ? Math.max(sx, sy) : Math.min(sx, sy);
+    sprite.scale.set(s);
+  };
+  if (sprite.texture.valid) doResize();
+  else sprite.texture.once('update', doResize);
+};
+
+// HP/먼지 위치: anchorY = 1(바닥 기준)
+const placeHpAndDust = (buildingSprite, hpBg, hpFill, dust) => {
+  if (!buildingSprite) return;
+  const topY = buildingSprite.y - buildingSprite.height; // 바닥기준이라 top = y - height
+  if (hpBg) {
+    hpBg.x = buildingSprite.x - HP_BAR_WIDTH / 2;
+    hpBg.y = topY - HP_BAR_OFFSET_Y;
+  }
+  if (hpFill) {
+    hpFill.x = buildingSprite.x - HP_BAR_WIDTH / 2;
+    hpFill.y = topY - HP_BAR_OFFSET_Y;
+  }
+  if (dust) {
+    dust.x = buildingSprite.x;
+    dust.y = buildingSprite.y - 10; // 건물 바닥 바로 위
+  }
+};
+
+// 금(크랙) 위치를 건물 내부에 무작위로
+const randomCrackPosition = (b) => {
+  const topY = b.y - b.height;
+  const x = b.x + (Math.random() - 0.5) * b.width * 0.6;
+  const y = topY + b.height * (0.15 + Math.random() * 0.7); // 위/아래 여백 조금
+  return { x, y };
+};
+
 const PixiCanvas = ({
   action,
   playerSkin,
-  onBuildingDestroyed,     // 파괴 시 constructureSeq 인자 전달
+  onBuildingDestroyed,
   kcal,
   setKcal,
   showBuildingHp,
-  building,                // { constructureSeq, hp, imageUrl, name }
+  building, // { constructureSeq, hp, imageUrl, name }
 }) => {
   const pixiRef = useRef(null);
   const appRef = useRef(null);
+
   const boxerRef = useRef(null);
   const buildingRef = useRef(null);
+  const hpBgRef = useRef(null);
   const healthBarRef = useRef(null);
   const dustSpriteRef = useRef(null);
-  const prevActionRef = useRef('idle');
   const crackSpritesRef = useRef([]);
 
+  const prevActionRef = useRef('idle');
   const destroyedLock = useRef(false);
-  const [buildingHP, setBuildingHP] = useState(building?.hp ?? 100); // 초기 HP를 building에서
+
+  const [buildingHP, setBuildingHP] = useState(building?.hp ?? 100);
+  const maxHPRef = useRef(building?.hp ?? 100);
 
   const [isBuildingFalling, setIsBuildingFalling] = useState(false);
   const [isNewBuildingDropping, setIsNewBuildingDropping] = useState(false);
@@ -52,9 +114,10 @@ const PixiCanvas = ({
   const boxerWidth = 250;
   const boxerHeight = 250;
 
-  // PIXI 초기화
+  // ========== PIXI 초기화 ==========
   useEffect(() => {
     if (!pixiRef.current) return;
+
     const app = new PIXI.Application({
       width: pixiRef.current.clientWidth,
       height: pixiRef.current.clientHeight,
@@ -66,113 +129,158 @@ const PixiCanvas = ({
     pixiRef.current.appendChild(app.view);
     app.stage.sortableChildren = true;
 
-    loadAssets(app);
+    loadAssets();
 
     const handleResize = () => {
+      if (!appRef.current) return;
+      const app = appRef.current;
       app.renderer.resize(pixiRef.current.clientWidth, pixiRef.current.clientHeight);
+
+      // 리사이즈 시 하단 정렬 유지
+      const b = buildingRef.current;
+      if (b) {
+        const { w: boxW, h: boxH, cx, bottomY } = computeBox(app);
+        b.x = cx;
+        fitSpriteToBox(b, boxW, boxH, 'fit');
+        b.y = bottomY; // 바닥 붙임
+        placeHpAndDust(b, hpBgRef.current, healthBarRef.current, dustSpriteRef.current);
+
+        // 크랙 위치도 보정
+        crackSpritesRef.current.forEach((cr) => {
+          const p = randomCrackPosition(b);
+          cr.x = p.x; cr.y = p.y;
+        });
+      }
     };
+
     window.addEventListener('resize', handleResize);
 
     return () => {
-      app.destroy(true, { children: true });
       window.removeEventListener('resize', handleResize);
+      app.destroy(true, { children: true });
       appRef.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const safeAddChild = (sprite) => {
-    if (appRef.current?.stage && !appRef.current.stage.destroyed) {
-      appRef.current.stage.addChild(sprite);
+    const app = appRef.current;
+    if (app?.stage && !app.stage.destroyed) {
+      app.stage.addChild(sprite);
     }
   };
 
   const loadAssets = () => {
-    const containerWidth = pixiRef.current.clientWidth;
-    const containerHeight = pixiRef.current.clientHeight;
+    const app = appRef.current;
+    if (!app) return;
+    const { cx, cy, w: boxW, h: boxH, bottomY } = computeBox(app);
 
+    // 배경
     const background = PIXI.Sprite.from(singleBack);
     background.anchor.set(0.5);
-    background.x = containerWidth / 2;
-    background.y = containerHeight / 2 - 100;
+    background.x = app.renderer.width / 2;
+    background.y = app.renderer.height / 2 - 100;
     background.zIndex = 0;
     safeAddChild(background);
 
+    // 복서
     const boxer = new PIXI.Sprite(PIXI.Texture.from(karina_final_anim_01));
     boxer.anchor.set(0.5);
     boxer.width = boxerWidth;
     boxer.height = boxerHeight;
-    boxer.x = containerWidth * 0.3;
-    boxer.y = containerHeight * 0.75;
+    boxer.x = app.renderer.width * 0.3;
+    boxer.y = app.renderer.height * 0.75;
     boxer.zIndex = 1;
     boxerRef.current = boxer;
     safeAddChild(boxer);
 
-    // API로 받은 building.imageUrl 사용 (없으면 기본 이미지)
+    // 건물 (바닥 기준 정렬)
     const bld = new PIXI.Sprite(PIXI.Texture.from(building?.imageUrl || building1));
-    bld.anchor.set(0.5);
-    bld.x = containerWidth * 0.63;
-    bld.y = containerHeight * 0.63;
-    bld.scale.set(0.5);
+    bld.anchor.set(0.5, 1); // ⬅️ 바닥 기준
+    bld.x = cx;
+    fitSpriteToBox(bld, boxW, boxH, 'fit');
+    bld.y = bottomY;        // ⬅️ 박스 바닥에 붙임
     bld.zIndex = 1;
     buildingRef.current = bld;
     safeAddChild(bld);
 
+    // 먼지 (바닥 근처)
     const dust = new PIXI.Sprite(PIXI.Texture.from(dustFrames[0]));
     dust.anchor.set(0.5);
-    dust.x = bld.x;
-    dust.y = bld.y + bld.height / 3;
-    dust.scale.set(0.45);
     dust.visible = false;
     dust.zIndex = 2;
     dustSpriteRef.current = dust;
     safeAddChild(dust);
 
+    // HP 바
     if (showBuildingHp) {
       const hpBg = new PIXI.Graphics();
-      hpBg.beginFill(0xaaaaaa).drawRect(0, 0, 200, 15).endFill();
-      hpBg.x = bld.x - 100;
-      hpBg.y = bld.y - bld.height / 2 - 20;
-      hpBg.zIndex = 2;
+      hpBg.beginFill(0xaaaaaa).drawRect(0, 0, HP_BAR_WIDTH, HP_BAR_HEIGHT).endFill();
+      hpBg.zIndex = 3;
+      hpBgRef.current = hpBg;
       safeAddChild(hpBg);
 
       const hpFill = new PIXI.Graphics();
-      hpFill.beginFill(0xff3333).drawRect(0, 0, 200, 15).endFill();
-      hpFill.x = hpBg.x;
-      hpFill.y = hpBg.y;
-      hpFill.zIndex = 3;
+      hpFill.beginFill(0xff3333).drawRect(0, 0, HP_BAR_WIDTH, HP_BAR_HEIGHT).endFill();
+      hpFill.zIndex = 4;
       healthBarRef.current = hpFill;
       safeAddChild(hpFill);
     } else {
+      hpBgRef.current = null;
       healthBarRef.current = null;
     }
 
-    const crackSprites = [];
+    placeHpAndDust(bld, hpBgRef.current, healthBarRef.current, dustSpriteRef.current);
+
+    // 크랙
+    const cracks = [];
     for (let i = 0; i < 3; i++) {
       const crack = new PIXI.Sprite(PIXI.Texture.from(crackTexture));
       crack.alpha = 0.6;
       crack.anchor.set(0.5);
-      crack.scale.set(0.4 + Math.random() * 0.3);
-      crack.x = bld.x + (Math.random() * 100 - 50);
-      crack.y = bld.y + (Math.random() * 100 - 50);
+      crack.scale.set(0.5);
+      const p = randomCrackPosition(bld);
+      crack.x = p.x; crack.y = p.y;
       crack.visible = false;
       crack.zIndex = 3;
-      crackSprites.push(crack);
+      cracks.push(crack);
       safeAddChild(crack);
     }
-    crackSpritesRef.current = crackSprites;
+    crackSpritesRef.current = cracks;
   };
 
-  // building 변경 시 텍스처/HP 리셋
+  // ========= building 변경 시 (텍스처/HP/정렬 갱신) =========
   useEffect(() => {
+    const app = appRef.current;
     const b = buildingRef.current;
-    if (!b || !building) return;
+    if (!app || !b || !building) return;
+
+    maxHPRef.current = building.hp ?? 100;
+    setBuildingHP(maxHPRef.current);
+
     b.texture = PIXI.Texture.from(building.imageUrl || building1);
-    setBuildingHP(building.hp ?? 100);
+
+    const { w: boxW, h: boxH, cx, bottomY } = computeBox(app);
+    b.anchor.set(0.5, 1);
+    b.x = cx;
+    fitSpriteToBox(b, boxW, boxH, 'fit');
+    b.y = bottomY;
+
+    if (crackSpritesRef.current?.length) {
+      crackSpritesRef.current.forEach((cr) => {
+        const p = randomCrackPosition(b);
+        cr.x = p.x; cr.y = p.y;
+        cr.visible = false;
+      });
+    }
+
+    placeHpAndDust(b, hpBgRef.current, healthBarRef.current, dustSpriteRef.current);
   }, [building]);
 
-  // 펀치 애니메이션 트리거
+  // ========= 펀치 =========
   useEffect(() => {
     if (!boxerRef.current) return;
+
     if (action === 'punch' && prevActionRef.current !== 'punch' && !isBuildingFalling && !isNewBuildingDropping) {
       let i = 0;
       const interval = setInterval(() => {
@@ -184,25 +292,31 @@ const PixiCanvas = ({
         }
       }, 80);
 
-      setBuildingHP((prev) => Math.max(prev - 50, 0)); //#damage
-      setKcal((prev) => Math.round(((prev + 0.1))*10)/10 );
+      setBuildingHP((prev) => Math.max(prev - 20, 0));
+      if (typeof setKcal === 'function') {
+        setKcal((prev) => Math.round((prev + 0.1) * 10) / 10);
+      }
     }
     prevActionRef.current = action;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [action, isNewBuildingDropping, isBuildingFalling]);
 
-  // HP 변화
+  // ========= HP 변화 =========
   useEffect(() => {
     if (healthBarRef.current) {
-      const newWidth = (buildingHP / 100) * 200;
+      const pct = Math.max(0, Math.min(1, buildingHP / (maxHPRef.current || 100)));
+      const newWidth = pct * HP_BAR_WIDTH;
       healthBarRef.current.clear();
-      healthBarRef.current.beginFill(0xff3333).drawRect(0, 0, newWidth, 15).endFill();
+      healthBarRef.current.beginFill(0xff3333).drawRect(0, 0, newWidth, HP_BAR_HEIGHT).endFill();
+      placeHpAndDust(buildingRef.current, hpBgRef.current, healthBarRef.current, dustSpriteRef.current);
     }
 
     if (crackSpritesRef.current) {
       crackSpritesRef.current.forEach((sprite, index) => {
-        if (buildingHP <= 25 && index <= 2) sprite.visible = true;
-        else if (buildingHP <= 50 && index <= 1) sprite.visible = true;
-        else if (buildingHP <= 75 && index === 0) sprite.visible = true;
+        const pct = buildingHP / (maxHPRef.current || 100);
+        if (pct <= 0.25 && index <= 2) sprite.visible = true;
+        else if (pct <= 0.5 && index <= 1) sprite.visible = true;
+        else if (pct <= 0.75 && index === 0) sprite.visible = true;
         else sprite.visible = false;
       });
     }
@@ -212,7 +326,7 @@ const PixiCanvas = ({
     }
   }, [buildingHP]);
 
-  // 건물 붕괴 → 먼지
+  // ========= 붕괴 → 먼지 =========
   useEffect(() => {
     const b = buildingRef.current;
     const dust = dustSpriteRef.current;
@@ -242,31 +356,41 @@ const PixiCanvas = ({
         }
       }, 100);
     }
+
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isBuildingFalling, building]);
+  }, [isBuildingFalling, building, onBuildingDestroyed]);
 
-  // 새 건물 드랍
+  // ========= 새 건물 드랍 (바닥 정렬) =========
   useEffect(() => {
     const app = appRef.current;
     const b = buildingRef.current;
     if (!app || !b) return;
 
     if (isNewBuildingDropping && building) {
-      b.x = app.renderer.width * 0.63;
-      b.y = -200;
+      const { w: boxW, h: boxH, cx, bottomY } = computeBox(app);
+
+      b.anchor.set(0.5, 1);
+      b.x = cx;
+      b.y = -50; // 화면 위에서 시작(바닥 기준이니까 -50이면 완전 위)
       b.texture = PIXI.Texture.from(building.imageUrl || building1);
       b.visible = true;
-      setBuildingHP(building.hp ?? 100);
+
+      maxHPRef.current = building.hp ?? 100;
+      setBuildingHP(maxHPRef.current);
+
+      fitSpriteToBox(b, boxW, boxH, 'fit');
+      placeHpAndDust(b, hpBgRef.current, healthBarRef.current, dustSpriteRef.current);
 
       const ticker = (delta) => {
         b.y += 15 * delta;
-        if (b.y >= app.renderer.height * 0.63) {
-          b.y = app.renderer.height * 0.63;
+        if (b.y >= bottomY) {
+          b.y = bottomY;
           setIsNewBuildingDropping(false);
           destroyedLock.current = false;
           app.ticker.remove(ticker);
+          placeHpAndDust(b, hpBgRef.current, healthBarRef.current, dustSpriteRef.current);
         }
       };
       app.ticker.add(ticker);
