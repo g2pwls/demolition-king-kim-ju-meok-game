@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Pose } from '@mediapipe/pose';
+//import { Pose } from '@mediapipe/pose';
 //import * as mpPose from '@mediapipe/pose';
 import { Camera } from '@mediapipe/camera_utils';
 import { drawLandmarks } from '@mediapipe/drawing_utils';
@@ -197,7 +197,7 @@ const SingleTestPage = () => {
       // const localBase = '/mediapipe/pose'; // [OPTIONAL][MP] public/mediapipe/pose/* 로 복사 시 사용
       //const assetBase = cdnBase; // 필요시 localBase 로 전환
       const assetBase = `${import.meta.env.BASE_URL}mediapipe/pose`;
-
+      const { Pose } = await import('@mediapipe/pose');
       const pose = new Pose({
         locateFile: (file) => `${assetBase}/${file}`,                      // [CHANGED][MP]
       });
