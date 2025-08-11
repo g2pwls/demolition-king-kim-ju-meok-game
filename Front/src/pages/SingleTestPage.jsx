@@ -6,7 +6,9 @@ import { drawLandmarks } from '@mediapipe/drawing_utils';
 import PixiCanvas from '../components/pixi/PixiCanvas';
 import api from '../utils/api';
 import "../styles/SingleTestPage.css";
-
+import coinImg from '../assets/images/main/coin.png';
+import AnimatedPage from '../components/AnimatedPage';
+import timerIcon from '../assets/images/singlemode/timer.png';
 /*
 // 시간상 관계로 코드 하드코딩 세팅 이용해야함. Cntrl + F
 - #TIMERSETTING : 타이머 값 수정 #TIMERSETTING
@@ -210,7 +212,7 @@ const SingleTestPage = () => {
     /* =================== 감지 로직 전면 교체 (안정화 + 잽/어퍼) =================== */
     pose.onResults((results) => {
       // [GAMEOVER] 게임오버면 더 이상 프레임 처리/상태 업데이트 하지 않음
-      if (isGameOverRef.current) return; 
+      if (!isPlayingRef.current || isGameOverRef.current) return; 
 
       const videoEl = videoRef.current;
       const canvasEl = canvasRef.current;
@@ -381,7 +383,7 @@ const SingleTestPage = () => {
     const cam = new Camera(videoEl, {
       onFrame: async () => {
         // [GAMEOVER] 게임오버면 더 이상 pose 처리 안 함
-        if (isGameOverRef.current) return; 
+        if (!isPlayingRef.current || isGameOverRef.current) return; 
         try {
           await pose.send({ image: videoEl });
         } catch (e) {
@@ -714,22 +716,41 @@ const SingleTestPage = () => {
 
     setTimeout(() => { advanceLockRef.current = false; }, 250);
   }
-
-  useEffect(() => {
-  if (isGameOver) return;
-
-  // 게임 시작 시 현재 시간 저장
-  if (!startTimeRef.current) {
-    startTimeRef.current = Date.now();
-  }
+// === [PRESTART] 10초 준비 카운트다운 ===
+const READY_SECONDS = 10;                   // 준비 시간(초)
+const [isPlaying, setIsPlaying] = useState(false);   // 본 게임 진행 여부
+const isPlayingRef = useRef(false);                  // 콜백용 ref
+const [readyLeft, setReadyLeft] = useState(READY_SECONDS);
+// === [PRESTART] 카운트다운 시작 ===
+useEffect(() => {
+  setReadyLeft(READY_SECONDS);
+  const t = setInterval(() => {
+    setReadyLeft(prev => {
+      if (prev <= 1) {
+        clearInterval(t);
+        setIsPlaying(true);
+        isPlayingRef.current = true;
+        // 본 게임 타이머 기준 시각 시작
+        startTimeRef.current = Date.now();
+        return 0;
+      }
+      return prev - 1;
+    });
+  }, 1000);
+  return () => clearInterval(t);
+}, []);
+// === [PRESTART] 본 게임 타이머: isPlaying 동안만 틱 ===
+useEffect(() => {
+  if (!isPlaying || isGameOver) return;
 
   const interval = setInterval(() => {
     const now = Date.now();
-    setElapsedTime(Math.floor((now - startTimeRef.current) / 1000)); // 초 단위 #TIMERSETTING
+    setElapsedTime(Math.floor((now - startTimeRef.current) / 1000)); // #TIMERSETTING
   }, 100);
 
   return () => clearInterval(interval);
-}, [isGameOver]);
+}, [isPlaying, isGameOver]);
+
 
 
 
@@ -962,27 +983,48 @@ useEffect(() => {
   =====================================================================================*/
 
   return (
+    <AnimatedPage>
+{/* [PRESTART] 준비 카운트다운 오버레이 */}
+{!isGameOver && !isPlaying && (
+  <div className="prestart-overlay">
+    <div className="countdown">{readyLeft}</div>
+  </div>
+)}
+
     <div className="page-container">
       <audio ref={audioRef} src="/sounds/bgm.mp3" />
       {isGameOver && (
         <div className="game-over-overlay">
+          <div className="gameover">
           <h1>GAME OVER</h1>
           {/* [PLAYTIME] 별도 플레이 시간 표기 */}
-          {playTime !== null && <p>플레이 시간: {playTime}초</p>}
-          {destroyedCount !== null && <p>부순 건물 수: {destroyedCount}개</p>}
-          {kcal !== null && <p>소모 칼로리: {kcal}KCAL</p>}
-          <button onClick={() => window.location.reload()}>다시 시작</button>
+          <div className="gamediv">
+          {playTime !== null && <div className="gameovertext">플레이 시간: {playTime}초</div>}
+          {destroyedCount !== null && <div className="gameovertext">부순 건물 수: {destroyedCount}개</div>}
+          {kcal !== null && <div className="gameovertext">소모 칼로리: {kcal}KCAL</div>}
+          {coinCount !== null && <div className="gameovertext">오늘의 일당: <img 
+      src={coinImg} 
+      alt="coin" 
+      style={{ height: '20px', margin: '0 5px', verticalAlign: 'middle' }} 
+    />{coinCount}개</div>}
+          </div>
+          <div className="playbutton">
+          <button className="playagain" onClick={() => window.location.reload()}>다시 시작</button>
+          <button className="playagain" onClick={() => window.location.href = '/main'}>나가기</button>
+          </div>
+          </div>
         </div>
       )}
 
       <div className="game-layout">
         <div className="left-game">
           <div className="overlay-ui">
+            <img src={timerIcon} alt="Timer" className="timer-icon" />
             <div className="progress-bar">
               {/* [TIMER SEP] TIME_LIMIT_SEC를 기준으로 % 계산 (임의 변경에 안전) */}
               <div className="progress-fill" style={{ width: `${(timeover / TIME_LIMIT_SEC) * 100}%` }}></div>
             </div>
-            <div className="overlay-ui">
+            <div className="overlay-ui1">
               {renderCommandSequence()}
             </div>
           </div>
@@ -1023,13 +1065,14 @@ useEffect(() => {
           {/* [GAMEOVER] QUIT 버튼으로 즉시 종료 */}
           <button className="quit-button" onClick={() => setIsGameOver(true)}>QUIT</button> {/* [GAMEOVER] */}
 
-          <div className="webcam-container">
+          <div className="webcam-container mirror">
             <video ref={videoRef} autoPlay muted className="webcam-video" />
             <canvas ref={canvasRef} className="webcam-canvas" width="640" height="480"></canvas>
           </div>
         </div>
       </div>
     </div>
+    </AnimatedPage>
   );
 };
 

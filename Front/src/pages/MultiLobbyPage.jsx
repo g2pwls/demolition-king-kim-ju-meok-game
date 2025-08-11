@@ -6,6 +6,7 @@ import {
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import awaitroomBg from "../assets/images/awaitroom/awaitroom.png";
 import "../styles/MultiLobbyPage.css";
+import AnimatedPage from '../components/AnimatedPage';
 
 const APPLICATION_SERVER_URL = "http://localhost:6080/";
 const LIVEKIT_URL = "ws://localhost:7880/";

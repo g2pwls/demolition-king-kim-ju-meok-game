@@ -6,6 +6,7 @@ import googleIcon from '../assets/images/login/google.png';
 import kakaoIcon from '../assets/images/login/kakao.png';
 import loginBack from '../assets/images/login/loginbackf.png';
 import backIcon from '../assets/images/back.png';
+import AnimatedPage from '../components/AnimatedPage';
 
 function parseJwt(token) {
   try {
@@ -74,6 +75,7 @@ function LoginPage() {
   };
 
   return (
+    <AnimatedPage>
     <div
       className="login-page-background"
       style={{ backgroundImage: `url(${loginBack})` }}
@@ -122,6 +124,7 @@ function LoginPage() {
         </form>
       </div>
     </div>
+    </AnimatedPage>
   );
 }
 
