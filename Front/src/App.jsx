@@ -24,7 +24,7 @@ import SingleTestPage from "./pages/SingleTestPage";
 import MultiLobbyPage from "./pages/MultiLobbyPage";
 import MultiPlayPage from "./pages/MultiPlayPage";
 import MultiModeEntryPage from "./pages/MultiModeEntryPage";
-
+import MultiResultPage from "./pages/MultiResultPage";
 // components
 import AppLayout from "./components/AppLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -42,6 +42,7 @@ function AppRoutes() {
                 <Route path="/password" element={<AppLayout><PasswordPage /></AppLayout>} />
                 <Route path="/resetpassword" element={<AppLayout><ResetPasswordPage /></AppLayout>} />
                 <Route path="/multiplay" element={<MultiPlayPage />} />
+                <Route path="/multi-result" element={<MultiResultPage />} />
 
                 {/* Protected */}
                 <Route path="/main" element={<ProtectedRoute><MainPage /></ProtectedRoute>} />

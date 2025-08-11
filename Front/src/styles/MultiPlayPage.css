@@ -1,121 +1,269 @@
-/* 전체 페이지 3열 고정: [왼]260px  [중]자동  [오]380px  */
-.mp-root{
-    display:grid;
-    grid-template-columns: 260px minmax(0,1fr) 380px;
-    grid-template-rows: minmax(0,1fr);
-    gap:16px;
-    height:100vh;
-    padding:16px;
-    box-sizing:border-box;
-    background:#0a0d12;
+/* === 전체 레이아웃 === */
+.mp-root {
+    height: 100dvh;                /* 모바일 브라우저 주소창 고려 */
+    width: 100%;
+    display: grid;
+    grid-template-areas: "sidebar main right";
+    grid-template-columns: 280px 1fr 380px;  /* 좌 / 중 / 우 */
+    grid-template-rows: 1fr;
+    gap: 14px;
+    padding: 12px;
+    box-sizing: border-box;
+    overflow: hidden;
+    background: #0a0c0f;
 }
 
-/* 왼쪽 원격 타일 컬럼 */
-.mp-sidebar{
-    height:100%;
-    display:flex;
-    flex-direction:column;
-    gap:14px;
-    overflow-y:auto;
-}
-.peer-tile{
-    position:relative;
-    background:#0b0e12;
-    border:1px solid #1e2430;
-    border-radius:12px;
-    overflow:hidden;
-    height:200px;
-    flex:0 0 auto;
-}
-.peer-tile video{width:100%;height:100%;object-fit:cover;}
-.peer-badge{
-    position:absolute;left:8px;bottom:8px;
-    display:inline-flex;gap:6px;padding:3px 8px;
-    border-radius:10px;background:rgba(0,0,0,.55);
-    color:#e9ecf1;font-size:12px;
+/* 중간(main) 영역도 전체 높이 채움 */
+.mp-main {
+    grid-area: main;
+    display: grid;
+    grid-template-rows: auto 1fr;  /* HUD, GAME */
+    gap: 10px;
+    min-height: 0; /* 자식 스크롤 허용 */
 }
 
-/* 가운데 게임 영역 */
-.mp-main{
-    position:relative;
-    height:100%;
-    background:#0b0e12;
-    border:1px solid #1e2430;
-    border-radius:18px;
-    overflow:hidden;
+/* HUD (상단 고정) */
+.mp-hud {
+    padding: 6px 10px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(4px);
 }
-.mp-game{position:relative;width:100%;height:100%;}
-.mp-hidden-input{display:none;}
 
-/* HUD (타이머/콤보) */
-.mp-hud{
-    position:absolute;top:8px;left:12px;right:12px;
-    z-index:5;pointer-events:none;
+/* 타이머 바 */
+.timer-bar {
+    height: 10px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 8px;
 }
-.timer-bar{
-    height:14px;background:rgba(255,255,255,.15);
-    border-radius:12px;overflow:hidden;
-    box-shadow:inset 0 0 0 2px rgba(255,255,255,.08);
+.timer-fill {
+    height: 100%;
+    background: #ff5757;
 }
-.timer-fill{height:100%;background:#ff3b3b;transition:width .2s linear;}
 
-.command-sequence{
-    margin-top:10px;display:flex;gap:10px;justify-content:center;
+/* 콤보 원형 아이템 */
+.command-sequence {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
 }
-.command-circle{
-    pointer-events:none;min-width:56px;padding:8px 10px;
-    border-radius:22px;font-weight:800;font-size:16px;color:#fff;
-    box-shadow:0 2px 8px rgba(0,0,0,.25), inset 0 -3px 0 rgba(0,0,0,.2);
+.command-circle {
+    min-width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    background: #2b2f35;
+    color: #e7edf3;
+    box-shadow: 0 2px 0 rgba(0,0,0,.25) inset;
+    padding: 0 10px;
 }
-.command-circle.red{background:#ff6868;border:3px solid #ffb0b0;}
-.command-circle.black{background:#2b2f39;border:3px solid #a6a6a6;}
-.command-circle.current{transform:translateY(-2px);outline:3px solid #ffd54a;}
-.command-circle.done{opacity:.5;}
+.command-circle.red { background:#ff6b6b; color:#1b1d20; }
+.command-circle.black { background:#2b2f35; }
+.command-circle.done { opacity:.5; outline:2px solid rgba(255,255,255,.25); }
+.command-circle.current { outline:2px solid #ffd54a; }
 
-/* 오른쪽 패널: LOG + 내 PIP + 스탯 */
+/* 게임 캔버스 래퍼: 16:9 비율 유지 + 가능한 한 크게 */
+.mp-game {
+    position: relative;
+    min-height: 0;         /* 부모 그리드 스크롤 허용 */
+    display: grid;
+    place-items: center;
+}
+.mp-game > * {
+    width: 100%;
+    height: 100%;
+    max-height: calc(100dvh - 140px);   /* 상단 HUD/패딩 감안 */
+    aspect-ratio: 16 / 9;               /* 16:9 유지 */
+    object-fit: contain;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #0b2030;
+}
+
+/* === 좌측: 원격 참가자 === */
+.mp-sidebar {
+    grid-area: sidebar;
+    display: grid;
+    grid-template-rows: repeat(3, 1fr);
+    gap: 12px;
+    min-height: 0;
+    overflow: hidden;
+}
+.peer-tile {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #000;
+    display: grid;
+}
+.peer-tile .slot-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* 원격은 꽉 채움 */
+}
+.peer-badge {
+    position: absolute;
+    left: 8px; bottom: 8px;
+    padding: 4px 8px;
+    border-radius: 9999px;
+    background: rgba(0,0,0,0.55);
+    color: #fff;
+    font-size: 12px;
+    display: flex; gap: 6px; align-items: center;
+}
+.peer-stat {
+    position: absolute;
+    right: 8px; bottom: 8px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: rgba(0,0,0,0.55);
+    color: #fff;
+    font-size: 12px;
+}
+
+/* 우측: 로그(1fr) + 내 카메라(auto) — 로그가 위에서 공간 차지 */
 .mp-right{
-    height:100%;
+    grid-area:right;
+    display:grid;
+    grid-template-rows: 1fr auto;  /* ⬅️ 순서 바꿈: 위 로그가 커지고, 아래 카메라 카드 고정 */
+    gap:12px;
+    min-height:0;
+}
+
+/* 내 카메라 카드 */
+.me-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-radius: 12px;
+    background: #0c0e10;
+    padding: 10px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+}
+
+/* 세로형(3:4) 비율 유지 */
+.me-video-wrap {
+    width: 100%;
+    aspect-ratio: 3 / 4;   /* 세로 길게 */
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #000;
+}
+
+/* MyCamera 내부 비디오/캔버스 오버레이 */
+.local-pip { position: absolute; inset: 0; }
+.local-pip video,
+.local-pip canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%; height: 100%;
+    object-fit: contain; /* 얼굴/포즈 잘림 방지 */
+}
+
+/* 스탯 줄 */
+.me-stats {
+    font-size: 14px;
+    line-height: 1.35;
+    color: #cfd6dd;
+    padding: 6px 8px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.05);
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 로그 패널은 스크롤 가능하게 */
+.mp-chat{
+    border-radius:10px;
+    background:#0c0e10;
+    padding:10px;
     display:flex;
     flex-direction:column;
-    gap:12px;
+    min-height:140px;
+    max-height:100%;
+    overflow:hidden;
+}
+.mp-chat-list{ flex:1; overflow:auto; min-height:0; }
+.mp-chat-title {
+    font-weight: 700; color: #cfd6dd; margin-bottom: 8px;
+}
+.mp-chat-list {
+    flex: 1; overflow: auto; min-height: 0;
+}
+.mp-chat-item { color: #b8c2cc; font-size: 13px; padding: 3px 0; }
+.mp-chat-item .nick { color: #90caf9; }
+
+/* === 반응형 브레이크포인트 === */
+
+/* ① 1280px 이상: 기본 3열 (현재 설정 그대로) */
+
+/* ② 1024–1279px: 우측 폭 줄이고 게임을 우선 */
+@media (max-width: 1279.98px) {
+    .mp-root {
+        grid-template-columns: 260px 1fr 320px;
+    }
 }
 
-/* LOG 패널 */
-.mp-chat{
-    flex:0 0 200px;
-    background:#0b0e12;border:1px solid #1e2430;border-radius:12px;
-    display:grid;grid-template-rows:36px 1fr;
+/* ③ 768–1023px: 2열로 축소(좌/중), 우측 패널은 아래로 */
+@media (max-width: 1023.98px) {
+    .mp-root {
+        grid-template-areas:
+      "sidebar main"
+      "right   main";
+        grid-template-columns: 260px 1fr;
+        grid-template-rows: auto 1fr;
+    }
+    .mp-right {
+        grid-template-rows: auto auto; /* me-card + log */
+    }
 }
-.mp-chat-title{padding:8px 10px;font-weight:800;color:#e9ecf1;}
-.mp-chat-list{padding:8px 10px;overflow:auto;}
-.mp-chat-item{color:#bfc6d4;font-size:13px;margin-bottom:6px;}
-.mp-chat-item .nick{color:#9fb7ff;margin-right:6px;}
 
-/* 내 PIP (비디오 + Mediapipe 오버레이) */
-.local-pip{
-    flex:1 1 auto;
-    position:relative;
-    background:#0b0e12;border:1px solid #1e2430;border-radius:12px;
-    overflow:hidden;display:grid;align-items:center;justify-items:center;
+/* ④ ~767px: 한 열 스택 (상: 게임, 중: 내 카메라, 하: 로그/원격) */
+@media (max-width: 767.98px) {
+    .mp-root {
+        grid-template-areas:
+      "main"
+      "right"
+      "sidebar";
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto 1fr;
+        gap: 10px;
+        padding: 8px;
+    }
+    .mp-sidebar {
+        grid-template-rows: none;
+        grid-auto-rows: 160px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: 70%;
+        gap: 10px;
+    }
+    .mp-main .mp-game > * {
+        aspect-ratio: 16 / 9;
+        max-height: unset
+    }
+    .mp-right {
+        grid-template-rows: auto auto;
+    }
 }
-.local-pip video.mirror{
-    width:100%; height:100%;
-    object-fit:cover;
-    transform:scaleX(-1);
-}
-.local-pip .overlay{
-    position:absolute; inset:0;
-    width:100%; height:100%;
-    pointer-events:none;
-}
-.mirror{ transform:scaleX(-1); }
-
-.mp-stats{
-    flex:0 0 auto;
-    display:flex;align-items:center;gap:12px;
-    padding:8px 10px;background:#0b0e12;border:1px solid #1e2430;border-radius:12px;color:#e9ecf1;
-}
-.mp-stats .quit{
-    margin-left:auto;background:#c03535;border:none;color:#fff;
-    font-weight:700;padding:8px 12px;border-radius:10px;cursor:pointer;
+/* 숨김 입력 비디오: 렌더링/레이아웃에서 완전 제외 */
+.mp-hidden-input{
+    position:absolute !important;
+    width:1px !important;
+    height:1px !important;
+    opacity:0 !important;
+    pointer-events:none !important;
+    overflow:hidden !important;
+    clip-path: inset(50%) !important; /* 접근성 + 확실한 숨김 */
 }
