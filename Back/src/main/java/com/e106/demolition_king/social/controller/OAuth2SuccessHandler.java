@@ -8,6 +8,7 @@ import com.e106.demolition_king.util.JwtUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -15,9 +16,12 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
@@ -25,14 +29,17 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
     private final UserRepository userRepository;
     private final UserOnboardingService onboardingService;
     private final UserServiceImpl userService;
+    private final RedisTemplate<String, String> redisTemplate;
+
 
     public OAuth2SuccessHandler(JwtUtil jwtUtil,
                                 UserRepository userRepository,
-                                UserOnboardingService onboardingService, UserServiceImpl userService) {
+                                UserOnboardingService onboardingService, UserServiceImpl userService, RedisTemplate<String, String> redisTemplate) {
         this.jwtUtil = jwtUtil;
         this.userRepository = userRepository;
         this.onboardingService = onboardingService;
         this.userService = userService;
+        this.redisTemplate = redisTemplate;
     }
 
     @Override
@@ -73,8 +80,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             // 현재 사용자 삭제
             userService.deleteByEmail(email);    // 아래 예시 메서드 구현
             // 토큰/쿠키 제거
-            response.setHeader("Set-Cookie", "ACCESS_TOKEN=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=None");
-            response.addHeader("Set-Cookie", "REFRESH_TOKEN=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=None");
+            response.addHeader("Set-Cookie", "refreshToken=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=None");
             redirect(response, "/account/delete/done");
             return;
         }
@@ -88,27 +94,23 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             userRepository.save(user);
         }
 
-        // roles가 없으면 빈 리스트로
-        String access  = jwtUtil.createAccessToken(user.getUserEmail(), List.of());
-        String refresh = jwtUtil.createRefreshToken(user.getUserEmail());
+        String access  = jwtUtil.createAccessToken(user.getUserUuid(), List.of("USER"));
+        String refresh = jwtUtil.createRefreshToken(user.getUserUuid());
 
-        // HttpOnly + Secure + SameSite=None
-        ResponseCookie accessCookie = ResponseCookie.from("ACCESS_TOKEN", access)
-                .httpOnly(true).secure(true).sameSite("None").path("/")
-                .maxAge(10 * 60) // 10분
-                .build();
+        redisTemplate.opsForValue().set("RT:" + user.getUserUuid(), refresh, 31, TimeUnit.DAYS);
+        //온라인 유저 redis에 추가
+        redisTemplate.opsForValue().set("online:"+ user.getUserUuid(), "true", 1, TimeUnit.DAYS);
 
-        ResponseCookie refreshCookie = ResponseCookie.from("REFRESH_TOKEN", refresh)
+        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refresh)
                 .httpOnly(true).secure(true).sameSite("None").path("/")
                 .maxAge(7 * 24 * 60 * 60) // 7일
                 .build();
 
-        response.addHeader("Set-Cookie", accessCookie.toString());
         response.addHeader("Set-Cookie", refreshCookie.toString());
 
         // 성공 후 원하는 경로로 리디렉트
         try {
-            response.sendRedirect("https://i13e106.p.ssafy.io/main");
+            response.sendRedirect("https://i13e106.p.ssafy.io/story#access="+ URLEncoder.encode(access, StandardCharsets.UTF_8));
         } catch (Exception ignored) { }
     }
 

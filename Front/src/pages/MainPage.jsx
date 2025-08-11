@@ -133,14 +133,6 @@ import thirdTrophy from '../assets/images/main/third.png';
 
 function MainPage() {
 
-  // 메인 창 로그인 못하면 못 보게
-  useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) {
-      alert('로그인이 필요합니다.');
-      navigate('/login');
-    }
-  }, []);
   // 세션 만료되면 다시 로그인하게
   axios.interceptors.response.use(
     response => response,
@@ -410,8 +402,8 @@ function MainPage() {
   const [isFriendPopupOpen, setIsFriendPopupOpen] = useState(false); // ✅ 반드시 함수 컴포넌트 내부에
   const [activeTab, setActiveTab] = useState('통계');
   const [userInfo, setUserInfo] = useState(null);
-  
-  // 유저 정보 불러오기
+
+    // 유저 정보 불러오기
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
