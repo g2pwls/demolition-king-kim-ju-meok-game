@@ -60,9 +60,9 @@ function AppRoutes() {
         <Route
           path="/story"
           element={
-            <ProtectedRoute>
+            // <ProtectedRoute>
               <AppLayout><StoryPage /></AppLayout>
-            </ProtectedRoute>
+            // </ProtectedRoute>
           }
         />
         <Route

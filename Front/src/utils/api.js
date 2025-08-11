@@ -3,11 +3,11 @@ import axios from 'axios';
 
 const api = axios.create({
   baseURL: 'https://i13e106.p.ssafy.io/api',
-  // withCredentials: true  // refreshToken을 httpOnly 쿠키로 쓴다면 켜주세요
+  withCredentials: true  // refreshToken을 httpOnly 쿠키로 쓴다면 켜주세요
 });
 
 // 유틸: JWT exp 파싱
-function getTokenExp(token) {
+function getTokenExpMs(token) {
   try {
     const payload = JSON.parse(atob(token.split('.')[1]));
     return payload.exp * 1000;  // ms 단위
@@ -16,69 +16,97 @@ function getTokenExp(token) {
   }
 }
 
-// 1) 요청 인터셉터: 만료 임박 시 미리 refresh
-api.interceptors.request.use(
-  async (config) => {
-    const accessToken = localStorage.getItem('accessToken');
-    if (accessToken) {
-      const expTime = getTokenExp(accessToken);
-      const now = Date.now();
+// --- 공용: Authorization 헤더 부착 ---
+api.interceptors.request.use(async (config) => {
+  const access = localStorage.getItem('accessToken');
 
-      // 만료 1분(60,000ms) 이내라면 갱신
-      if (expTime - now < 60_000) {
-        try {
-          const refreshToken = localStorage.getItem('refreshToken');
-          const { data } = await axios.post(
-            `${api.defaults.baseURL}/user/auth/tokenrefresh`,
-            { refreshToken }  // 서버가 body로 받을 경우
-            // 만약 header로 받을 경우:
-            // null,
-            // { headers: { Authorization: `Bearer ${refreshToken}` } }
-          );
-          const newAccess = data.result.accessToken;
-          localStorage.setItem('accessToken', newAccess);
-        } catch (err) {
-          // 갱신 실패 시 강제 로그아웃
-          localStorage.clear();
-          window.location.href = '/login';
-          return Promise.reject(err);
-        }
+  // 1) 만료 60초 이내면 쿠키로 사전 갱신
+  if (access) {
+    const exp = getTokenExpMs(access);
+    if (exp && exp - Date.now() < 60_000) {
+      try {
+        const newAccess = await refreshAccessToken(); // ⬇️ 아래 함수
+        if (newAccess) localStorage.setItem('accessToken', newAccess);
+      } catch {
+        // 무시하고 기존 토큰으로 시도 -> 어차피 401에서 재갱신 로직 있음
       }
-
-      // 최종적으로 최신 accessToken 헤더에 세팅
-      config.headers.Authorization = `Bearer ${localStorage.getItem('accessToken')}`;
     }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+  }
 
-// 2) 응답 인터셉터: 401 Unauthorized 잡아서 refresh & retry
+  // 2) 최신 토큰 부착
+  const latest = localStorage.getItem('accessToken');
+  if (latest) {
+    config.headers.Authorization = `Bearer ${latest}`;
+  }
+  return config;
+});
+
+// --- 401 처리: 단일 갱신 후 재시도 ---
+let isRefreshing = false;
+let waiters = [];
+
+function subscribe(cb) { waiters.push(cb); }
+function notifyAll(token) { waiters.forEach((cb) => cb(token)); waiters = []; }
+
+async function refreshAccessToken() {
+  // refresh endpoint 자체 호출 중 중복 방지
+  if (isRefreshing) {
+    return new Promise((resolve, reject) => {
+      subscribe((tok) => tok ? resolve(tok) : reject(new Error('refresh failed')));
+    });
+  }
+  isRefreshing = true;
+  try {
+    // 인터셉터 재귀를 피합니다.
+    const { data } = await axios.post(
+      'https://i13e106.p.ssafy.io/api/user/auth/tokenrefresh',
+      {},
+      { withCredentials: true }
+    );
+    const newAccess =
+      data?.result?.accessToken ?? data?.accessToken; // BaseResponse 대응
+    if (!newAccess) throw new Error('no accessToken in response');
+
+    notifyAll(newAccess);
+    return newAccess;
+  } finally {
+    isRefreshing = false;
+  }
+}
+
 api.interceptors.response.use(
   (res) => res,
   async (error) => {
     const { config, response } = error;
-    if (response?.status === 401 && !config._retry) {
-      config._retry = true;  // 무한루프 방지
-      try {
-        const refreshToken = localStorage.getItem('refreshToken');
-        const { data } = await axios.post(
-          `${api.defaults.baseURL}/user/auth/tokenrefresh`,
-          { refreshToken }
-        );
-        const newAccess = data.result.accessToken;
-        localStorage.setItem('accessToken', newAccess);
 
-        // 실패한 원래 요청에 새 토큰 세팅 후 재시도
-        config.headers.Authorization = `Bearer ${newAccess}`;
-        return api.request(config);
-      } catch (refreshErr) {
-        // refresh도 실패하면 로그인 페이지로
+    // 네트워크 에러나 응답 없음
+    if (!response) return Promise.reject(error);
+
+    // 이미 한번 재시도했으면 패스
+    if (response.status === 401 && !config._retry) {
+      // refresh 엔드포인트에서 401이면 바로 로그아웃
+      if (config.url?.includes('/user/auth/tokenrefresh')) {
         localStorage.clear();
         window.location.href = '/login';
-        return Promise.reject(refreshErr);
+        return Promise.reject(error);
+      }
+
+      config._retry = true;
+      try {
+        const newAccess = await refreshAccessToken();
+        localStorage.setItem('accessToken', newAccess);
+
+        // 원요청 토큰 교체 후 재시도
+        config.headers = { ...(config.headers || {}), Authorization: `Bearer ${newAccess}` };
+        return api.request(config);
+      } catch (e) {
+        // 재갱신 실패 → 세션 정리
+        localStorage.clear();
+        window.location.href = '/login';
+        return Promise.reject(e);
       }
     }
+
     return Promise.reject(error);
   }
 );

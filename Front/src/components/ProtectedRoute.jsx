@@ -1,16 +1,46 @@
 // components/ProtectedRoute.jsx
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
+import api from '../utils/api';
 
-const ProtectedRoute = ({ children }) => {
-  const token = localStorage.getItem('accessToken');
+export default function ProtectedRoute({ children }) {
+  const [checking, setChecking] = useState(true);
+  const [ok, setOk] = useState(false);
+  const location = useLocation();
 
-  if (!token) {
-    alert('로그인이 필요합니다.');
-    return <Navigate to="/login" replace />;
+  useEffect(() => {
+    (async () => {
+      const at = localStorage.getItem('accessToken');
+      if (at) {
+        setOk(true); setChecking(false);
+        return;
+      }
+      // ❗ accessToken 없으면 1회 refresh 시도
+      try {
+        // 쿠키형이면 body 없이, LS형이면 body로
+        const res = await api.post('https://i13e106.p.ssafy.io/user/auth/tokenrefresh', {
+          refreshToken: localStorage.getItem('refreshToken') // 쿠키 쓰면 이 줄은 제거
+        });
+        const newAt = res.data?.result?.accessToken;
+        if (newAt) {
+          localStorage.setItem('accessToken', newAt);
+          setOk(true);
+        } else {
+          setOk(false);
+        }
+      } catch {
+        setOk(false);
+      } finally {
+        setChecking(false);
+      }
+    })();
+  }, []);
+
+  if (checking) return null; // 또는 스피너
+
+  if (!ok) {
+    return <Navigate to="/login" replace state={{ from: location }} />;
   }
-
   return children;
-};
-
-export default ProtectedRoute;
+}
