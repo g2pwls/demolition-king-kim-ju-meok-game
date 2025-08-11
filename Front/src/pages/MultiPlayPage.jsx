@@ -1,3 +1,14 @@
+// src/pages/MultiPlayPage.jsx
+import React from "react";
+
+export default function MultiPlayPage() {
+  return (
+    <div style={{padding: 24}}>
+      멀티 플레이 페이지 준비중
+    </div>
+  );
+}
+
 // import React, { useEffect, useMemo, useRef, useState } from "react";
 // import { useLocation, useNavigate } from "react-router-dom";
 // import {
