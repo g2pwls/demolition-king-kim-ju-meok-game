@@ -1,32 +1,111 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
-import "../styles/MultiModeEntryPage.css"; // 필요 시 생성
+import React, { useEffect, useState } from "react";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
+    import "../styles/MultiModeEntryPage.css";
 
-function MultiModeEntryPage() {
-  const navigate = useNavigate();
+export default function MultiModeEntryPage() {
+    const navigate = useNavigate();
+    const location = useLocation();
+    const [params] = useSearchParams();
 
-  const handleCreateRoom = () => {
-    // 랜덤 roomName 생성 or 이후 uuid 방식으로 수정 가능
-    const roomName = "Room_" + Math.random().toString(36).substr(2, 6);
-    navigate(`/multilobby?room=${roomName}`);
-  };
+    // null | 'create' | 'join'
+    const [mode, setMode] = useState(null);
+    const [title, setTitle] = useState("");
 
-  const handleJoinRoom = () => {
-    const inputRoom = prompt("방 코드(이름)를 입력하세요");
-    if (inputRoom) {
-      navigate(`/multilobby?room=${inputRoom}`);
-    }
-  };
+    // 메인에서 넘어온 action/room, 또는 쿼리로 초기 모드/값 세팅
+    useEffect(() => {
+        const actionFromState = location.state?.action;
+        const actionFromQuery = params.get("action");
+        const initialMode = actionFromState || actionFromQuery;
 
-  return (
-    <div className="multi-mode-entry">
-      <h1>멀티모드</h1>
-      <div className="button-wrapper">
-        <button onClick={handleCreateRoom}>방 만들기</button>
-        <button onClick={handleJoinRoom}>참가하기</button>
-      </div>
-    </div>
-  );
+        if (initialMode === "create" || initialMode === "join") {
+            setMode(initialMode);
+        } else {
+            setMode(null);
+        }
+
+        const prefill =
+            location.state?.roomName ||
+            params.get("room") ||
+            "";
+        if (prefill) setTitle(prefill);
+    }, [location.state, params]);
+
+    // 초대링크도 허용해서 코드만 뽑기
+    const extractRoomId = (input) => {
+        if (!input) return "";
+        let s = input.trim();
+        const m = s.match(/\/lobby\/([^/?#]+)/) || s.match(/[?&]room=([^&]+)/);
+        if (m) s = decodeURIComponent(m[1]);
+        return s;
+    };
+
+    const reset = () => { setMode(null); setTitle(""); };
+
+    const goBackToMyEntry = () => {
+        navigate("/main", { replace: true, state: { openMulti: true } });
+    };
+    const handleCreate = () => {
+        const code = title.trim();
+        if (!code) { alert("방 제목을 입력하세요."); return; }
+        navigate(`/lobby/${encodeURIComponent(code)}`);
+    };
+
+    const handleJoin = () => {
+        const code = extractRoomId(title) || title.trim();
+        if (!code) { alert("방 제목(또는 초대 링크)을 입력하세요."); return; }
+        navigate(`/lobby/${encodeURIComponent(code)}`);
+    };
+
+    return (
+        <div className="ml-entry-root">
+            <div className="ml-entry-card">
+                <h1 className="ml-title">멀티 로비</h1>
+                <p className="ml-sub">친구와 함께 방을 만들거나 참가해보세요</p>
+
+                {/* 초기 버튼 화면 */}
+                {!mode && (
+                    <div className="ml-buttons">
+                        <button className="ml-btn create" onClick={() => setMode("create")}>방 만들기</button>
+                        <button className="ml-btn join" onClick={() => setMode("join")}>방 참가하기</button>
+                    </div>
+                )}
+
+                {/* 방 생성 */}
+                {mode === "create" && (
+                    <div className="ml-form">
+                        <label className="ml-label">방 제목을 입력하세요</label>
+                        <input
+                            className="ml-input"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            placeholder="예) 철거왕들의 아지트"
+                            autoFocus
+                        />
+                        <div className="ml-actions">
+                            <button className="ml-btn ghost" onClick={goBackToMyEntry}>취소</button>
+                            <button className="ml-btn create" onClick={handleCreate}>생성하기</button>
+                        </div>
+                    </div>
+                )}
+
+                {/* 방 참가 */}
+                {mode === "join" && (
+                    <div className="ml-form">
+                        <label className="ml-label">방 제목 또는 초대 링크</label>
+                        <input
+                            className="ml-input"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            placeholder="제목을 입력하거나 /lobby/… 링크를 붙여넣기"
+                            autoFocus
+                        />
+                        <div className="ml-actions">
+                            <button className="ml-btn ghost" onClick={goBackToMyEntry}>취소</button>
+                            <button className="ml-btn join" onClick={handleJoin}>참가하기</button>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
 }
-
-export default MultiModeEntryPage;
