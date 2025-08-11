@@ -193,9 +193,10 @@ const SingleTestPage = () => {
     // 2) MediaPipe Pose 설정
     // ======= [CHANGED][MP] Pose 인스턴스 생성부 시작 =======
     if (!poseRef.current) {
-      const cdnBase = 'https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404'; // [PINNED][MP]
+      //const cdnBase = 'https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404'; // [PINNED][MP]
       // const localBase = '/mediapipe/pose'; // [OPTIONAL][MP] public/mediapipe/pose/* 로 복사 시 사용
-      const assetBase = cdnBase; // 필요시 localBase 로 전환
+      //const assetBase = cdnBase; // 필요시 localBase 로 전환
+      const assetBase = `${import.meta.env.BASE_URL}mediapipe/pose`;
 
       const pose = new mpPose.Pose({
         locateFile: (file) => `${assetBase}/${file}`,                      // [CHANGED][MP]
