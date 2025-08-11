@@ -74,7 +74,7 @@ springdoc:
 swagger:
   uri: http://54.180.226.214:8080
 #  로컬용
-#   uri: http://localhost:8080
+#  uri: http://localhost:8080
 
 logging:
   level:
