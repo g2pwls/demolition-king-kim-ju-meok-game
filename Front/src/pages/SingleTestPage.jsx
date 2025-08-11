@@ -1,95 +1,175 @@
+// Front/src/pages/SingleTestPage.jsx
 import React, { useEffect, useRef, useState } from 'react';
-import { Pose } from '@mediapipe/pose';
+// import { Pose } from '@mediapipe/pose';
+import * as mpPose from '@mediapipe/pose';
 import { Camera } from '@mediapipe/camera_utils';
 import { drawLandmarks } from '@mediapipe/drawing_utils';
 import PixiCanvas from '../components/pixi/PixiCanvas';
+import api from '../utils/api';
 import "../styles/SingleTestPage.css";
+import coinImg from '../assets/images/main/coin.png';
+import AnimatedPage from '../components/AnimatedPage';
+import timerIcon from '../assets/images/singlemode/timer.png';
+import singleBgm from '../assets/sounds/single_bgm.wav';
+
+/*
+// 시간상 관계로 코드 하드코딩 세팅 이용해야함. Cntrl + F
+- #TIMERSETTING : 타이머 값 수정 #TIMERSETTING
+- #ONOFF        : 미디어 파이프 관절 ON/OFF
+- #BGM          : 브금 세팅 ************ 이거 유빈이가 알아본다 해서 보류 여기다 해줘 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> (작업 필요)
+- #BUILDINGCNT  : 빌딩 개수 세팅
+- #ADDBUILDINGTIME : 건물 부쉈을때 빌딩 타이머 증가
+
+#init
+  0. 초기 세팅
+    - 카메라 세팅 (완)       
+    - mediaPipe 세팅 (완)   
+#001
+  1. 게임 시작 전
+    - 건물 리스트 뽑아오기 (완)                        
+    - AccessToken 으로 사용자 skin 가져오기 (완)       
+      >> 캔버스에 할당[output] (완)                    
+      >> 플레이어 스킨 하드 코딩 연동하기 (시간 부족으로 하드코딩 하기로 협의 함) (완)
+    - 콤보 할당 받기 (완)
+
+#002
+  2. 게임 플레이
+    - (캔버스에)기본 input 작업 (완)
+    - 미디어 파이프 이식 (완) 
+    - 건물 적용 (완) 
+    - 건물 hp 적용 (완)
+    - 스킨 적용  (userSkin은 가져왔지만 skin 적용 후 작업 해주기) 애니메이션 작업해주기 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> (작업 필요)
+    - quit 버튼 경로 작업 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> (작업 필요)
+    - combo 100개 다 끝나면 인덱스 초기화 (완)
+    - 빌딩 부술때 마다 배열에 빌딩 키 추가 (완)
+    - 플레이 시간 계산 추가 (완)
+    
+#003
+  3. 게임 종료
+    - 최신 화 정보 갱신
+      - GAMEOVER 페이지에 뿌려주기 (싱글은 일단 초, 부순 건물수, 칼로리)(완) 멀티는 골드 , 순위 계산 로직 추가 필요 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> (작업 필요)
+    - 사용자 리포트 최신화
+      - singleTopBuilding : 싱글 넣어주기 (싱글)? : 0
+      - multiTopBuilding  : 멀티 넣어주기 (멀티)? : 0
+      - goldMedal         : 골드 메달     (멀티)? : 0
+      - silverMedal       : 실버 메달    (멀티)? : 0
+      - bronzeMedal       : 브론즈 메달  (멀티)? : 0
+      - playTime          : 플레이 시간  (토탈)
+    - 빌딩 키 배열 최신화
+      - 빌딩 키 seq 배열 
+    - 사용자 일일 리포트 최신화
+      - kcal
+      - playTimeDate      : 플레이 시간
+    - 사용자 골드 정보 최신화
+      - goldCnt           : 골드 갯수
+*/
 
 const SingleTestPage = () => {
   const canvasRef = useRef(null);
   const videoRef = useRef(null);
+  const [userUuid, setUserUuid] = useState("");             // 사용자 UUID
 
-  const [action, setAction] = useState('idle');
-  const [health, setHealth] = useState(100);
-  const [buildingIndex, setBuildingIndex] = useState(0);
-  const [isGameOver, setIsGameOver] = useState(false);
-  const [kcal, setKcal] = useState(0);
-  const [destroyedCount, setDestroyedCount] = useState(0);
-  const [coinCount, setCoinCount] = useState(0);
+  // 게임
+  const [action, setAction] = useState('idle');             // Pixi로 전달(애니메이션 트리거)
+  const [timeover, setTimeover] = useState(100);            // 상단 타이머(카운트다운) 남은 시간(초)
+  const [kcal, setKcal] = useState(0);                      // 칼로리
+  const [coinCount, setCoinCount] = useState(0);            // 코인 수
+  const [destroyedCount, setDestroyedCount] = useState(0);  // 부순 건물 수
+
+  // 빌딩
+  const [buildingIndex, setBuildingIndex] = useState(0);    // (서버 리스트 순회 인덱스)
+  const [combo, setCombo] = useState([]);                   // 유저 콤보
+  const [isGameOver, setIsGameOver] = useState(false);      // 게임오버 트리거
+  // 추가: 부순 건물 seq 리스트
+  const [destroyedSeqs, setDestroyedSeqs] = useState([]);
+  // 시간
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const startTimeRef = useRef(null);
+  const [playTime, setPlayTime] = useState(0);
+  const [addTime, setAddTime] = useState(3000); // #ADDBUILDINGTIME(ms 단위로 가정)
+  // const currentBuilding = buildingList[buildingIndex] ?? null;
+
   const COIN_PER_BUILDING = 1;
 
+  // 콤보(패턴)
+  const [patternIdx, setPatternIdx] = useState(0);
+  const [stepIdx, setStepIdx] = useState(0);
+  const advanceLockRef = useRef(false);
+
+  // 게임 시작 시각 및 제한시간(초)
+  const TIME_LIMIT_SEC = 100;
+  const gameStartAtRef = useRef(null);
+  const [finalTimeover, setFinalTimeover] = useState(null);
+
+  /* ================== 미디어파이프 감지용 공용 ref/상수 ================== */
   const audioRef = useRef(null);
   const mediaStreamRef = useRef(null);
   const mediapipeCameraRef = useRef(null);
-  
-// === 추가: 속도·시작어깨 기록용 ===
+  const poseRef = useRef(null);
+
+  const fsmStateRef = useRef('get_ready');                            // 'get_ready' | 'action' | 'cooldown'
+  const startPosRef = useRef({ left: null, right: null });            // 손목 시작 좌표
+  const startShoulderRef = useRef({ left: null, right: null });       // 어깨 기준 좌표
+  const lastActionAtRef = useRef(0);
+
+  // 속도/안정화 필터
   const lPrevRef = useRef({ x: 0, y: 0, init: false });
   const rPrevRef = useRef({ x: 0, y: 0, init: false });
+  const lFiltRef = useRef({ x: 0, y: 0, init: false });
+  const rFiltRef = useRef({ x: 0, y: 0, init: false });
+  const lOverCntRef = useRef(0);
+  const rOverCntRef = useRef(0);
   const lastTsRef = useRef(0);
 
+  // [GAMEOVER] 현재 게임오버 상태를 비동기 콜백에서 안전하게 확인하기 위한 ref
+  const isGameOverRef = useRef(false);
+  useEffect(() => { isGameOverRef.current = isGameOver; }, [isGameOver]);
 
-  const fsmStateRef = useRef('get_ready');
-  const startPosRef = useRef({ left: null, right: null });
-  // 시작 시점 어깨 좌표(가드 기준) 저장
-  const startShoulderRef = useRef({ left: null, right: null });
+  // 게임 종료 리포트 중복 방지
+  const didReportRef = useRef(false);
+  const didDailyReportRef = useRef(false);
+  const didGoldReportRef = useRef(false);
+  const didConstructureSaveRef = useRef(false);
 
-  const lastActionAtRef = useRef(0);
-  // === 감지 안정화용 추가 ===
-  const lFiltRef = useRef({ x: 0, y: 0, init: false }); // 왼손 EMA
-  const rFiltRef = useRef({ x: 0, y: 0, init: false }); // 오른손 EMA
-  const lOverCntRef = useRef(0); // 왼손 연속 프레임 카운터
-  const rOverCntRef = useRef(0); // 오른손 연속 프레임 카운터
+  // 튜닝 포인트 (기존 값 유지)
+  const EMA_ALPHA = 0.5;
+  const HIT_MIN_FRAMES = 3;
+  const COOLDOWN_SEC = 0.6;
 
-// 튜닝 포인트
-  const EMA_ALPHA = 0.5;        // 0.5~0.7 추천 (클수록 더 부드러움 = 반응은 살짝 느려짐)
-  const HIT_MIN_FRAMES = 3;     // 2~5 추천 (연속 프레임 개수)
-  const COOLDOWN_SEC = 0.6;     // 기존 1.0에서 살짝 줄여 반응성 ↑
-
-
-
+  // Mediapipe 인덱스 (정규화 좌표)
   const NOSE = 0, LS = 11, RS = 12, LE = 13, RE = 14, LW = 15, RW = 16;
-  
-  function isReadyPose(lm) {
-  const noseY = lm[NOSE].y;
-  const LwY = lm[LW].y;
-  const RwY = lm[RW].y;
-  const LeY = lm[LE].y;
-  const ReY = lm[RE].y;
-  const LsY = lm[LS].y;
-  const RsY = lm[RS].y;
 
-  // 코~어깨 사이에 손목 / 팔꿈치는 어깨보다 아래
-  const shoulderBand = 0.08; // 어깨 위 여유
-  const handInGuard =
-    noseY < LwY && LwY < (LsY + shoulderBand) &&
-    noseY < RwY && RwY < (RsY + shoulderBand);
-  const elbowsDown = LeY > LsY && ReY > RsY;
-  return handInGuard && elbowsDown;
-}
+  // 가드 자세 판정(정규화 y)
+  function isReadyPoseNorm(lm) {
+    const noseY = lm[NOSE].y;
+    const LwY = lm[LW].y;
+    const RwY = lm[RW].y;
+    const LeY = lm[LE].y;
+    const ReY = lm[RE].y;
+    const LsY = lm[LS].y;
+    const RsY = lm[RS].y;
 
+    const shoulderBand = 0.08;
+    const handInGuard =
+      noseY < LwY && LwY < (LsY + shoulderBand) &&
+      noseY < RwY && RwY < (RsY + shoulderBand);
+    const elbowsDown = LeY > LsY && ReY > RsY;
 
+    return handInGuard && elbowsDown;
+  }
+  const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 
-  function classifyMotion(start, now, hand /* 'left' | 'right' */) {
-    const dx = now.x - start.x;
-    const dy = now.y - start.y;
-  // 파이썬 로직 그대로: 수직 성분이 더 크면 어퍼컷, 아니면 잽
-    const isUppercut = Math.abs(dy) > Math.abs(dx) && dy < -0.06; // 위로 6% 이상
-    const kind = isUppercut ? 'uppercut' : 'jab';
-    return `${hand}_${kind}`; // e.g. 'left_jab', 'right_uppercut'
-}
-
-  // 체력 자연 감소
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (action !== 'punch') {
-        setHealth((prev) => Math.max(prev - 1, 0));
-      }
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [action]);
+  /*=====================================================================================
+    #init 게임 시작 초기 세팅
+  =====================================================================================*/
 
   // 카메라 시작
   const startCamera = async () => {
+    if (isGameOverRef.current) return;
+    if (mediapipeCameraRef.current || (videoRef.current && videoRef.current.srcObject)) {
+      return;
+    }
+
     // 1) 로컬 카메라 열기
     const stream = await navigator.mediaDevices.getUserMedia({
       video: { width: 640, height: 480, facingMode: 'user' },
@@ -101,213 +181,227 @@ const SingleTestPage = () => {
     videoEl.srcObject = stream;
     videoEl.muted = true;
     videoEl.playsInline = true;
-    await videoEl.play().catch(() => { /* 자동재생 차단 시 버튼 한번 더 눌러야 할 수 있음 */ });
+    await new Promise(res => videoEl.onloadedmetadata = res);
+    const canvasEl = canvasRef.current;
+    if (canvasEl) {
+      canvasEl.width = videoEl.videoWidth || 640;
+      canvasEl.height = videoEl.videoHeight || 480;
+    }
+    await videoEl.play().catch(() => {});
 
     // 2) MediaPipe Pose 설정
-    const pose = new Pose({
-      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`,
+    if (!poseRef.current) {
+      const cdnBase = 'https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404';
+      const assetBase = cdnBase;
+
+      // 참고 로그 (네임스페이스 기준)
+      console.log('Pose class exist? ', typeof mpPose?.Pose);
+
+      const pose = new mpPose.Pose({
+        locateFile: (file) => `${assetBase}/${file}`,
+      });
+
+      pose.setOptions({
+        modelComplexity: 0,
+        smoothLandmarks: true,
+        enableSegmentation: false,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5,
+        selfieMode: true,
+      });
+
+      poseRef.current = pose;
+    }
+
+    /* =================== 감지 로직 =================== */
+    poseRef.current.onResults((results) => {
+      if (!isPlayingRef.current || isGameOverRef.current) return;
+
+      const videoEl = videoRef.current;
+      const canvasEl = canvasRef.current;
+      const ctx = canvasEl.getContext('2d');
+      ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+
+      const lm = results.poseLandmarks;
+      if (!lm) {
+        fsmStateRef.current = 'get_ready';
+        if (!isGameOverRef.current) setAction('idle');
+        return;
+      }
+
+      // #ONOFF: 관절 시각화
+      drawLandmarks(ctx, lm, { color: '#FF0000', radius: 3 });
+
+      const nowSec = performance.now() / 1000;
+
+      // 1) 준비 상태
+      if (fsmStateRef.current === 'get_ready') {
+        if (isReadyPoseNorm(lm)) {
+          const left  = { x: lm[LW].x, y: lm[LW].y };
+          const right = { x: lm[RW].x, y: lm[RW].y };
+          const lSh   = { x: lm[LS].x, y: lm[LS].y };
+          const rSh   = { x: lm[RS].x, y: lm[RS].y };
+
+          startPosRef.current = { left, right };
+          startShoulderRef.current = { left: lSh, right: rSh };
+
+          // EMA/속도 초기화
+          lFiltRef.current = { ...left,  init: true };
+          rFiltRef.current = { ...right, init: true };
+          lPrevRef.current = { ...left,  init: true };
+          rPrevRef.current = { ...right, init: true };
+          lastTsRef.current = nowSec;
+
+          // 카운터 리셋
+          lOverCntRef.current = 0;
+          rOverCntRef.current = 0;
+
+          fsmStateRef.current = 'action';
+        }
+        return;
+      }
+
+      // 2) 액션 상태
+      if (fsmStateRef.current === 'action') {
+        // 시간보정
+        let dt = nowSec - (lastTsRef.current || nowSec);
+        if (dt <= 0 || dt > 0.2) dt = 0.016;
+        lastTsRef.current = nowSec;
+
+        // 사람 크기 기준(어깨폭)
+        const shoulderDist = Math.abs(lm[LS].x - lm[RS].x);
+
+        // 임계값(튜닝) — 기존 값 유지
+        const JAB_X_TH       = 0.22 * shoulderDist;
+        const JAB_FLAT_Y_MAX = 0.22 * shoulderDist;
+        const JAB_DIST_GAIN  = 0.18 * shoulderDist;
+        const VEL_X_TH       = 0.04 * shoulderDist / Math.max(dt, 1e-3);
+
+        const UPP_Y_TH      = 0.33 * shoulderDist;
+        const UPP_DOM_RATIO = 1.70;
+        const VEL_Y_TH      = 0.06 * shoulderDist / Math.max(dt, 1e-3);
+
+        // 현재 좌표 + EMA
+        const lNowRaw = { x: lm[LW].x, y: lm[LW].y };
+        const rNowRaw = { x: lm[RW].x, y: lm[RW].y };
+        if (!lFiltRef.current.init) {
+          lFiltRef.current = { ...lNowRaw, init: true };
+          rFiltRef.current = { ...rNowRaw, init: true };
+        }
+        const a = EMA_ALPHA;
+        lFiltRef.current.x = a * lNowRaw.x + (1 - a) * lFiltRef.current.x;
+        lFiltRef.current.y = a * lNowRaw.y + (1 - a) * lFiltRef.current.y;
+        rFiltRef.current.x = a * rNowRaw.x + (1 - a) * rFiltRef.current.x;
+        rFiltRef.current.y = a * rNowRaw.y + (1 - a) * rFiltRef.current.y;
+
+        const lNow = lFiltRef.current;
+        const rNow = rFiltRef.current;
+
+        const lStart = startPosRef.current.left;
+        const rStart = startPosRef.current.right;
+        const lSh0   = startShoulderRef.current.left;
+        const rSh0   = startShoulderRef.current.right;
+        if (!lStart || !rStart || !lSh0 || !rSh0) return;
+
+        // 변위
+        const ldx = lNow.x - lStart.x, ldy = lNow.y - lStart.y;
+        const rdx = rNow.x - rStart.x, rdy = rNow.y - rStart.y;
+
+        // 속도
+        if (!lPrevRef.current.init) lPrevRef.current = { ...lNow, init: true };
+        if (!rPrevRef.current.init) rPrevRef.current = { ...rNow, init: true };
+        const lvx = (lNow.x - lPrevRef.current.x) / dt;
+        const lvy = (lNow.y - lPrevRef.current.y) / dt;
+        const rvx = (rNow.x - rPrevRef.current.x) / dt;
+        const rvy = (rNow.y - rPrevRef.current.y) / dt;
+        lPrevRef.current = { ...lNow, init: true };
+        rPrevRef.current = { ...rNow, init: true };
+
+        // 손목-어깨 거리 증가(잽 보조)
+        const lWS0 = dist(lStart, lSh0);
+        const rWS0 = dist(rStart, rSh0);
+        const lWS  = dist(lNow,   lSh0);
+        const rWS  = dist(rNow,   rSh0);
+
+        // 후보 조건
+        // 왼손
+        let lHit = false;
+        const lJabCand   = (Math.abs(ldx) > JAB_X_TH || (lWS - lWS0) > JAB_DIST_GAIN)
+                            && Math.abs(ldy) < JAB_FLAT_Y_MAX
+                            && Math.abs(lvx) > VEL_X_TH;
+        const lUpperCand = (-ldy) > UPP_Y_TH
+                            && Math.abs(ldy) > Math.abs(ldx) * UPP_DOM_RATIO
+                            && (-lvy) > VEL_Y_TH;
+        if (lJabCand || lUpperCand) {
+          lOverCntRef.current++;
+          if (lOverCntRef.current >= Math.max(2, HIT_MIN_FRAMES - 1)) lHit = true;
+        } else {
+          lOverCntRef.current = Math.max(0, lOverCntRef.current - 1);
+        }
+
+        // 오른손
+        let rHit = false;
+        const rJabCand   = (Math.abs(rdx) > JAB_X_TH || (rWS - rWS0) > JAB_DIST_GAIN)
+                            && Math.abs(rdy) < JAB_FLAT_Y_MAX
+                            && Math.abs(rvx) > VEL_X_TH;
+        const rUpperCand = (-rdy) > UPP_Y_TH
+                            && Math.abs(rdy) > Math.abs(rdx) * UPP_DOM_RATIO
+                            && (-rvy) > VEL_Y_TH;
+        if (rJabCand || rUpperCand) {
+          rOverCntRef.current++;
+          if (rOverCntRef.current >= Math.max(2, HIT_MIN_FRAMES - 1)) rHit = true;
+        } else {
+          rOverCntRef.current = Math.max(0, rOverCntRef.current - 1);
+        }
+
+        // === 트리거: 'left_jab' / 'right_jab' / 'left_uppercut' / 'right_uppercut' 로 구분해서 던진다 ===
+        if (lHit || rHit) {
+          // 어떤 동작으로 확정할지 결정 (동시충족 시 잽 우선)
+          let motion = null;
+
+          if (lHit) {
+            if (lJabCand) motion = 'left_jab';
+            else if (lUpperCand) motion = 'left_uppercut';
+          }
+          if (!motion && rHit) {
+            if (rJabCand) motion = 'right_jab';
+            else if (rUpperCand) motion = 'right_uppercut';
+          }
+          if (!motion) motion = 'punch'; // 안전 가드
+
+          if (!isGameOverRef.current) {
+            setAction(motion);
+            setTimeout(() => setAction('idle'), 0);
+          }
+
+          lastActionAtRef.current = nowSec;
+          fsmStateRef.current = 'cooldown';
+          lOverCntRef.current = 0;
+          rOverCntRef.current = 0;
+          return;
+        }
+
+        return;
+      }
+
+      // 3) 쿨다운
+      if (fsmStateRef.current === 'cooldown') {
+        if (nowSec - lastActionAtRef.current > COOLDOWN_SEC) {
+          fsmStateRef.current = 'get_ready';
+        }
+        return;
+      }
     });
-    pose.setOptions({
-      modelComplexity: 0,
-      smoothLandmarks: true,
-      enableSegmentation: false,
-      minDetectionConfidence: 0.5,
-      minTrackingConfidence: 0.5,
-    });
-
-   
-
-   pose.onResults((results) => {
-  const canvasEl = canvasRef.current;
-  const ctx = canvasEl.getContext('2d');
-  ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
-
-  const lm = results.poseLandmarks;
-  if (!lm) {
-    // 포즈 끊기면 초기화
-    fsmStateRef.current = 'get_ready';
-    setAction('idle');
-    return;
-  }
-
-  // (선택) 시각화 유지
-  drawLandmarks(ctx, lm, { color: '#FF0000', radius: 3 });
-
-  const now = performance.now() / 1000; // 초 단위
-
-  // 1) 준비 상태: 가드 자세가 되면 손목 시작점 저장 후 action으로
-  if (fsmStateRef.current === 'get_ready') {
-    if (isReadyPose(lm)) {
-      const left  = { x: lm[LW].x, y: lm[LW].y };
-      const right = { x: lm[RW].x, y: lm[RW].y };
-      const lSh   = { x: lm[LS].x, y: lm[LS].y };
-      const rSh   = { x: lm[RS].x, y: lm[RS].y };
-
-      startPosRef.current = { left, right };
-      startShoulderRef.current = { left: lSh, right: rSh };
-
-    // EMA/속도 초기화
-      lFiltRef.current = { ...left,  init: true };
-      rFiltRef.current = { ...right, init: true };
-      lPrevRef.current = { ...left,  init: true };
-      rPrevRef.current = { ...right, init: true };
-      lastTsRef.current = performance.now() / 1000;
-
-    // 카운터 리셋
-      lOverCntRef.current = 0;
-      rOverCntRef.current = 0;
-
-      fsmStateRef.current = 'action';
-  }
-  return;
-}
-
-
-  // 2) 액션 상태: 왼손/오른손 각각 이동량 체크
-  if (fsmStateRef.current === 'action') {
-  // 시간/속도 계산
-  const nowSec = performance.now() / 1000;
-  let dt = nowSec - (lastTsRef.current || nowSec);
-  if (dt <= 0 || dt > 0.2) dt = 0.016; // 프레임 끊김 보호
-  lastTsRef.current = nowSec;
-
-  // 1) 사람 크기 기준 (어깨폭)
-  const shoulderDist = Math.abs(lm[LS].x - lm[RS].x);
-
-  // === 임계값 (조정됨) ===
-  // 잽: 수평 강하게 + 수직 흔들림은 작게 + 수평 속도 존재
-  const JAB_X_TH       = 0.22 * shoulderDist;
-  const JAB_FLAT_Y_MAX = 0.22 * shoulderDist;
-  const JAB_DIST_GAIN  = 0.18 * shoulderDist;
-  const VEL_X_TH       = 0.04 * shoulderDist / Math.max(dt, 1e-3);
-
-
-  // 어퍼: 위로 크게 + 수직 우세 + 수직 속도 존재
-  const UPP_Y_TH      = 0.33 * shoulderDist;
-  const UPP_DOM_RATIO = 1.70;
-  const VEL_Y_TH      = 0.06 * shoulderDist / Math.max(dt, 1e-3);
-  // 2) 현재값 + EMA
-  const lNowRaw = { x: lm[LW].x, y: lm[LW].y };
-  const rNowRaw = { x: lm[RW].x, y: lm[RW].y };
-  if (!lFiltRef.current.init) {
-    lFiltRef.current = { ...lNowRaw, init: true };
-    rFiltRef.current = { ...rNowRaw, init: true };
-  }
-  const alpha = EMA_ALPHA;
-  lFiltRef.current.x = alpha * lNowRaw.x + (1 - alpha) * lFiltRef.current.x;
-  lFiltRef.current.y = alpha * lNowRaw.y + (1 - alpha) * lFiltRef.current.y;
-  rFiltRef.current.x = alpha * rNowRaw.x + (1 - alpha) * rFiltRef.current.x;
-  rFiltRef.current.y = alpha * rNowRaw.y + (1 - alpha) * rFiltRef.current.y;
-
-  const lNow = lFiltRef.current;
-  const rNow = rFiltRef.current;
-
-  const lStart = startPosRef.current.left;
-  const rStart = startPosRef.current.right;
-  const lSh0   = startShoulderRef.current.left;
-  const rSh0   = startShoulderRef.current.right;
-  if (!lStart || !rStart || !lSh0 || !rSh0) return; // 안전장치
-
-  // 3) 변위
-  const ldx = lNow.x - lStart.x, ldy = lNow.y - lStart.y;
-  const rdx = rNow.x - rStart.x, rdy = rNow.y - rStart.y;
-
-  // 4) 속도 (직전 EMA 좌표와의 차이)
-  if (!lPrevRef.current.init) lPrevRef.current = { ...lNow, init: true };
-  if (!rPrevRef.current.init) rPrevRef.current = { ...rNow, init: true };
-  const lvx = (lNow.x - lPrevRef.current.x) / dt;
-  const lvy = (lNow.y - lPrevRef.current.y) / dt;
-  const rvx = (rNow.x - rPrevRef.current.x) / dt;
-  const rvy = (rNow.y - rPrevRef.current.y) / dt;
-  // 업데이트
-  lPrevRef.current = { ...lNow, init: true };
-  rPrevRef.current = { ...rNow, init: true };
-
-  // 5) 손목-어깨 거리 증가(잽 보조)
-  const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
-  const lWS0 = dist(lStart, lSh0);
-  const rWS0 = dist(rStart, rSh0);
-  const lWS  = dist(lNow,   lSh0);
-  const rWS  = dist(rNow,   rSh0);
-
-  // 6) 후보 조건
-  // 왼손
-  let lHitKind = null;
-  const lJabCand   = (Math.abs(ldx) > JAB_X_TH || (lWS - lWS0) > JAB_DIST_GAIN)
-                      && Math.abs(ldy) < JAB_FLAT_Y_MAX
-                      && Math.abs(lvx) > VEL_X_TH;
-  const lUpperCand = (-ldy) > UPP_Y_TH
-                      && Math.abs(ldy) > Math.abs(ldx) * UPP_DOM_RATIO
-                      && (-lvy) > VEL_Y_TH;
-
-  const lMovedAny = lJabCand || lUpperCand;
-  if (lMovedAny) {
-    lOverCntRef.current++;
-    if (lOverCntRef.current >= Math.max(2, HIT_MIN_FRAMES - 1)) {
-      // 동시충족 시 잽 우선
-      lHitKind = lJabCand ? 'left_jab' : (lUpperCand ? 'left_uppercut' : null);
-    }
-  } else {
-    lOverCntRef.current = Math.max(0, lOverCntRef.current - 1);
-  }
-
-  // 오른손
-  let rHitKind = null;
-  const rJabCand   = (Math.abs(rdx) > JAB_X_TH || (rWS - rWS0) > JAB_DIST_GAIN)
-                      && Math.abs(rdy) < JAB_FLAT_Y_MAX
-                      && Math.abs(rvx) > VEL_X_TH;
-  const rUpperCand = (-rdy) > UPP_Y_TH
-                      && Math.abs(rdy) > Math.abs(rdx) * UPP_DOM_RATIO
-                      && (-rvy) > VEL_Y_TH;
-
-  const rMovedAny = rJabCand || rUpperCand;
-  if (rMovedAny) {
-    rOverCntRef.current++;
-    if (rOverCntRef.current >= Math.max(2, HIT_MIN_FRAMES - 1)) {
-      rHitKind = rJabCand ? 'right_jab' : (rUpperCand ? 'right_uppercut' : null);
-    }
-  } else {
-    rOverCntRef.current = Math.max(0, rOverCntRef.current - 1);
-  }
-
-  // 7) 트리거
-  if (lHitKind || rHitKind) {
-    const motion = lHitKind || rHitKind;
-    console.log('DETECTED:', motion);
-
-    setAction(motion);
-    setTimeout(() => setAction('idle'), 0);
-
-    lastActionAtRef.current = nowSec;
-    fsmStateRef.current = 'cooldown';
-
-    // 리셋
-    lOverCntRef.current = 0;
-    rOverCntRef.current = 0;
-    return;
-  }
-
-  return; // 아직 미확정
-}
-
-
-
-
-  // 3) 쿨다운
-  if (fsmStateRef.current === 'cooldown') {
-    if (now - lastActionAtRef.current > COOLDOWN_SEC) {
-      fsmStateRef.current = 'get_ready';
-    }
-    return;
-  }
-});
-
+    /* =================== 감지 로직 끝 =================== */
 
     // 3) MediaPipe Camera로 비디오 프레임 처리
     const cam = new Camera(videoEl, {
       onFrame: async () => {
+        if (!isPlayingRef.current || isGameOverRef.current) return;
         try {
-          await pose.send({ image: videoEl });
+          if (poseRef.current) {
+            await poseRef.current.send({ image: videoEl });
+          }
         } catch (e) {
           // 처리 에러 무시
         }
@@ -332,530 +426,650 @@ const SingleTestPage = () => {
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
+
+    // Pose 정리
+    if (poseRef.current) {
+      try { poseRef.current.close(); } catch {}
+      poseRef.current = null;
+    }
   };
 
-  // 컴포넌트 언마운트 시 정리
+  // 화면 들어오면 카메라 켜기
   useEffect(() => {
-    return () => {
-      stopCamera();
-    };
-  }, []);
-
-  // 게임오버 체크
-  useEffect(() => {
-    if (health === 0) {
-      setIsGameOver(true);
-      // console.log("🛑 Game Over!");
-    }
-  }, [health]);
-
-  // BGM
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = 0.5;
-      audioRef.current.loop = true;
-      audioRef.current.play().catch(() => {});
-    }
-  }, []);
-
-  return (
-    <div className="page-container">
-      <audio ref={audioRef} src="/sounds/bgm.mp3" />
-      {isGameOver && (
-        <div className="game-over-overlay">
-          <h1>GAME OVER</h1>
-          <button onClick={() => window.location.reload()}>다시 시작</button>
-        </div>
-      )}
-
-      <div className="top-controls">
-        <h1>싱글모드: 로컬 카메라 + MediaPipe</h1>
-        <div className="buttons">
-          <button onClick={startCamera}>카메라 시작</button>
-          <button onClick={stopCamera}>카메라 종료</button>
-        </div>
-      </div>
-
-      <div className="game-layout">
-        <div className="left-game">
-          <div className="overlay-ui">
-            <div className="progress-bar">
-              <div className="progress-fill" style={{ width: `${health}%` }}></div>
-            </div>
-            <div className="command-sequence">
-              <div className="command-circle red">잽</div>
-              <div className="command-circle green">회피</div>
-              <div className="command-circle black">어퍼</div>
-              <div className="command-circle red">잽</div>
-              <div className="command-circle red">잽</div>
-              <div className="command-circle red">잽</div>
-              <div className="command-circle green">회피</div>
-              <div className="command-circle black">어퍼</div>
-            </div>
-          </div>
-
-          <PixiCanvas
-            action={action}
-            buildingIndex={buildingIndex}
-            onBuildingDestroyed={() => {
-              setHealth((prev) => Math.min(prev + 30, 100)); // 체력 회복
-              setBuildingIndex((prev) => (prev + 1) % 3);
-              setDestroyedCount((c) => c + 1); 
-              setCoinCount((c) => c + COIN_PER_BUILDING);   // 다음 건물 (3개 순환)
-            }}
-            setKcal={setKcal}
-          />
-        </div>
-
-        <div className="right-panel">
-          <div className="kcal-display">{kcal} KCAL</div>
-          <div className="building-status">🏢 부순 건물: {destroyedCount}</div>
-          <div className="coin-status">💰 코인: {coinCount}</div>
-
-          <button className="quit-button">QUIT</button>
-
-          <div className="webcam-container">
-            <video ref={videoRef} autoPlay muted className="webcam-video" />
-            <canvas ref={canvasRef} className="webcam-canvas" width="640" height="480"></canvas>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default SingleTestPage;
-싱글
-import React, { useEffect, useRef, useState } from 'react';
-import { Pose } from '@mediapipe/pose';
-import { Camera } from '@mediapipe/camera_utils';
-import { drawLandmarks } from '@mediapipe/drawing_utils';
-import PixiCanvas from '../components/pixi/PixiCanvas';
-import punchImg from '../assets/images/singlemode/punch.png';
-import upperImg from '../assets/images/singlemode/upper.png';
-import dodgeImg from '../assets/images/singlemode/dodge.png';
-import combobImg from '../assets/images/singlemode/combob.png';
-import "../styles/SingleTestPage.css";
-
-const SingleTestPage = () => {
-  const canvasRef = useRef(null);
-  const videoRef = useRef(null);
-
-  const [action, setAction] = useState('idle');
-  const [health, setHealth] = useState(100);
-  const [buildingIndex, setBuildingIndex] = useState(0);
-  const [isGameOver, setIsGameOver] = useState(false);
-  const [kcal, setKcal] = useState(0);
-  const [destroyedCount, setDestroyedCount] = useState(0);
-  const [coinCount, setCoinCount] = useState(0);
-  const COIN_PER_BUILDING = 1;
-
-  const audioRef = useRef(null);
-  const mediaStreamRef = useRef(null);
-  const mediapipeCameraRef = useRef(null);
-  
-// === 추가: 속도·시작어깨 기록용 ===
-  const lPrevRef = useRef({ x: 0, y: 0, init: false });
-  const rPrevRef = useRef({ x: 0, y: 0, init: false });
-  const lastTsRef = useRef(0);
-
-
-  const fsmStateRef = useRef('get_ready');
-  const startPosRef = useRef({ left: null, right: null });
-  // 시작 시점 어깨 좌표(가드 기준) 저장
-  const startShoulderRef = useRef({ left: null, right: null });
-
-  const lastActionAtRef = useRef(0);
-  // === 감지 안정화용 추가 ===
-  const lFiltRef = useRef({ x: 0, y: 0, init: false }); // 왼손 EMA
-  const rFiltRef = useRef({ x: 0, y: 0, init: false }); // 오른손 EMA
-  const lOverCntRef = useRef(0); // 왼손 연속 프레임 카운터
-  const rOverCntRef = useRef(0); // 오른손 연속 프레임 카운터
-
-// 튜닝 포인트
-  const EMA_ALPHA = 0.5;        // 0.5~0.7 추천 (클수록 더 부드러움 = 반응은 살짝 느려짐)
-  const HIT_MIN_FRAMES = 3;     // 2~5 추천 (연속 프레임 개수)
-  const COOLDOWN_SEC = 0.6;     // 기존 1.0에서 살짝 줄여 반응성 ↑
-
-
-
-  const NOSE = 0, LS = 11, RS = 12, LE = 13, RE = 14, LW = 15, RW = 16;
-  
-  function isReadyPose(lm) {
-  const noseY = lm[NOSE].y;
-  const LwY = lm[LW].y;
-  const RwY = lm[RW].y;
-  const LeY = lm[LE].y;
-  const ReY = lm[RE].y;
-  const LsY = lm[LS].y;
-  const RsY = lm[RS].y;
-
-  // 코~어깨 사이에 손목 / 팔꿈치는 어깨보다 아래
-  const shoulderBand = 0.08; // 어깨 위 여유
-  const handInGuard =
-    noseY < LwY && LwY < (LsY + shoulderBand) &&
-    noseY < RwY && RwY < (RsY + shoulderBand);
-  const elbowsDown = LeY > LsY && ReY > RsY;
-  return handInGuard && elbowsDown;
-}
-
-
-
-  function classifyMotion(start, now, hand /* 'left' | 'right' */) {
-    const dx = now.x - start.x;
-    const dy = now.y - start.y;
-  // 파이썬 로직 그대로: 수직 성분이 더 크면 어퍼컷, 아니면 잽
-    const isUppercut = Math.abs(dy) > Math.abs(dx) && dy < -0.06; // 위로 6% 이상
-    const kind = isUppercut ? 'uppercut' : 'jab';
-    return `${hand}_${kind}`; // e.g. 'left_jab', 'right_uppercut'
-}
-
-  // 체력 자연 감소
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (action !== 'punch') {
-        setHealth((prev) => Math.max(prev - 1, 0));
+    (async () => {
+      try {
+        console.log('mpPose.Pose typeof:', typeof mpPose?.Pose);
+        await startCamera();
+      } catch (e) {
+        console.error('카메라 시작 실패:', e);
       }
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [action]);
-
-  // 카메라 시작
-  const startCamera = async () => {
-    // 1) 로컬 카메라 열기
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { width: 640, height: 480, facingMode: 'user' },
-      audio: false,
-    });
-    mediaStreamRef.current = stream;
-
-    const videoEl = videoRef.current;
-    videoEl.srcObject = stream;
-    videoEl.muted = true;
-    videoEl.playsInline = true;
-    await videoEl.play().catch(() => { /* 자동재생 차단 시 버튼 한번 더 눌러야 할 수 있음 */ });
-
-    // 2) MediaPipe Pose 설정
-    const pose = new Pose({
-      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`,
-    });
-    pose.setOptions({
-      modelComplexity: 0,
-      smoothLandmarks: true,
-      enableSegmentation: false,
-      minDetectionConfidence: 0.5,
-      minTrackingConfidence: 0.5,
-    });
-
-   
-
-   pose.onResults((results) => {
-  const canvasEl = canvasRef.current;
-  const ctx = canvasEl.getContext('2d');
-  ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
-
-  const lm = results.poseLandmarks;
-  if (!lm) {
-    // 포즈 끊기면 초기화
-    fsmStateRef.current = 'get_ready';
-    setAction('idle');
-    return;
-  }
-
-  // (선택) 시각화 유지
-  drawLandmarks(ctx, lm, { color: '#FF0000', radius: 3 });
-
-  const now = performance.now() / 1000; // 초 단위
-
-  // 1) 준비 상태: 가드 자세가 되면 손목 시작점 저장 후 action으로
-  if (fsmStateRef.current === 'get_ready') {
-    if (isReadyPose(lm)) {
-      const left  = { x: lm[LW].x, y: lm[LW].y };
-      const right = { x: lm[RW].x, y: lm[RW].y };
-      const lSh   = { x: lm[LS].x, y: lm[LS].y };
-      const rSh   = { x: lm[RS].x, y: lm[RS].y };
-
-      startPosRef.current = { left, right };
-      startShoulderRef.current = { left: lSh, right: rSh };
-
-    // EMA/속도 초기화
-      lFiltRef.current = { ...left,  init: true };
-      rFiltRef.current = { ...right, init: true };
-      lPrevRef.current = { ...left,  init: true };
-      rPrevRef.current = { ...right, init: true };
-      lastTsRef.current = performance.now() / 1000;
-
-    // 카운터 리셋
-      lOverCntRef.current = 0;
-      rOverCntRef.current = 0;
-
-      fsmStateRef.current = 'action';
-  }
-  return;
-}
-
-
-  // 2) 액션 상태: 왼손/오른손 각각 이동량 체크
-  if (fsmStateRef.current === 'action') {
-  // 시간/속도 계산
-  const nowSec = performance.now() / 1000;
-  let dt = nowSec - (lastTsRef.current || nowSec);
-  if (dt <= 0 || dt > 0.2) dt = 0.016; // 프레임 끊김 보호
-  lastTsRef.current = nowSec;
-
-  // 1) 사람 크기 기준 (어깨폭)
-  const shoulderDist = Math.abs(lm[LS].x - lm[RS].x);
-
-  // === 임계값 (조정됨) ===
-  // 잽: 수평 강하게 + 수직 흔들림은 작게 + 수평 속도 존재
-  const JAB_X_TH       = 0.22 * shoulderDist;
-  const JAB_FLAT_Y_MAX = 0.22 * shoulderDist;
-  const JAB_DIST_GAIN  = 0.18 * shoulderDist;
-  const VEL_X_TH       = 0.04 * shoulderDist / Math.max(dt, 1e-3);
-
-
-  // 어퍼: 위로 크게 + 수직 우세 + 수직 속도 존재
-  const UPP_Y_TH      = 0.33 * shoulderDist;
-  const UPP_DOM_RATIO = 1.70;
-  const VEL_Y_TH      = 0.06 * shoulderDist / Math.max(dt, 1e-3);
-  // 2) 현재값 + EMA
-  const lNowRaw = { x: lm[LW].x, y: lm[LW].y };
-  const rNowRaw = { x: lm[RW].x, y: lm[RW].y };
-  if (!lFiltRef.current.init) {
-    lFiltRef.current = { ...lNowRaw, init: true };
-    rFiltRef.current = { ...rNowRaw, init: true };
-  }
-  const alpha = EMA_ALPHA;
-  lFiltRef.current.x = alpha * lNowRaw.x + (1 - alpha) * lFiltRef.current.x;
-  lFiltRef.current.y = alpha * lNowRaw.y + (1 - alpha) * lFiltRef.current.y;
-  rFiltRef.current.x = alpha * rNowRaw.x + (1 - alpha) * rFiltRef.current.x;
-  rFiltRef.current.y = alpha * rNowRaw.y + (1 - alpha) * rFiltRef.current.y;
-
-  const lNow = lFiltRef.current;
-  const rNow = rFiltRef.current;
-
-  const lStart = startPosRef.current.left;
-  const rStart = startPosRef.current.right;
-  const lSh0   = startShoulderRef.current.left;
-  const rSh0   = startShoulderRef.current.right;
-  if (!lStart || !rStart || !lSh0 || !rSh0) return; // 안전장치
-
-  // 3) 변위
-  const ldx = lNow.x - lStart.x, ldy = lNow.y - lStart.y;
-  const rdx = rNow.x - rStart.x, rdy = rNow.y - rStart.y;
-
-  // 4) 속도 (직전 EMA 좌표와의 차이)
-  if (!lPrevRef.current.init) lPrevRef.current = { ...lNow, init: true };
-  if (!rPrevRef.current.init) rPrevRef.current = { ...rNow, init: true };
-  const lvx = (lNow.x - lPrevRef.current.x) / dt;
-  const lvy = (lNow.y - lPrevRef.current.y) / dt;
-  const rvx = (rNow.x - rPrevRef.current.x) / dt;
-  const rvy = (rNow.y - rPrevRef.current.y) / dt;
-  // 업데이트
-  lPrevRef.current = { ...lNow, init: true };
-  rPrevRef.current = { ...rNow, init: true };
-
-  // 5) 손목-어깨 거리 증가(잽 보조)
-  const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
-  const lWS0 = dist(lStart, lSh0);
-  const rWS0 = dist(rStart, rSh0);
-  const lWS  = dist(lNow,   lSh0);
-  const rWS  = dist(rNow,   rSh0);
-
-  // 6) 후보 조건
-  // 왼손
-  let lHitKind = null;
-  const lJabCand   = (Math.abs(ldx) > JAB_X_TH || (lWS - lWS0) > JAB_DIST_GAIN)
-                      && Math.abs(ldy) < JAB_FLAT_Y_MAX
-                      && Math.abs(lvx) > VEL_X_TH;
-  const lUpperCand = (-ldy) > UPP_Y_TH
-                      && Math.abs(ldy) > Math.abs(ldx) * UPP_DOM_RATIO
-                      && (-lvy) > VEL_Y_TH;
-
-  const lMovedAny = lJabCand || lUpperCand;
-  if (lMovedAny) {
-    lOverCntRef.current++;
-    if (lOverCntRef.current >= Math.max(2, HIT_MIN_FRAMES - 1)) {
-      // 동시충족 시 잽 우선
-      lHitKind = lJabCand ? 'left_jab' : (lUpperCand ? 'left_uppercut' : null);
-    }
-  } else {
-    lOverCntRef.current = Math.max(0, lOverCntRef.current - 1);
-  }
-
-  // 오른손
-  let rHitKind = null;
-  const rJabCand   = (Math.abs(rdx) > JAB_X_TH || (rWS - rWS0) > JAB_DIST_GAIN)
-                      && Math.abs(rdy) < JAB_FLAT_Y_MAX
-                      && Math.abs(rvx) > VEL_X_TH;
-  const rUpperCand = (-rdy) > UPP_Y_TH
-                      && Math.abs(rdy) > Math.abs(rdx) * UPP_DOM_RATIO
-                      && (-rvy) > VEL_Y_TH;
-
-  const rMovedAny = rJabCand || rUpperCand;
-  if (rMovedAny) {
-    rOverCntRef.current++;
-    if (rOverCntRef.current >= Math.max(2, HIT_MIN_FRAMES - 1)) {
-      rHitKind = rJabCand ? 'right_jab' : (rUpperCand ? 'right_uppercut' : null);
-    }
-  } else {
-    rOverCntRef.current = Math.max(0, rOverCntRef.current - 1);
-  }
-
-  // 7) 트리거
-  if (lHitKind || rHitKind) {
-    const motion = lHitKind || rHitKind;
-    console.log('DETECTED:', motion);
-
-    setAction(motion);
-    setTimeout(() => setAction('idle'), 0);
-
-    lastActionAtRef.current = nowSec;
-    fsmStateRef.current = 'cooldown';
-
-    // 리셋
-    lOverCntRef.current = 0;
-    rOverCntRef.current = 0;
-    return;
-  }
-
-  return; // 아직 미확정
-}
-
-
-
-
-  // 3) 쿨다운
-  if (fsmStateRef.current === 'cooldown') {
-    if (now - lastActionAtRef.current > COOLDOWN_SEC) {
-      fsmStateRef.current = 'get_ready';
-    }
-    return;
-  }
-});
-
-
-    // 3) MediaPipe Camera로 비디오 프레임 처리
-    const cam = new Camera(videoEl, {
-      onFrame: async () => {
-        try {
-          await pose.send({ image: videoEl });
-        } catch (e) {
-          // 처리 에러 무시
-        }
-      },
-      width: 640,
-      height: 480,
-    });
-    mediapipeCameraRef.current = cam;
-    cam.start();
-  };
-
-  // 카메라 종료
-  const stopCamera = () => {
-    mediapipeCameraRef.current?.stop();
-    mediapipeCameraRef.current = null;
-
-    if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach((t) => t.stop());
-      mediaStreamRef.current = null;
-    }
-
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
-  };
+    })();
+    return () => { stopCamera(); };
+  }, []);
 
   // 컴포넌트 언마운트 시 정리
+  useEffect(() => () => { stopCamera(); }, []);
+
+  // [GAMEOVER] 게임오버 시 모든 진행 중인 요소 정지 (카메라/음악)
   useEffect(() => {
-    return () => {
-      stopCamera();
+    if (!isGameOver) return;
+    stopCamera();
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    setFinalTimeover(timeover);
+  }, [isGameOver]);
+
+  /*=====================================================================================
+    #001 게임 시작 전
+  =====================================================================================*/
+
+  //  빌딩 리스트 가져오기
+  const [buildingList, setBuildingList] = useState([]);
+  const currentBuilding = buildingList[buildingIndex] ?? null;
+  const [playerSkin, setPlayerSkin] = useState("");
+  useEffect(() => {
+    const fetchBuildings = async () => {
+      try {
+        const { data, status } = await api.get('/constructures/generate', {
+          params: { count: 50 }, // #BUILDINGCNT
+        });
+        if (status !== 200 || !data.isSuccess) {
+          throw new Error(data.message || `HTTP ${status}`);
+        }
+        if (!isGameOverRef.current) setBuildingList(data.result);
+      } catch (err) {
+        console.error('건물 리스트 로드 실패:', err);
+      }
     };
+    fetchBuildings();
+  }, []);
+  
+  // SKIN 정보 가져오기
+  useEffect(() => {
+    const fetchSkin = async () => {
+      try {
+        const token = localStorage.getItem("accessToken");
+        const { data: skinData } = await api.get('/skins/getSkin', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!isGameOverRef.current) setPlayerSkin(skinData.result);
+      } catch (err) {
+        console.error('플레이어스킨 로드 실패:', err);
+      }
+    };
+    fetchSkin();
+  }, []);
+  
+  // 게임 콤보 패턴 가져오기
+  useEffect(() => {
+    const fetchGameCombo = async () => {
+      try {
+        const token = localStorage.getItem("accessToken");
+        const { data, status } = await api.get('users/games/generate/numeric', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (status === 200) {
+          if (!isGameOverRef.current) setCombo(Array.isArray(data?.patterns) ? data.patterns : []);
+        } else {
+          console.warn('응답 상태 비정상:', status);
+        }
+      } catch (error) {
+        console.error('게임 패턴 로드 실패:', error);
+      }
+    };
+    fetchGameCombo();
+  }, []);
+  
+  // 회원 정보 가져오기( UUID )
+  useEffect(() => {
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      alert("로그인이 필요합니다.");
+      return;
+    }
+
+    fetch("https://i13e106.p.ssafy.io/api/user/auth/getUserInfo", {
+      method: "GET",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("응답 오류" + res.status);
+        return res.json();
+      })
+      .then((data) => {
+        console.log("✅ userInfo 결과", data);
+        if (data?.result?.userUuid && data?.result?.userNickname) {
+          if (!isGameOverRef.current) setUserUuid(data.result.userUuid);
+        } else {
+          throw new Error("데이터 형식 오류");
+        }
+      })
+      .catch((err) => {
+        console.error("❌ 유저 정보 조회 실패", err);
+        alert("유저 정보를 가져오는 데 실패했습니다.");
+      });
   }, []);
 
-  // 게임오버 체크
   useEffect(() => {
-    if (health === 0) {
-      setIsGameOver(true);
-      // console.log("🛑 Game Over!");
-    }
-  }, [health]);
+    console.log('buildingList updated:', buildingList);
+  }, [buildingList]);
 
+  /*=====================================================================================
+    #002 게임 중 
+  =====================================================================================*/
+
+  useEffect(() => {
+    // 기존 액션 기반 감소 타이머는 제거(상단 타이머는 벽시계 기반)
+  }, [action, isGameOver]);
+
+  useEffect(() => {
+    if (Array.isArray(combo) && combo.length > 0) {
+      if (isGameOverRef.current) return;
+      setPatternIdx(0);
+      setStepIdx(0);
+    }
+  }, [combo]);
+
+  const lastActionRef = useRef('idle');
+  useEffect(() => {
+    if (isGameOver) return;
+    // PixiCanvas에서 action 1회 트리거 후 즉시 idle로 되돌리므로
+    if (action !== 'idle' && lastActionRef.current === 'idle') {
+      advanceStepOnce();
+    }
+    lastActionRef.current = action;
+  }, [action, isGameOver]);
+
+  const MOVE_META = {
+    0: { label: '왼잽', color: 'red' },
+    1: { label: '오잽', color: 'red' },
+    2: { label: '왼어퍼', color: 'black' },
+    3: { label: '오어퍼', color: 'black' },
+  };
+
+  function renderCommandSequence() {
+    const current = combo[patternIdx];
+    const moves = current?.moves || [];
+
+    return (
+      <div className="command-sequence">
+        {moves.map((m, i) => {
+          const meta = MOVE_META[m] || { label: '?', color: 'black' };
+          const stateClass =
+            i < stepIdx ? 'done' : i === stepIdx ? 'current' : '';
+          const colorClass =
+            meta.color === 'red' ? 'red' :
+              meta.color === 'green' ? 'green' : 'black';
+          return (
+            <div key={i} className={`command-circle ${colorClass} ${stateClass}`}>
+              {meta.label}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // === 기존 상태/함수 (그대로 유지) ===
+  const STATE = useRef('get_ready');
+  const lastActionTime = useRef(0);
+  const cooldownSec = 1.0;
+  const startPositions = useRef({ left: null, right: null });
+  const motionTextRef = useRef(null);
+
+  function getLandmarkXY(lm, idx, width, height) {
+    const p = lm[idx];
+    return [Math.round(p.x * width), Math.round(p.y * height)];
+  }
+
+  // (미사용 헬퍼는 유지)
+  function isReadyPose(lm, width, height, mpPoseNS) {
+    const L_WRIST = mpPoseNS.PoseLandmark.LEFT_WRIST;
+    const R_WRIST_IDX = mpPoseNS.PoseLandmark.RIGHT_WRIST;
+    const L_ELBOW = mpPoseNS.PoseLandmark.LEFT_ELBOW;
+    const R_ELBOW = mpPoseNS.PoseLandmark.RIGHT_ELBOW;
+    const L_SHOULDER = mpPoseNS.PoseLandmark.LEFT_SHOULDER;
+    const R_SHOULDER_IDX = mpPoseNS.PoseLandmark.RIGHT_SHOULDER;
+    const NOSE_IDX = mpPoseNS.PoseLandmark.NOSE;
+
+    const [, noseY] = getLandmarkXY(lm, NOSE_IDX, width, height);
+    const [, lwY] = getLandmarkXY(lm, L_WRIST, width, height);
+    const [, rwY] = getLandmarkXY(lm, R_WRIST_IDX, width, height);
+    const [, leY] = getLandmarkXY(lm, L_ELBOW, width, height);
+    const [, reY] = getLandmarkXY(lm, R_ELBOW, width, height);
+    const [, lsY] = getLandmarkXY(lm, L_SHOULDER, width, height);
+    const [, rsY] = getLandmarkXY(lm, R_SHOULDER_IDX, width, height);
+
+    const hand_in_guard_range =
+      (noseY < lwY && lwY < lsY + 40) &&
+      (noseY < rwY && rwY < rsY + 40);
+
+    const elbows_down = (leY > lsY) && (reY > rsY);
+
+    return hand_in_guard_range && elbows_down;
+  }
+
+  function detectMotion(startXY, nowXY, axis = 'x', threshold = 60) {
+    if (!startXY || !nowXY) return [0, false];
+    const diff = axis === 'x' ? (nowXY[0] - startXY[0]) : (nowXY[1] - startXY[1]);
+    return [diff, Math.abs(diff) > threshold];
+  }
+
+  function classifyMotion(startXY, nowXY, hand = 'left') {
+    const dx = nowXY[0] - startXY[0];
+    const dy = nowXY[1] - startXY[1];
+    const isUppercut = Math.abs(dy) > Math.abs(dx) && dy < -0.06;
+    const kind = isUppercut ? 'uppercut' : 'jab';
+    return `${hand} ${kind}`;
+  }
+
+  function handleUserMove(moveCode) {
+    if (isGameOverRef.current) return;
+
+    const current = combo[patternIdx];
+    if (!current || !Array.isArray(current.moves)) return;
+
+    const expected = current.moves[stepIdx];
+
+    if (moveCode === expected) {
+      setStepIdx(prev => prev + 1);
+
+      if (stepIdx + 1 >= current.moves.length) {
+        setDestroyedCount(c => c + 1);
+        setCoinCount(c => c + COIN_PER_BUILDING);
+        setPatternIdx(prev => (prev + 1) % combo.length);
+        setStepIdx(0);
+      }
+    } else {
+      // 페널티 필요시 추가
+    }
+  }
+
+  function advanceStepOnce() {
+    if (isGameOverRef.current) return;
+    if (!Array.isArray(combo) || combo.length === 0) return;
+    if (advanceLockRef.current) return;
+
+    advanceLockRef.current = true;
+
+    const current = combo[patternIdx];
+    const total = (current?.moves || []).length;
+
+    setStepIdx(prev => {
+      const next = prev + 1;
+      if (next >= total) {
+        setPatternIdx(p => (p + 1) % combo.length);
+        return 0;
+      }
+      return next;
+    });
+
+    setTimeout(() => { advanceLockRef.current = false; }, 250);
+  }
+
+  // === [PRESTART] 10초 준비 카운트다운 ===
+  const READY_SECONDS = 10;
+  const [isPlaying, setIsPlaying] = useState(false);
+  const isPlayingRef = useRef(false);
+  const [readyLeft, setReadyLeft] = useState(READY_SECONDS);
+
+  // === [PRESTART] 카운트다운 시작 ===
+  useEffect(() => {
+    setReadyLeft(READY_SECONDS);
+    const t = setInterval(() => {
+      setReadyLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(t);
+          setIsPlaying(true);
+          isPlayingRef.current = true;
+          startTimeRef.current = Date.now();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  // === [PRESTART] 본 게임 타이머 ===
+  useEffect(() => {
+    if (!isPlaying || isGameOver) return;
+
+    const interval = setInterval(() => {
+      const now = Date.now();
+      setElapsedTime(Math.floor((now - startTimeRef.current) / 1000));
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [isPlaying, isGameOver]);
+
+  useEffect(() => {
+    const remaining = Math.max(TIME_LIMIT_SEC - elapsedTime, 0);
+    setTimeover(remaining);
+    if (remaining === 0 && !isGameOverRef.current) {
+      setIsGameOver(true);
+    }
+  }, [elapsedTime]);
+
+  useEffect(() => {
+    console.log("부서진 빌딩 배열 : " ,destroyedSeqs);
+  }, [destroyedSeqs]);
+
+  // 자동재생 차단 해제용
+  const [soundLocked, setSoundLocked] = useState(false);
   // BGM
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = 0.5;
-      audioRef.current.loop = true;
-      audioRef.current.play().catch(() => {});
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    audio.volume = 0.5;
+    audio.loop = true;
+
+    if (isPlaying && !isGameOver) {
+      const p = audio.play();
+      if (p && typeof p.catch === 'function') {
+        p.catch((err) => {
+          console.warn('🔇 자동재생이 차단되었습니다. 버튼을 눌러 사운드를 켜세요.', err);
+          setSoundLocked(true);
+        });
+      }
+    } else {
+      audio.pause();
+      try { audio.currentTime = 0; } catch (_) {}
     }
-  }, []);
+  }, [isPlaying, isGameOver]);
+
+  /*=====================================================================================
+    #003 게임 종료
+  =====================================================================================*/
+
+  useEffect(() => {
+    if (timeover === 0) setIsGameOver(true);
+  }, [timeover]);
+
+  // 게임 종료 시 경과 시간 확인
+  useEffect(() => {
+    if (isGameOver && startTimeRef.current) {
+      setPlayTime(Math.floor((Date.now() - startTimeRef.current + (addTime * destroyedCount))/1000));
+      console.log("최종 플레이 시간(초):", playTime);
+    }
+  }, [isGameOver]);
+
+  // 게임 종료 리포트 업데이트
+  useEffect(() => {
+    if (!isGameOver) return;
+    if (playTime == null || playTime === 0) return;
+    if (didReportRef.current) return;
+    didReportRef.current = true;
+
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+      console.warn('액세스 토큰 없음 → 리포트 전송 생략');
+      return;
+    }
+
+    const params = {
+      singleTopBuilding: destroyedCount,
+      multiTopBuilding: 0,
+      goldMedal: 0,
+      silverMedal: 0,
+      bronzeMedal: 0,
+      playCnt: 1,
+      playTime: Number((playTime / 60).toFixed(2)),
+    };
+
+    api.patch('/users/games/reportUpdates', null, {
+      params,
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => {
+        if (res.status === 200 && res.data?.isSuccess) {
+          console.log('✅ 리포트 업데이트 성공', res.data);
+        } else {
+          console.warn('⚠️ 서버 응답 비정상', res.status, res.data);
+        }
+      })
+      .catch((err) => {
+        console.error('❌ 리포트 업데이트 실패', {
+          status: err?.response?.status,
+          data: err?.response?.data,
+        });
+      });
+  }, [isGameOver, destroyedCount, playTime]);
+
+  // 일일 리포트 업데이트
+  useEffect(() => {
+    if (!isGameOver) return;
+    if (playTime == null || playTime === 0) return;
+    if (didDailyReportRef.current) return;
+    didDailyReportRef.current = true;
+
+    const playTimeDate = Number((playTime / 60).toFixed(2));
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+      console.warn('액세스 토큰 없음 → 일일 리포트 전송 생략');
+      return;
+    }
+
+    api.patch(
+      '/users/games/reportPerDateUpdates',
+      null,
+      {
+        params: {
+          kcal: Math.round(kcal) ?? 0,
+          playTimeDate,
+        },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: '*/*',
+        },
+      },
+    )
+      .then((res) => {
+        if (res.status === 200 && res.data?.isSuccess) {
+          console.log('✅ 일일 리포트 업데이트 성공', res.data);
+        } else {
+          console.warn('⚠️ 일일 리포트 응답 비정상', res.status, res.data);
+        }
+      })
+      .catch((err) => {
+        console.error('❌ 일일 리포트 업데이트 실패', {
+          status: err?.response?.status,
+          data: err?.response?.data,
+        });
+      });
+  }, [isGameOver, kcal, playTime]);
+
+  // 골드 업데이트
+  useEffect(() => {
+    if (!isGameOver) return;
+    if (didGoldReportRef.current) return;
+    didGoldReportRef.current = true;
+
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+      console.warn('액세스 토큰 없음 → 골드 업데이트 생략');
+      return;
+    }
+
+    api.patch(
+      '/users/games/addGoldCnt',
+      null,
+      {
+        params: { goldCnt: coinCount },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: '*/*',
+        },
+      }
+    )
+      .then((res) => {
+        if (res.status === 200 && res.data?.isSuccess) {
+          console.log('✅ 골드 업데이트 성공', res.data);
+        } else {
+          console.warn('⚠️ 골드 업데이트 응답 비정상', res.status, res.data);
+        }
+      })
+      .catch((err) => {
+        console.error('❌ 골드 업데이트 실패', {
+          status: err?.response?.status,
+          data: err?.response?.data,
+        });
+      });
+  }, [isGameOver, coinCount]);
+
+  // 파괴한 건물 업데이트
+  useEffect(() => {
+    if (!isGameOver) return;
+    if (didConstructureSaveRef.current) return;
+    didConstructureSaveRef.current = true;
+
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+      console.warn('액세스 토큰 없음 → 건물 저장 생략');
+      return;
+    }
+
+    api.post(
+      '/constructures/save',
+      {
+        userUuid: userUuid,
+        constructureSeqList: destroyedSeqs
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          Accept: '*/*',
+        },
+      }
+    )
+      .then((res) => {
+        if (res.status === 200 && res.data?.isSuccess) {
+          console.log('✅ 파괴 건물 저장 성공', res.data);
+        } else {
+          console.warn('⚠️ 파괴 건물 저장 응답 비정상', res.status, res.data);
+        }
+      })
+      .catch((err) => {
+        console.error('❌ 파괴 건물 저장 실패', {
+          status: err?.response?.status,
+          data: err?.response?.data,
+        });
+      });
+  }, [isGameOver, destroyedSeqs]);
+
+  /*=====================================================================================
+    #003 게임 종료 END
+  =====================================================================================*/
 
   return (
-    <div className="page-container">
-      <audio ref={audioRef} src="/sounds/bgm.mp3" />
-      {isGameOver && (
-        <div className="game-over-overlay">
-          <h1>GAME OVER</h1>
-          <button onClick={() => window.location.reload()}>다시 시작</button>
+    <AnimatedPage>
+      {soundLocked && isPlaying && !isGameOver && (
+        <button
+          onClick={() => {
+            audioRef.current?.play()
+              .then(() => setSoundLocked(false))
+              .catch(() => {});
+          }}
+          style={{
+            position: 'fixed', top: 16, right: 16, zIndex: 9999,
+            padding: '8px 12px', borderRadius: 8, border: '1px solid #ccc',
+            background: '#111', color: '#fff', cursor: 'pointer'
+          }}
+        >
+          🔊 사운드 켜기
+        </button>
+      )}
+
+      {/* [PRESTART] 준비 카운트다운 오버레이 */}
+      {!isGameOver && !isPlaying && (
+        <div className="prestart-overlay">
+          <div className="countdown">{readyLeft}</div>
         </div>
       )}
 
-      <div className="top-controls">
-        <h1>싱글모드: 로컬 카메라 + MediaPipe</h1>
-        <div className="buttons">
-          <button onClick={startCamera}>카메라 시작</button>
-          <button onClick={stopCamera}>카메라 종료</button>
-        </div>
-      </div>
+      <div className="page-container">
+        <audio ref={audioRef} src={singleBgm} preload="auto" />
+        {isGameOver && (
+          <div className="game-over-overlay">
+            <div className="gameover">
+              <h1>GAME OVER</h1>
+              <div className="gamediv">
+                {playTime !== null && <div className="gameovertext">플레이 시간: {playTime}초</div>}
+                {destroyedCount !== null && <div className="gameovertext">부순 건물 수: {destroyedCount}개</div>}
+                {kcal !== null && <div className="gameovertext">소모 칼로리: {kcal}KCAL</div>}
+                {coinCount !== null && (
+                  <div className="gameovertext">
+                    오늘의 일당: <img src={coinImg} alt="coin" style={{ height: '20px', margin: '0 5px', verticalAlign: 'middle' }} />
+                    {coinCount}개
+                  </div>
+                )}
+              </div>
+              <div className="playbutton">
+                <button className="playagain" onClick={() => window.location.reload()}>다시 시작</button>
+                <button className="playagain" onClick={() => window.location.href = '/main'}>나가기</button>
+              </div>
+            </div>
+          </div>
+        )}
 
-      <div className="game-layout">
-        <div className="left-game">
-          <div className="overlay-ui">
-            <div className="progress-bar">
-              <div className="progress-fill" style={{ width: `${health}%` }}></div>
-            </div>
-            <div className="combob-bg" style={{ backgroundImage: `url(${combobImg})` }}>
-            <div className="command-sequence">
-              <div className="command-circle red" style={{ backgroundImage: `url(${punchImg})` }} />
-              <div className="command-circle green" style={{ backgroundImage: `url(${dodgeImg})` }} />
-              <div className="command-circle black" style={{ backgroundImage: `url(${upperImg})` }} />
-              <div className="command-circle red" style={{ backgroundImage: `url(${punchImg})` }} />
-              <div className="command-circle red" style={{ backgroundImage: `url(${punchImg})` }} />
-              <div className="command-circle red" style={{ backgroundImage: `url(${punchImg})` }} />
-              <div className="command-circle green" style={{ backgroundImage: `url(${dodgeImg})` }} />
-              <div className="command-circle black" style={{ backgroundImage: `url(${upperImg})` }} />
-            </div>
+        <div className="game-layout">
+          <div className="left-game">
+            <div className="overlay-ui">
+              <img src={timerIcon} alt="Timer" className="timer-icon" />
+              <div className="progress-bar">
+                <div className="progress-fill" style={{ width: `${(timeover / TIME_LIMIT_SEC) * 100}%` }}></div>
+              </div>
+              <div className="overlay-ui1">
+                {renderCommandSequence()}
+              </div>
             </div>
 
+            <PixiCanvas
+              action={action}
+              building={currentBuilding}
+              playerSkin={playerSkin}
+              combo={combo}
+              onBuildingDestroyed={(seq) => {
+                if (isGameOverRef.current) return;
+                if (seq) setDestroyedSeqs(prev => [...prev, seq]);
+                setBuildingIndex((prev) =>
+                  buildingList.length === 0 ? 0 : (prev + 1) % buildingList.length
+                );
+                setDestroyedCount((c) => c + 1);
+                setCoinCount((c) => c + COIN_PER_BUILDING);
+                // 보너스 시간 추가(#TIMERSETTING)
+                if (startTimeRef.current) {
+                  startTimeRef.current += addTime;
+                }
+              }}
+              setKcal={(val) => {
+                if (isGameOverRef.current) return;
+                setKcal(val);
+              }}
+              showBuildingHp={true}
+            />
           </div>
 
-          <PixiCanvas
-            action={action}
-            buildingIndex={buildingIndex}
-            onBuildingDestroyed={() => {
-              setHealth((prev) => Math.min(prev + 30, 100)); // 체력 회복
-              setBuildingIndex((prev) => (prev + 1) % 3);
-              setDestroyedCount((c) => c + 1); 
-              setCoinCount((c) => c + COIN_PER_BUILDING);   // 다음 건물 (3개 순환)
-            }}
-            setKcal={setKcal}
-          />
-        </div>
+          <div className="right-panel">
+            <div className="kcal-display">{kcal} KCAL</div>
+            <div className="building-status">🏢 부순 건물: {destroyedCount}</div>
+            <div className="coin-status">💰 코인: {coinCount}</div>
 
-        <div className="right-panel">
-          <div className="kcal-display">{kcal} KCAL</div>
-          <div className="building-status">🏢 부순 건물: {destroyedCount}</div>
-          <div className="coin-status">💰 코인: {coinCount}</div>
+            {/* 즉시 종료 */}
+            <button className="quit-button" onClick={() => setIsGameOver(true)}>QUIT</button>
 
-          <button className="quit-button">QUIT</button>
-
-          <div className="webcam-container">
-            <video ref={videoRef} autoPlay muted className="webcam-video" />
-            <canvas ref={canvasRef} className="webcam-canvas" width="640" height="480"></canvas>
+            <div className="webcam-container mirror">
+              <video ref={videoRef} autoPlay muted className="webcam-video" />
+              <canvas ref={canvasRef} className="webcam-canvas" width="640" height="480"></canvas>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </AnimatedPage>
   );
 };
 

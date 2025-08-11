@@ -17,9 +17,9 @@ import karina_upper from '../../assets/images/karina/karina_upper.png';
 
 
 //복서
-import boxer_01 from '../../assets/images/karina/boxer_01.png';
-import boxer_02 from '../../assets/images/karina/boxer_02.png';
-import boxer_03 from '../../assets/images/karina/boxer_03.png';
+import boxer_01 from '../../assets/images/karina/boxer_idle.png';
+import boxer_02 from '../../assets/images/karina/boxer_punch_1.png';
+import boxer_03 from '../../assets/images/karina/boxer_punch_2.png';
 // ✅ 어퍼컷 전용 프레임 추가
 import boxer_upper from '../../assets/images/karina/boxer_upper.png';
 
