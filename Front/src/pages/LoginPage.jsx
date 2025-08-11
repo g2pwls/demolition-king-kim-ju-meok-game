@@ -114,8 +114,22 @@ function LoginPage() {
           </div>
 
           <div className="social-login">
-            <img src={googleIcon} alt="Google" />
-            <img src={kakaoIcon} alt="Kakao" />
+            <img
+              src={googleIcon}
+              alt="Google"
+              style={{ cursor: 'pointer' }}
+              onClick={() => {
+                window.location.href = "https://i13e106.p.ssafy.io/oauth2/authorization/google";
+              }}
+            />
+            <img
+              src={kakaoIcon}
+              alt="Kakao"
+              style={{ cursor: 'pointer' }}
+              onClick={() => {
+                window.location.href = "https://i13e106.p.ssafy.io/oauth2/authorization/kakao";
+              }}
+            />
           </div>
 
           <div className="login-links">

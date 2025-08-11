@@ -1,12 +1,47 @@
 // src/pages/StoryPage.jsx
-import React from 'react';
+import React, { useEffect } from 'react';
 import '../styles/StoryPage.css';
 import TypewriterText from '../components/TypewriterText';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import AnimatedPage from '../components/AnimatedPage';
+import api from '../utils/api';
 
 function StoryPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // 1) 해시로 온 access 토큰 저장 + 해시 제거
+  useEffect(() => {
+    try {
+      const hash = location.hash?.slice(1) || ''; // "access=..."
+      if (!hash) return;
+      const params = new URLSearchParams(hash);
+      const at = params.get('access');
+      if (at) {
+        localStorage.setItem('accessToken', at);
+        // URL 정리: 해시 제거 (히스토리 오염 방지)
+        navigate(location.pathname + location.search, { replace: true });
+      }
+    } catch (e) {
+      console.error('[Story] hash parse failed', e);
+    }
+  }, [location, navigate]);
+
+  // 2) 혹시 해시가 없고, localStorage도 비어있다면 (새로고침 등)
+  //    refresh 쿠키로 교환 API를 한 번 시도 (선택사항)
+  useEffect(() => {
+    (async () => {
+      if (localStorage.getItem('accessToken')) return;
+      try {
+        const { data } = await api.post('/user/auth/tokenrefresh'); // 쿠키 동봉됨
+        const at = data?.result?.accessToken ?? data?.accessToken;
+        if (at) localStorage.setItem('accessToken', at);
+      } catch {
+        // 교환도 실패하면 로그인으로
+        // 여기서 바로 튕기지 않고, 아래 onDone에서 /main 가기 전에 체크해도 OK
+      }
+    })();
+  }, []);
   const storyText = `
   한때, 그는 대한민국 복싱계를 뒤흔든 레전드였다.
 하지만 세월은 흘렀고, 
