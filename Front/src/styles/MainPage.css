@@ -106,7 +106,6 @@ width: 100vw;  /* 화면 너비에 맞춤 */
 .top-icon-button {
   background: none;
   border: none;
-  cursor: pointer;
   padding: 0;
 }
 
@@ -134,7 +133,6 @@ width: 100vw;  /* 화면 너비에 맞춤 */
 .bottom-icon-button {
   background: none;
   border: none;
-  cursor: pointer;
   padding: 0;
 }
 
@@ -186,7 +184,6 @@ width: 100vw;  /* 화면 너비에 맞춤 */
   background: transparent;
   border: none;
   padding: 0;
-  cursor: pointer;
   z-index: 1000;
 }
 
@@ -232,7 +229,6 @@ width: 100vw;  /* 화면 너비에 맞춤 */
   transform: translateY(-50%);
   background: none;
   border: none;
-  cursor: pointer;
   padding: 0;
 }
 
@@ -262,7 +258,6 @@ width: 100vw;  /* 화면 너비에 맞춤 */
 .multi-mode-buttons button {
   background: none;
   border: none;
-  cursor: pointer;
 }
 
 .multi-mode-buttons img {
@@ -778,7 +773,7 @@ width: 100vw;  /* 화면 너비에 맞춤 */
 
 .mypage-edit-btn.disabled {
   background-color: gray;
-  cursor: not-allowed;
+  /* cursor: not-allowed; */
   opacity: 0.7;
 }
 
@@ -1167,7 +1162,6 @@ width: 100vw;  /* 화면 너비에 맞춤 */
   color: white;
   border: none;
   border-radius: 4px;
-  cursor: pointer;
   transition: background-color 0.2s;
   font-size: 16px;
 }
@@ -1329,3 +1323,69 @@ width: 100vw;  /* 화면 너비에 맞춤 */
   font-size: 20px;
   margin-bottom:20px
 }
+
+.tuclose {
+  position: absolute;
+  top: 15%;
+  right: 16%;
+  width: 50px;
+  height: 50px;
+}
+
+/* === 싱글모드 프리스타트 모달 (필요 최소) === */
+.prestart-modal {
+  width: min(560px, 92vw);
+  background: #111;
+  color: #fff;
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.08);
+  position: relative;
+}
+
+.prestart-title {
+  font-size: 20px;
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+
+.prestart-tips {
+  margin: 0 0 16px 18px;
+  padding: 0;
+  line-height: 1.6;
+  font-size: 16px;
+}
+
+.prestart-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.prestart-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0.9;
+  font-size: 14px;
+}
+
+.prestart-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.ps-btn {
+  padding: 10px 14px;
+  font-size: 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+  transition: transform .06s ease, background .2s ease;
+}
+.ps-btn:hover { transform: translateY(-1px); }
+.ps-btn.primary { background: #0d6efd; border-color: #0d6efd; }
+.ps-btn.ghost { background: transparent; opacity: 0.85; }
