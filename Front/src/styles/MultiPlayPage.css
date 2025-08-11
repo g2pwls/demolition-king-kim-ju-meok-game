@@ -1,0 +1,134 @@
+:root{
+    --panel-bg: rgba(20,22,28,.55);
+    --panel-border: rgba(255,255,255,.08);
+    --text: #e9ecf1;
+    --subtext: #9aa3b2;
+}
+
+.mp-root{
+    position: relative;
+    width: 100vw; height: 100vh;
+    display: grid;
+    grid-template-columns: 14.2857% 1fr; /* ← 좌측 1/7, 우측 나머지 */
+    background: #0e1217;
+    overflow: hidden;
+}
+
+/* 좌측: 3개 썸네일 스택 */
+.mp-sidebar{
+    display: grid;
+    grid-template-rows: repeat(3, 1fr);
+    gap: 12px;
+    padding: 12px;
+    background: rgba(0,0,0,.22);
+    border-right: 1px solid var(--panel-border);
+}
+
+.peer-tile{
+    position: relative;
+    border-radius: 14px;
+    overflow: hidden;
+    background: rgba(255,255,255,.06);
+    border: 1px solid var(--panel-border);
+    display: flex; align-items: center; justify-content: center;
+}
+.peer-tile video{
+    width: 100%; height: 100%; object-fit: cover;
+}
+.peer-tile.off{
+    background: rgba(255,255,255,.04);
+}
+.peer-badge{
+    position: absolute; left: 8px; top: 8px;
+    display: flex; gap: 6px;
+    padding: 4px 8px;
+    background: rgba(0,0,0,.45);
+    border: 1px solid var(--panel-border);
+    color: var(--text);
+    border-radius: 10px;
+    font-size: .8rem;
+}
+
+/* 메인 게임 영역 */
+.mp-main{
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Pixi 캔버스 감쌀 영역 */
+.mp-game{
+    width: 100%;
+    height: 100%;
+}
+
+/* 내 PIP: 좌하단 */
+.local-pip{
+    position: absolute;
+    left: 16px;
+    bottom: 16px;
+    width: 240px;
+    aspect-ratio: 16/9;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--panel-border);
+    box-shadow: 0 12px 28px rgba(0,0,0,.4);
+}
+.local-pip video{
+    width: 100%; height: 100%; object-fit: cover;
+}
+.local-pip .mirror{
+    transform: scaleX(-1);
+}
+
+/* Mediapipe 입력 전용 비디오(화면에는 숨김) */
+.mp-hidden-input{
+    position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0;
+}
+
+/* 채팅(우상단) */
+.mp-chat-wrap{
+    position: absolute;
+    right: 16px; top: 16px;
+    width: 360px;
+}
+.mp-chat{
+    display: flex; flex-direction: column; gap: 10px;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 14px;
+    padding: 12px;
+    backdrop-filter: blur(8px);
+    color: var(--text);
+}
+.mp-chat-title{
+    font-weight: 700; letter-spacing: .3px;
+}
+.mp-chat-list{
+    max-height: 320px; overflow-y: auto;
+    display: flex; flex-direction: column; gap: 6px;
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    padding: 8px;
+    background: rgba(0,0,0,.25);
+}
+.mp-chat-item .nick{
+    color: #6fb6ff; margin-right: 6px; font-weight: 600;
+}
+.mp-chat-input{
+    display: flex; gap: 8px;
+}
+.mp-chat-input input{
+    flex: 1; padding: .55rem .7rem; border-radius: 10px;
+    background: rgba(0,0,0,.25);
+    border: 1px solid var(--panel-border);
+    color: var(--text);
+}
+.mp-chat-input button{
+    padding: .55rem .8rem; border-radius: 10px; border: none;
+    background: linear-gradient(180deg,#334ab1,#2f449f);
+    color: #fff; cursor: pointer;
+}
+
+.ov-video { width: 100%; height: 100%; object-fit: cover; border-radius: 12px; }
