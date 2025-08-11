@@ -197,10 +197,13 @@ const SingleTestPage = () => {
       // const localBase = '/mediapipe/pose'; // [OPTIONAL][MP] public/mediapipe/pose/* 로 복사 시 사용
       //const assetBase = cdnBase; // 필요시 localBase 로 전환
       const assetBase = `${import.meta.env.BASE_URL}mediapipe/pose`;
+      console.log('전 Pose typeof:', typeof Pose); 
       const { Pose } = await import('@mediapipe/pose');
+      console.log('중 Pose typeof:', typeof Pose); 
       const pose = new Pose({
         locateFile: (file) => `${assetBase}/${file}`,                      // [CHANGED][MP]
       });
+      console.log('후 Pose typeof:', typeof Pose); 
 
       pose.setOptions({
         modelComplexity: 0,
