@@ -232,7 +232,7 @@ function MainPage() {
       },
     });
     // 캐릭터 선택 후, localStorage에 선택된 캐릭터 저장
-    localStorage.setItem('selectedCharacter', selectedSkin.playerSkinItemSeq);
+    localStorage.setItem('selectedCharacter', selectedSkin.image);
 
 
     // 다시 불러오기

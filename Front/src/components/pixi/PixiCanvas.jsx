@@ -3,6 +3,7 @@ import * as PIXI from 'pixi.js';
 
 import building1 from '../../assets/images/building/building1.png';
 import singleBack from '../../assets/images/singlemode/singleback.png';
+import eventgameback from '../../assets/images/eventmode/eventgameback.png';
 import buildingDust1 from '../../assets/images/effects/building_dust_1.png';
 import buildingDust2 from '../../assets/images/effects/building_dust_2.png';
 import buildingDust3 from '../../assets/images/effects/building_dust_3.png';
