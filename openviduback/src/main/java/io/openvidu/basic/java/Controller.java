@@ -29,7 +29,7 @@ public class Controller {
 	private String LIVEKIT_API_SECRET;
 
 	// ws가 아니라 http/https 엔드포인트 (기본값 로컬)
-	@Value("${livekit.url:http://localhost:7880}")
+	@Value("${livekit.url:http://caddy-proxy:7880}")
 	private String LIVEKIT_URL_HTTP;
 
 	/** 필요할 때마다 클라이언트 생성 */
