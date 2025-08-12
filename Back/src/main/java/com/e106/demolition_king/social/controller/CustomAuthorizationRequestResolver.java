@@ -51,7 +51,7 @@ public class CustomAuthorizationRequestResolver implements OAuth2AuthorizationRe
         // delete 모드면 prompt/max_age/state 지정
         Map<String, Object> add = new LinkedHashMap<>(req.getAdditionalParameters());
         add.put("prompt", "login");
-        add.put("max_age", "120");
+//        add.put("max_age", "120");
 
         return OAuth2AuthorizationRequest.from(req)
                 .state("delete")
