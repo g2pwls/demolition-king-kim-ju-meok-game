@@ -10,6 +10,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import java.util.concurrent.ThreadLocalRandom;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -26,23 +27,44 @@ public class ConstructureServiceImpl implements ConstructureService {
 
     @Override
     public List<ConstructureResponseVo> generateConstructures(int count) {
-        List<Constructure> all = constructureRepository.findAll();
-        List<ConstructureResponseVo> result = new ArrayList<>();
+        if (count <= 0) return Collections.emptyList();
 
-        // 총 확률 (BigDecimal로 계산)
-        BigDecimal totalWeight = all.stream()
+        // 1) 풀 구성: tier = 'event' 제외
+        List<Constructure> pool = constructureRepository.findAll().stream()
+                .filter(c -> c.getTier() == null || !"event".equalsIgnoreCase(c.getTier()))
+                .toList();
+
+        if (pool.isEmpty()) return Collections.emptyList();
+
+        // 2) 가중치 대상만 남기기 (rate > 0)
+        List<Constructure> weighted = pool.stream()
+                .filter(c -> c.getRate() != null && c.getRate().compareTo(BigDecimal.ZERO) > 0)
+                .toList();
+
+        // 3) 전부 0 또는 null이면 균등 랜덤
+        if (weighted.isEmpty()) {
+            List<ConstructureResponseVo> fallback = new ArrayList<>(count);
+            for (int i = 0; i < count; i++) {
+                Constructure pick = pool.get(ThreadLocalRandom.current().nextInt(pool.size()));
+                fallback.add(ConstructureResponseVo.fromEntity(pick));
+            }
+            return fallback;
+        }
+
+        // 4) 가중치 합
+        BigDecimal totalWeight = weighted.stream()
                 .map(Constructure::getRate)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        Random random = new Random();
-
+        // 5) 가중치 랜덤 선택
+        List<ConstructureResponseVo> result = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
-            BigDecimal rand = totalWeight.multiply(BigDecimal.valueOf(random.nextDouble()));
+            BigDecimal r = totalWeight.multiply(BigDecimal.valueOf(ThreadLocalRandom.current().nextDouble()));
             BigDecimal cumulative = BigDecimal.ZERO;
 
-            for (Constructure c : all) {
+            for (Constructure c : weighted) {
                 cumulative = cumulative.add(c.getRate());
-                if (rand.compareTo(cumulative) <= 0) {
+                if (r.compareTo(cumulative) < 0) { // < 0로 경계 편향 제거
                     result.add(ConstructureResponseVo.fromEntity(c));
                     break;
                 }

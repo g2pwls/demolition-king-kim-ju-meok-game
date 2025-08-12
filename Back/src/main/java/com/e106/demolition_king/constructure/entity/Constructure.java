@@ -30,4 +30,7 @@ public class Constructure {
 
     @Column(name = "name", nullable = false)
     private String name; // 예: 0.1 → 10%
+
+    @Column(name = "tier", nullable = false)
+    private String tier;
 }

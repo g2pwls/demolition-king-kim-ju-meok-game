@@ -30,30 +30,38 @@ public class FriendController {
 
     @Operation(
             summary = "방 초대 전송",
-            description = "헤더에 친구 UUID, 쿼리 파라미터에 방 이름(roomName)을 담아 SSE 초대 알림을 보냅니다."
+            description = "헤더에 내 UUID(X-User-Uuid)와 친구 UUID(Friend-Uuid), 쿼리파라미터 roomName을 담아 SSE 초대 알림을 보냅니다."
     )
     @PostMapping("/invite-room")
     public BaseResponse<Void> inviteRoom(
-            @RequestHeader("Authorization")
-            @Schema(description = "Access Token") String authHeader,
+            @RequestHeader("X-User-Uuid")
+            @Schema(description = "보내는 사람(나)의 UUID") String senderUuid,
             @RequestHeader("Friend-Uuid")
             @Schema(description = "초대할 친구의 UUID") String friendUuid,
             @RequestParam("roomName")
             @Schema(description = "방 이름", example = "복싱연습방-7") String roomName
     ) {
-        // 1) 토큰 검증 및 발신자 UUID 추출
-        String token = authHeader.replace("Bearer ", "").trim();
-        if (!jwtUtil.validateToken(token)) {
-            throw new RuntimeException("유효하지 않은 토큰입니다.");
+        // 간단 검증
+        if (senderUuid == null || senderUuid.isBlank()) {
+            throw new RuntimeException("X-User-Uuid 헤더가 비어있습니다.");
         }
-        String senderUuid = jwtUtil.getUserUuid(token);
+        if (friendUuid == null || friendUuid.isBlank()) {
+            throw new RuntimeException("Friend-Uuid 헤더가 비어있습니다.");
+        }
+        if (roomName == null || roomName.isBlank()) {
+            throw new RuntimeException("roomName 파라미터가 비어있습니다.");
+        }
+        if (senderUuid.equals(friendUuid)) {
+            throw new RuntimeException("본인에게는 초대할 수 없습니다.");
+        }
 
-        // 2) 서비스 호출
+        // 서비스 호출
         friendService.sendRoomInvite(senderUuid, friendUuid, roomName);
 
-        // 3) 성공 응답
         return BaseResponse.ok();
     }
+
+
     @Operation(
             summary = "닉네임으로 유저 조회",
             description = "친구 추가를 위해, 유저 닉네임으로 해당 유저 정보를 가져옵니다."
