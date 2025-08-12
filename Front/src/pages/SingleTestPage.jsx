@@ -714,8 +714,8 @@ const SingleTestPage = () => {
     setTimeout(() => { advanceLockRef.current = false; }, 250);
   }
 
-  // === [PRESTART] 10초 준비 카운트다운 ===
-  const READY_SECONDS = 10;
+  // === [PRESTART] 5초 준비 카운트다운 ===
+  const READY_SECONDS = 5;
   const [isPlaying, setIsPlaying] = useState(false);
   const isPlayingRef = useRef(false);
   const [readyLeft, setReadyLeft] = useState(READY_SECONDS);
