@@ -1038,7 +1038,7 @@ const fetchTotalPlayTime = async () => {
   const [withdrawError, setWithdrawError] = useState('');
 
   const isGoogle = !!userInfo?.googleSub;
-  const isKakao  = !!userInfo?.kakaoAccessToken;
+  const isKakao  = !!userInfo?.kakaoId;
   const isSocial = isGoogle || isKakao;
 
   const handleGoogleDelete = () => {
