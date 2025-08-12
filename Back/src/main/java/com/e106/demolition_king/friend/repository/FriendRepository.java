@@ -3,6 +3,9 @@ package com.e106.demolition_king.friend.repository;
 
 import com.e106.demolition_king.friend.entity.Friend;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -27,5 +30,8 @@ public interface FriendRepository extends JpaRepository<Friend, Long> {
 
     Optional<Friend> findByUser_UserUuidAndFriend_UserUuid(String userUuid, String friendUuid);
 
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("delete from Friend f where f.user.userUuid = :uuid or f.friend.userUuid = :uuid")
+    int deleteAllByUserUuidInvolved(@Param("uuid") String uuid);
 
 }

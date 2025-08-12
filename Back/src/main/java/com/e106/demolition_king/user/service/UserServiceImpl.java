@@ -2,6 +2,7 @@ package com.e106.demolition_king.user.service;
 
 import com.e106.demolition_king.common.base.BaseResponseStatus;
 import com.e106.demolition_king.common.exception.BaseException;
+import com.e106.demolition_king.friend.repository.FriendRepository;
 import com.e106.demolition_king.game.entity.Gold;
 import com.e106.demolition_king.game.entity.Report;
 import com.e106.demolition_king.skin.entity.PlayerSkin;
@@ -36,6 +37,7 @@ import java.util.concurrent.TimeUnit;
 public class UserServiceImpl implements UserService, UserDetailsService {
     private final UserRepository userRepository;         // JPA 레포지토리
     private final ProfileRepository profileRepository;
+    private final FriendRepository friendRepository;
     private final PasswordEncoder passwordEncoder;       // SecurityConfig에서 주입된 BCrypt 인코더
     private final JwtUtil jwtUtil;                       // 토큰 생성·검증 유틸
     private final RedisTemplate<String, String> redisTemplate; // 토큰 저장요 레디스 템플릿
@@ -265,7 +267,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     @Override
     @Transactional
     public void withdraw(String userUuid, String rawPassword) {
-        // 1) 유저 조회
+        // 1) 유저 조회x
         User user = userRepository.findByUserUuid(userUuid)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         // 2) 비밀번호 확인
@@ -273,6 +275,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
             throw new IllegalArgumentException("잘못된 비밀번호입니다.");
         }
         // 3) 탈퇴 처리: 실제 삭제 or isDeleted 플래그
+        friendRepository.deleteAllByUserUuidInvolved(userUuid);
         userRepository.delete(user);
         // 4) 로그아웃 처리: 남아 있는 RefreshToken 삭제
         redisTemplate.delete("RT:" + userUuid);
