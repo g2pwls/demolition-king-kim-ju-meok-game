@@ -147,11 +147,11 @@ export default function MultiLobbyPage() {
 
 
       const token = await getToken(roomId, nickName || "player", userUuid);
-      //await r.connect(LIVEKIT_URL, token);
+      await r.connect(LIVEKIT_URL, token);
       // 🔹 TURN 경유만 강제로 사용하도록 설정 (ICE 연결 테스트용)
-      await r.connect(LIVEKIT_URL, token, {
-        rtcConfig: { iceTransportPolicy: 'relay' }
-      });
+      // await r.connect(LIVEKIT_URL, token, {
+      //   rtcConfig: { iceTransportPolicy: 'relay' }
+      // });
 
       const audio = await createLocalAudioTrack().catch(() => null);
       const video = await createLocalVideoTrack().catch(() => null);
