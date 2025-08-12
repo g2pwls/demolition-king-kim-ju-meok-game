@@ -21,7 +21,7 @@ public class CustomAuthorizationRequestResolver implements OAuth2AuthorizationRe
 
     public CustomAuthorizationRequestResolver(ClientRegistrationRepository repo) {
         // 기본 엔드포인트: /oauth2/authorization/{registrationId}
-        this.delegate = new DefaultOAuth2AuthorizationRequestResolver(repo, "/oauth2/authorization");
+        this.delegate = new DefaultOAuth2AuthorizationRequestResolver(repo, "/api/oauth2/authorization");
     }
 
     @Override
