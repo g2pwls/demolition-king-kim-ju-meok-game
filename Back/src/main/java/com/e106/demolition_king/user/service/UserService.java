@@ -36,5 +36,7 @@ public interface UserService {
 
     void updateProfile(String userUuid, Integer profileSeq);
 
+    void offline(String userUuid);
+
     }
 
