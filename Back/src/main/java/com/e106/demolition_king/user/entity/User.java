@@ -34,7 +34,7 @@ public class User implements UserDetails {
     @Column(name = "user_nickname", length = 50, unique = true)
     private String userNickname;
     @Column(name = "kakao_access_token", length = 500, unique = true)
-    private String kakaoAccessToken;
+    private String kakaoId;
     @Column(name = "google_access", length = 500, unique = true)
     private String googleSub;
 

@@ -288,7 +288,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
                 .userEmail(user.getUserEmail())
                 .password(user.getPassword())
                 .userNickname(user.getUserNickname())
-                .kakaoAccessToken(user.getKakaoAccessToken())
+                .kakaoId(user.getKakaoId())
                 .googleSub(user.getGoogleSub())
                 .profile(ProfileDto.from(user.getProfile()))
                 .createdAt(user.getCreatedAt())
