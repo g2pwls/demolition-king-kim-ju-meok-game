@@ -125,6 +125,16 @@ export default function MultiLobbyPage() {
     });
 
     try {
+
+      try {
+        const preStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+        preStream.getTracks().forEach(t => t.stop()); // 자원 반납
+      } catch (permErr) {
+        console.warn('미디어 권한을 받지 못했습니다. 연결 실패 가능성 있음:', permErr);
+      }
+      
+
+
       const token = await getToken(roomId, nickName || "player", userUuid);
       await r.connect(LIVEKIT_URL, token);
 
