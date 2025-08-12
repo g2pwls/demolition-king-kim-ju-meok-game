@@ -231,6 +231,9 @@ function MainPage() {
         Authorization: `Bearer ${token}`, // ✅ 헤더에 토큰 포함
       },
     });
+    // 캐릭터 선택 후, localStorage에 선택된 캐릭터 저장
+    localStorage.setItem('selectedCharacter', selectedSkin.playerSkinItemSeq);
+
 
     // 다시 불러오기
     const refreshed = await api.get('/skins/getUserSkin');
