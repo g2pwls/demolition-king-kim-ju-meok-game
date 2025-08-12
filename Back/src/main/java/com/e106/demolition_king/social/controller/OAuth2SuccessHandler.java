@@ -81,7 +81,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             userService.deleteByEmail(email);    // 아래 예시 메서드 구현
             // 토큰/쿠키 제거
             response.addHeader("Set-Cookie", "refreshToken=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=None");
-            redirect(response, "/account/delete/done");
+            redirect(response, "/login");
             return;
         }
 
