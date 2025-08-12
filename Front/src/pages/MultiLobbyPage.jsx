@@ -11,8 +11,8 @@ import awaitroomBg from "../assets/images/awaitroom/awaitroom.png";
 import "../styles/MultiLobbyPage.css";
 import AnimatedPage from '../components/AnimatedPage';
 
-const APPLICATION_SERVER_URL = "http://localhost:6080/";
-const LIVEKIT_URL = "ws://localhost:7880/";
+const APPLICATION_SERVER_URL = "https://i13e106.p.ssafy.io/openviduback/"";
+const LIVEKIT_URL = "wss://i13e106.p.ssafy.io/livekit";
 const NEXT_GAME_PATH = "/multiplay";
 const GAME_START_SIGNAL = "__GAME_START__";
 
