@@ -226,7 +226,6 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     public UserDetails loadUserByUsername(String userUuid) throws UsernameNotFoundException {
         User user = userRepository.findByUserUuid(userUuid)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-
         // Spring Security 표준 UserDetails 객체 생성
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getUserUuid())
@@ -320,5 +319,11 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     @Transactional
     public void deleteByEmail(String email) {
         userRepository.findByUserEmail(email).ifPresent(userRepository::delete);
+    }
+
+    // 오프라인
+    @Override
+    public void offline(String userUuid) {
+        redisTemplate.delete("RT:" + userUuid);
     }
 }
