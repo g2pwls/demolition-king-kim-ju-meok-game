@@ -100,9 +100,13 @@ public class SecurityConfig {
                         .anyRequest().permitAll()
                 )
                 .oauth2Login(oauth -> oauth
-                        .authorizationEndpoint(a -> a.authorizationRequestResolver(customAuthorizationRequestResolver))
-                        // 시작: /oauth2/authorization/google
-                        // 콜백: /login/oauth2/code/google
+                        .authorizationEndpoint(a -> a
+                                .baseUri("/api/oauth2/authorization")                 // ✅ 시작 URL을 /api로
+                                .authorizationRequestResolver(customAuthorizationRequestResolver)
+                        )
+                        .redirectionEndpoint(r -> r
+                                .baseUri("/api/login/oauth2/code/*")                  // ✅ 콜백 URL을 /api로 (중요)
+                        )
                         .successHandler(successHandler)
                 )
                 .logout(logout -> logout
