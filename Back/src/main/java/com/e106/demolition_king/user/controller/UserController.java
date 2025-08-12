@@ -270,4 +270,30 @@ public class UserController {
         return BaseResponse.of(userService.getUserByUuid(userUuid));
     }
 
+    @Operation(
+            summary     = "오프라인",
+            description = "오프라인된 유저의 세션을 종료하고 Redis의 토큰·온라인 상태를 삭제합니다."
+    )
+    @PostMapping("/offline")
+    public BaseResponse<Void> offline(
+            @RequestHeader("Authorization") String authHeader,
+            HttpServletResponse response
+    ) {
+        // 1) Authorization 헤더 검증
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return BaseResponse.error(BaseResponseStatus.INVALID_AUTH_HEADER);
+        }
+        String token = authHeader.substring(7);
+        // 2) JWT 유효성 검사
+        if (!jwtUtil.validateToken(token)) {
+            return BaseResponse.error(BaseResponseStatus.WRONG_JWT_TOKEN);
+        }
+        // 3) UUID 추출
+        String userUuid = jwtUtil.getUserUuid(token);
+        // 4) 서비스 호출
+        userService.offline(userUuid);
+        // 5) 응답
+        return BaseResponse.ok();
+    }
+
 }
