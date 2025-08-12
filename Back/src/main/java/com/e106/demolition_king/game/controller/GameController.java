@@ -277,4 +277,49 @@ public class GameController {
         return ResponseEntity.ok(gameService.generateNumeric());
     }
 
+    // ✅ UUID 기반 - 사용자 리포트 정보 갱신
+    @Operation(summary = "사용자 리포트 정보 갱신 (UUID 기반)", description = "특정 사용자의 리포트 정보를 UUID로 갱신합니다.")
+    @PatchMapping("/reportUpdates/uuid")
+    public BaseResponse<String> updateUserReportsByUuid(
+            @RequestHeader(name = "X-User-Uuid", required = true) String userUuid,
+            @ParameterObject ReportUpdateRequestVo requestvo
+    ) {
+        if (userUuid == null || userUuid.isBlank()) {
+            throw new RuntimeException("유효하지 않은 사용자 UUID 헤더입니다.");
+        }
+        requestvo.setUserUuid(userUuid);
+        gameService.updateUserReport(requestvo.toDto(requestvo));
+        return BaseResponse.of(" ");
+    }
+
+    // ✅ UUID 기반 - 사용자의 일일 리포트 정보 갱신
+    @Operation(summary = "사용자의 일일 리포트 정보 갱신 (UUID 기반)", description = "특정 사용자의 일일 리포트 정보를 UUID로 갱신합니다.")
+    @PatchMapping("/reportPerDateUpdates/uuid")
+    public BaseResponse<String> upsertReportPerDateByUuid(
+            @RequestHeader(name = "X-User-Uuid", required = true) String userUuid,
+            @ParameterObject ReportPerDateUpdateRequestVo vo
+    ) {
+        if (userUuid == null || userUuid.isBlank()) {
+            throw new RuntimeException("유효하지 않은 사용자 UUID 헤더입니다.");
+        }
+        vo.setUserUuid(userUuid);
+        gameService.upsertReport(vo.toDto(vo));
+        return BaseResponse.of("일일 통계 저장 완료");
+    }
+
+    // ✅ UUID 기반 - 게임 종료시 골드 업데이트
+    @Operation(summary = "게임 종료시 골드 업데이트 (UUID 기반)", description = "게임 종료시 골드를 UUID로 업데이트합니다.")
+    @PatchMapping("/addGoldCnt/uuid")
+    public BaseResponse<String> updateGoldOnGameEndByUuid(
+            @RequestHeader(name = "X-User-Uuid", required = true) String userUuid,
+            @ParameterObject GoldUpdateRequestVo vo
+    ) {
+        if (userUuid == null || userUuid.isBlank()) {
+            throw new RuntimeException("유효하지 않은 사용자 UUID 헤더입니다.");
+        }
+        vo.setUserUuid(userUuid);
+        gameService.updateGold(vo.toDto(vo));
+        return BaseResponse.of("골드 저장 완료");
+    }
+
 }
