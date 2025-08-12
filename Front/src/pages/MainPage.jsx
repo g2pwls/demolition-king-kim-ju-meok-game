@@ -540,16 +540,6 @@ const fetchTotalPlayTime = async () => {
     weeklyPlayTime: Array(7).fill(0), // 일~토 기본값 0
   });
   const [dateRange, setDateRange] = useState([null, null]);
-//   const [selectedCalorieData, setSelectedCalorieData] = useState([]);
-//   const calorieData = {
-//     '2025-07-25': 220,
-//     '2025-07-26': 150,
-//     '2025-07-27': 180,
-//     '2025-07-28': 90,
-//     '2025-07-29': 270,
-//     '2025-07-30': 60,
-//     '2025-07-31': 300,
-//   };
 
   useEffect(() => {
   const userEmail = localStorage.getItem('userEmail');
@@ -1046,6 +1036,20 @@ const fetchTotalPlayTime = async () => {
   const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false);
   // 탈퇴 관련 state 모음 옆에 추가
   const [withdrawError, setWithdrawError] = useState('');
+
+  const isGoogle = !!userInfo?.googleSub;
+  const isKakao  = !!userInfo?.kakaoAccessToken;
+  const isSocial = isGoogle || isKakao;
+
+  const handleGoogleDelete = () => {
+    if (!confirm("구글 재인증 후 탈퇴가 진행됩니다. 계속할까요?")) return;
+    window.location.href = "/api/oauth2/authorization/google?purpose=delete";
+  };
+
+  const handleKakaoDelete = () => {
+    if (!confirm("카카오 재인증 후 탈퇴가 진행됩니다. 계속할까요?")) return;
+    window.location.href = "/api/oauth2/authorization/kakao?purpose=delete";
+  };
 
   // 탈퇴 시 비밀번호 검증
   const handleWithdraw = async () => {
@@ -1872,6 +1876,9 @@ const [token, setToken] = useState(null);
                             <button
                               className="delete-account-btn"
                               onClick={() => {
+                                if (isGoogle) return handleGoogleDelete();
+                                if (isKakao)  return handleKakaoDelete();
+                                //일반 계정이면 기존 비밀번호 폼 열기
                                 setIsDeletingAccount(true);  // ❗ 폼 열기
                                 setWithdrawPassword('');     // 입력 초기화
                               }}
