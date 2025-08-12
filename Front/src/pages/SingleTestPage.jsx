@@ -277,13 +277,11 @@ const SingleTestPage = () => {
           return;
         }
 
-        // #ONOFF 미디어 파이프 관절 ON/OFF
+        // #ON/OFF 관절
         try {
           drawing.drawLandmarks(lm);
-          // 연결선은 버전/타입 이슈 있으면 주석
           // drawing.drawConnectors(lm, PoseLandmarker.POSE_CONNECTIONS);
         } catch (e) {
-          // 안전 로그
           console.warn('[MP] drawing error', e);
         }
 
@@ -402,9 +400,14 @@ const SingleTestPage = () => {
             rOverCntRef.current = Math.max(0, rOverCntRef.current - 1);
           }
 
+          // ✅ 어퍼컷 우선 여부 판단
+          const upperReady =
+            (lUpperCand && lOverCntRef.current >= Math.max(2, HIT_MIN_FRAMES - 1)) ||
+            (rUpperCand && rOverCntRef.current >= Math.max(2, HIT_MIN_FRAMES - 1));
+
           if (lHit || rHit) {
             if (!isGameOverRef.current) {
-              setAction('punch');
+              setAction(upperReady ? 'uppercut' : 'punch'); // ← 잽/어퍼컷 구분
               setTimeout(() => setAction('idle'), 0);
             }
             lastActionAtRef.current = nowSec;
@@ -607,8 +610,9 @@ const SingleTestPage = () => {
   const lastActionRef = useRef('idle');
   useEffect(() => {
     if (isGameOver) return;
-    if (action === 'punch' && lastActionRef.current !== 'punch') {
-      advanceStepOnce();
+    if ((action === 'punch' || action === 'uppercut') &&
+       action !== lastActionRef.current) {
+      advanceStepOnce(); // ← 어퍼컷도 진행
     }
     lastActionRef.current = action;
   }, [action, isGameOver]);

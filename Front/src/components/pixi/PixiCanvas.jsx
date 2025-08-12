@@ -6,17 +6,30 @@ import singleBack from '../../assets/images/singlemode/singleback.png';
 import buildingDust1 from '../../assets/images/effects/building_dust_1.png';
 import buildingDust2 from '../../assets/images/effects/building_dust_2.png';
 import buildingDust3 from '../../assets/images/effects/building_dust_3.png';
-import crackTexture from '../../assets/images/effects/building_break.png';
+import crackTexture from '../../assets/images/effects/punch_effect.png';
+
+// 기본(카리나) 프레임
 import karina_final_anim_01 from '../../assets/images/karina/karina_final_anim_01.png';
 import karina_final_anim_03 from '../../assets/images/karina/karina_final_anim_03.png';
 import karina_final_anim_05 from '../../assets/images/karina/karina_final_anim_05.png';
+// 어퍼컷 전용 프레임
+import karina_upper from '../../assets/images/karina/karina_upper.png';
 
 // ========= 애니메이션 프레임 =========
-const karinaFrames = [
+const jabFrames = [
   karina_final_anim_01,
   karina_final_anim_03,
   karina_final_anim_05,
   karina_final_anim_05,
+  karina_final_anim_03,
+  karina_final_anim_01,
+];
+
+const uppercutFrames = [
+  karina_final_anim_01,
+  karina_final_anim_03,
+  karina_upper,
+  karina_upper,
   karina_final_anim_03,
   karina_final_anim_01,
 ];
@@ -96,11 +109,18 @@ const PixiCanvas = ({
   const appRef = useRef(null);
 
   const boxerRef = useRef(null);
-  const buildingRef = useRef(null);
+  const buildingSpriteRef = useRef(null);
   const hpBgRef = useRef(null);
   const healthBarRef = useRef(null);
   const dustSpriteRef = useRef(null);
+
+  // HP 단계용 크랙(원본 유지) — 필요하면 계속 사용 가능
   const crackSpritesRef = useRef([]);
+
+  // ★ 타격 순간 임팩트 크랙(딱 1장만 사용)
+  const impactCrackRef = useRef(null);
+  const impactHideTimerRef = useRef(null);
+  const impactFadeTickerRef = useRef(null);
 
   const prevActionRef = useRef('idle');
   const destroyedLock = useRef(false);
@@ -137,7 +157,7 @@ const PixiCanvas = ({
       app.renderer.resize(pixiRef.current.clientWidth, pixiRef.current.clientHeight);
 
       // 리사이즈 시 하단 정렬 유지
-      const b = buildingRef.current;
+      const b = buildingSpriteRef.current;
       if (b) {
         const { w: boxW, h: boxH, cx, bottomY } = computeBox(app);
         b.x = cx;
@@ -145,11 +165,18 @@ const PixiCanvas = ({
         b.y = bottomY; // 바닥 붙임
         placeHpAndDust(b, hpBgRef.current, healthBarRef.current, dustSpriteRef.current);
 
-        // 크랙 위치도 보정
+        // HP 단계 크랙은 위치만 재배치
         crackSpritesRef.current.forEach((cr) => {
           const p = randomCrackPosition(b);
-          cr.x = p.x; cr.y = p.y;
+          cr.x = p.x;
+          cr.y = p.y;
         });
+
+        // 임팩트 크랙도 중앙 근처로 보정 (안보일 때도 위치만 업데이트)
+        if (impactCrackRef.current) {
+          impactCrackRef.current.x = b.x;
+          impactCrackRef.current.y = b.y - b.height * 0.2;
+        }
       }
     };
 
@@ -157,6 +184,9 @@ const PixiCanvas = ({
 
     return () => {
       window.removeEventListener('resize', handleResize);
+      // 임팩트 타이머/티커 정리
+      if (impactHideTimerRef.current) clearTimeout(impactHideTimerRef.current);
+      if (impactFadeTickerRef.current) app.ticker.remove(impactFadeTickerRef.current);
       app.destroy(true, { children: true });
       appRef.current = null;
     };
@@ -199,9 +229,9 @@ const PixiCanvas = ({
     bld.anchor.set(0.5, 1); // ⬅️ 바닥 기준
     bld.x = cx;
     fitSpriteToBox(bld, boxW, boxH, 'fit');
-    bld.y = bottomY;        // ⬅️ 박스 바닥에 붙임
+    bld.y = bottomY; // ⬅️ 박스 바닥에 붙임
     bld.zIndex = 1;
-    buildingRef.current = bld;
+    buildingSpriteRef.current = bld;
     safeAddChild(bld);
 
     // 먼지 (바닥 근처)
@@ -232,7 +262,7 @@ const PixiCanvas = ({
 
     placeHpAndDust(bld, hpBgRef.current, healthBarRef.current, dustSpriteRef.current);
 
-    // 크랙
+    // HP 단계 크랙(3장) — 기본은 숨김
     const cracks = [];
     for (let i = 0; i < 3; i++) {
       const crack = new PIXI.Sprite(PIXI.Texture.from(crackTexture));
@@ -240,19 +270,32 @@ const PixiCanvas = ({
       crack.anchor.set(0.5);
       crack.scale.set(0.5);
       const p = randomCrackPosition(bld);
-      crack.x = p.x; crack.y = p.y;
+      crack.x = p.x;
+      crack.y = p.y;
       crack.visible = false;
       crack.zIndex = 3;
       cracks.push(crack);
       safeAddChild(crack);
     }
     crackSpritesRef.current = cracks;
+
+    // ★ 임팩트 크랙 1장 (히트 순간만 잠깐 보였다 사라짐)
+    const impact = new PIXI.Sprite(PIXI.Texture.from(crackTexture));
+    impact.alpha = 0.9;
+    impact.anchor.set(0.5);
+    impact.scale.set(0.5);
+    impact.visible = false;
+    impact.zIndex = 4;
+    impact.x = bld.x;
+    impact.y = bld.y - bld.height * 0.2;
+    impactCrackRef.current = impact;
+    safeAddChild(impact);
   };
 
   // ========= building 변경 시 (텍스처/HP/정렬 갱신) =========
   useEffect(() => {
     const app = appRef.current;
-    const b = buildingRef.current;
+    const b = buildingSpriteRef.current;
     if (!app || !b || !building) return;
 
     maxHPRef.current = building.hp ?? 100;
@@ -269,34 +312,106 @@ const PixiCanvas = ({
     if (crackSpritesRef.current?.length) {
       crackSpritesRef.current.forEach((cr) => {
         const p = randomCrackPosition(b);
-        cr.x = p.x; cr.y = p.y;
+        cr.x = p.x;
+        cr.y = p.y;
         cr.visible = false;
       });
+    }
+
+    if (impactCrackRef.current) {
+      impactCrackRef.current.x = b.x;
+      impactCrackRef.current.y = b.y - b.height * 0.2;
+      impactCrackRef.current.visible = false;
+      impactCrackRef.current.alpha = 0.9;
     }
 
     placeHpAndDust(b, hpBgRef.current, healthBarRef.current, dustSpriteRef.current);
   }, [building]);
 
-  // ========= 펀치 =========
+  // ★ 타격 순간 임팩트 크랙 표시/사라짐 — 중첩 방지, 200ms만 노출
+  const showCrackOnce = (duration = 200, fadeOut = false) => {
+    const app = appRef.current;
+    const b = buildingSpriteRef.current;
+    const crack = impactCrackRef.current;
+    if (!app || !b || !crack) return;
+
+    // 이전 예약/티커 정리
+    if (impactHideTimerRef.current) {
+      clearTimeout(impactHideTimerRef.current);
+      impactHideTimerRef.current = null;
+    }
+    if (impactFadeTickerRef.current) {
+      app.ticker.remove(impactFadeTickerRef.current);
+      impactFadeTickerRef.current = null;
+    }
+
+    // 랜덤 위치 재설정
+    const p = randomCrackPosition(b);
+    crack.x = p.x;
+    crack.y = p.y;
+    crack.alpha = 0.9;
+    crack.visible = true;
+
+    if (!fadeOut) {
+      impactHideTimerRef.current = setTimeout(() => {
+        if (impactCrackRef.current) impactCrackRef.current.visible = false;
+        impactHideTimerRef.current = null;
+      }, duration);
+    } else {
+      // (옵션) 페이드 아웃 쓰고 싶을 때
+      let elapsed = 0;
+      const total = duration;
+      const ticker = (delta) => {
+        elapsed += (1000 / 60) * delta;
+        const t = Math.min(elapsed / total, 1);
+        crack.alpha = 0.9 * (1 - t);
+        if (t >= 1) {
+          crack.visible = false;
+          app.ticker.remove(ticker);
+          impactFadeTickerRef.current = null;
+        }
+      };
+      impactFadeTickerRef.current = ticker;
+      app.ticker.add(ticker);
+    }
+  };
+
+  // ========= 펀치 / 어퍼컷 =========
   useEffect(() => {
     if (!boxerRef.current) return;
 
-    if (action === 'punch' && prevActionRef.current !== 'punch' && !isBuildingFalling && !isNewBuildingDropping) {
+    const isJab =
+      action === 'punch' || (typeof action === 'string' && action.endsWith('_jab'));
+    const isUpper =
+      action === 'uppercut' || (typeof action === 'string' && action.endsWith('_uppercut'));
+
+    if ((isJab || isUpper) &&
+        prevActionRef.current !== action &&
+        !isBuildingFalling &&
+        !isNewBuildingDropping) {
+
+      const frames = isUpper ? uppercutFrames : jabFrames;
+
       let i = 0;
       const interval = setInterval(() => {
-        if (i < karinaFrames.length) {
-          boxerRef.current.texture = PIXI.Texture.from(karinaFrames[i]);
+        if (i < frames.length && boxerRef.current) {
+          boxerRef.current.texture = PIXI.Texture.from(frames[i]);
           i++;
         } else {
           clearInterval(interval);
         }
       }, 80);
 
+      // 데미지/칼로리
       setBuildingHP((prev) => Math.max(prev - 20, 0));
       if (typeof setKcal === 'function') {
         setKcal((prev) => Math.round((prev + 0.1) * 10) / 10);
       }
+
+      // 임팩트 크랙 (200ms만)
+      showCrackOnce(200, false);
     }
+
     prevActionRef.current = action;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [action, isNewBuildingDropping, isBuildingFalling]);
@@ -308,9 +423,10 @@ const PixiCanvas = ({
       const newWidth = pct * HP_BAR_WIDTH;
       healthBarRef.current.clear();
       healthBarRef.current.beginFill(0xff3333).drawRect(0, 0, newWidth, HP_BAR_HEIGHT).endFill();
-      placeHpAndDust(buildingRef.current, hpBgRef.current, healthBarRef.current, dustSpriteRef.current);
+      placeHpAndDust(buildingSpriteRef.current, hpBgRef.current, healthBarRef.current, dustSpriteRef.current);
     }
 
+    // HP 단계 크랙(원래 로직 유지 – 필요 없으면 모두 false로 두면 됨)
     if (crackSpritesRef.current) {
       crackSpritesRef.current.forEach((sprite, index) => {
         const pct = buildingHP / (maxHPRef.current || 100);
@@ -328,9 +444,17 @@ const PixiCanvas = ({
 
   // ========= 붕괴 → 먼지 =========
   useEffect(() => {
-    const b = buildingRef.current;
+    const app = appRef.current;
+    const b = buildingSpriteRef.current;
     const dust = dustSpriteRef.current;
     if (!b || !dust) return;
+
+    // 붕괴 시작되면 임팩트 크랙 정리
+    if (isBuildingFalling) {
+      if (impactHideTimerRef.current) { clearTimeout(impactHideTimerRef.current); impactHideTimerRef.current = null; }
+      if (impactFadeTickerRef.current) { app?.ticker.remove(impactFadeTickerRef.current); impactFadeTickerRef.current = null; }
+      if (impactCrackRef.current) impactCrackRef.current.visible = false;
+    }
 
     let frameIndex = 0;
     let interval;
@@ -365,11 +489,16 @@ const PixiCanvas = ({
   // ========= 새 건물 드랍 (바닥 정렬) =========
   useEffect(() => {
     const app = appRef.current;
-    const b = buildingRef.current;
+    const b = buildingSpriteRef.current;
     if (!app || !b) return;
 
     if (isNewBuildingDropping && building) {
       const { w: boxW, h: boxH, cx, bottomY } = computeBox(app);
+
+      // 임팩트 크랙 안전정리
+      if (impactHideTimerRef.current) { clearTimeout(impactHideTimerRef.current); impactHideTimerRef.current = null; }
+      if (impactFadeTickerRef.current) { app.ticker.remove(impactFadeTickerRef.current); impactFadeTickerRef.current = null; }
+      if (impactCrackRef.current) impactCrackRef.current.visible = false;
 
       b.anchor.set(0.5, 1);
       b.x = cx;
