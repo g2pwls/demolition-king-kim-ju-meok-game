@@ -96,6 +96,17 @@ export default function MultiLobbyPage() {
     const r = new Room();
     setRoom(r);
 
+    // joinRoom 맨 위에 r 생성 직후
+    r.on(RoomEvent.ConnectionStateChanged, (state) => {
+      console.log('[LK] connectionState =', state);
+    });
+    r.on(RoomEvent.SignalConnected, () => {
+      console.log('[LK] signaling connected');
+    });
+    r.on(RoomEvent.MediaDevicesError, (e) => {
+      console.warn('[LK] media devices error', e?.name, e);
+    });
+
     r.on(RoomEvent.TrackSubscribed, (track, pub, participant) => {
       if (track.kind !== Track.Kind.Video) return;
       setRemoteTracks((prev) => [
