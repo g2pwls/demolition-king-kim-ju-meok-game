@@ -119,7 +119,7 @@ function LoginPage() {
               alt="Google"
               style={{ cursor: 'pointer' }}
               onClick={() => {
-                window.location.href = "/oauth2/authorization/google";
+                window.location.href = "/api/oauth2/authorization/google";
               }}
             />
             <img
@@ -127,7 +127,7 @@ function LoginPage() {
               alt="Kakao"
               style={{ cursor: 'pointer' }}
               onClick={() => {
-                window.location.href = "https://i13e106.p.ssafy.io/oauth2/authorization/kakao";
+                window.location.href = "/api/oauth2/authorization/kakao";
               }}
             />
           </div>
