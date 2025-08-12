@@ -15,8 +15,10 @@ import PixiCanvas from "../components/pixi/PixiCanvas";
 import api from "../utils/api";
 import "../styles/MultiPlayPage.css";
 
-const APPLICATION_SERVER_URL = "http://localhost:6080/";
-const LIVEKIT_URL = "ws://localhost:7880/";
+const APPLICATION_SERVER_URL =
+    import.meta.env.VITE_TOKEN_SERVER_URL || "http://127.0.0.1:6080/";
+const LIVEKIT_URL =
+    import.meta.env.VITE_LIVEKIT_URL || "ws://127.0.0.1:7880";
 
 // ===== Pose 랜드마크(숫자 고정) =====
 const LM = {
@@ -70,9 +72,7 @@ function RemotePeerTile({ track, nickname = "대기 중...", uuid, stat }) {
                 {uuid ? <span className="uuid">{String(uuid).slice(0, 6)}…</span> : null}
             </div>
             {stat ? (
-                <div className="peer-stat">
-                    🏢 {stat.destroyed ?? 0} · 💰 {stat.coin ?? 0}
-                </div>
+                <div className="peer-stat">🏢 {stat.destroyed ?? 0} · 💰 {stat.coin ?? 0}</div>
             ) : null}
         </div>
     );
@@ -139,26 +139,15 @@ function MyCamera({ stream, overlayRef }) {
     );
 }
 
-/* ===== 유틸: 랭킹 정렬 ===== */
-// kcal 기준 Top 3
-function compileRankingTop3(finalMap) {
-    const arr = Array.from(finalMap.values());
-    arr.sort((a, b) =>
-        (b.kcal - a.kcal) ||
-        (b.destroyed - a.destroyed) ||
-        (b.coin - a.coin) ||
-        (a.playTimeSec - b.playTimeSec)
-    );
-    return arr.slice(0, 3).map((x, i) => ({ rank: i + 1, ...x }));
-}
-// 전체 정렬(내 순위 계산용)
+/* ===== 유틸: 정렬 ===== */
 function sortAll(finalMap) {
     const arr = Array.from(finalMap.values());
-    arr.sort((a, b) =>
-        (b.kcal - a.kcal) ||
-        (b.destroyed - a.destroyed) ||
-        (b.coin - a.coin) ||
-        (a.playTimeSec - b.playTimeSec)
+    arr.sort(
+        (a, b) =>
+            b.kcal - a.kcal ||
+            b.destroyed - a.destroyed ||
+            b.coin - a.coin ||
+            (a.playTimeSec ?? 0) - (b.playTimeSec ?? 0)
     );
     return arr;
 }
@@ -183,17 +172,14 @@ export default function MultiPlayPage() {
     /* ===== 게임 로그 ===== */
     const [log, setLog] = useState([]);
 
-    /* ===== 내 카메라(미리보기 & Mediapipe 입력) ===== */
+    /* ===== 내 카메라 / Mediapipe ===== */
     const [localStream, setLocalStream] = useState(null);
-    const inputVideoRef = useRef(null); // Mediapipe 입력(숨김)
-    const overlayCanvasRef = useRef(null); // 내 PIP 오버레이
+    const inputVideoRef = useRef(null);
+    const overlayCanvasRef = useRef(null);
 
     /* ===== 게임 상태 ===== */
     const [action, setAction] = useState("idle");
     const [timeover, setTimeover] = useState(100);
-    const [kcal, setKcal] = useState(0);
-    const [coinCount, setCoinCount] = useState(0);
-    const [destroyedCount, setDestroyedCount] = useState(0);
 
     const [buildingList, setBuildingList] = useState([]);
     const [buildingIndex, setBuildingIndex] = useState(0);
@@ -213,16 +199,33 @@ export default function MultiPlayPage() {
     const isGameOverRef = useRef(false);
     useEffect(() => { isGameOverRef.current = isGameOver; }, [isGameOver]);
 
-    /* ===== 추가 시간(ms) ===== */
+    /* ===== 누적 스탯 (state + ref 동기화) ===== */
+    const [kcal, setKcal] = useState(0);
+    const [coinCount, setCoinCount] = useState(0);
+    const [destroyedCount, setDestroyedCount] = useState(0);
+    const kcalRef = useRef(0);
+    const coinRef = useRef(0);
+    const destroyedRef = useRef(0);
+    useEffect(() => { kcalRef.current = kcal; }, [kcal]);
+    useEffect(() => { coinRef.current = coinCount; }, [coinCount]);
+    useEffect(() => { destroyedRef.current = destroyedCount; }, [destroyedCount]);
+
+    /* ===== 보너스 시간 ===== */
     const [addTimeMs] = useState(3000);
 
-    /* ===== 원격 스탯 ===== */
+    /* ===== 원격 스탯/파이널 ===== */
     const [remoteStats, setRemoteStats] = useState(new Map());
-
-    /* ===== 종료/수집 ===== */
-    const [isEnding, setIsEnding] = useState(false);
     const finalsRef = useRef(new Map()); // id -> 최종 스냅샷
-    const FINAL_WAIT_MS = 3000;
+
+    /* ===== 참가자 집합(배리어) ===== */
+    const expectedIdsRef = useRef(new Set()); // identity(userUuid) 집합
+    // const [expectedCount, setExpectedCount] = useState(1);
+    // const [finalCount, setFinalCount] = useState(0);
+    const resultsAnnouncedRef = useRef(false);
+    const [waitingOverlay, setWaitingOverlay] = useState(false);
+    const [resultsReady, setResultsReady] = useState(false);
+
+    const FINAL_WAIT_MS = 3000; // 사용 안 함(배리어로 대체)
 
     /* ───────── 유저 정보 ───────── */
     useEffect(() => {
@@ -268,7 +271,7 @@ export default function MultiPlayPage() {
         (async () => {
             try {
                 const token = localStorage.getItem("accessToken");
-                const { data, status } = await api.get("users/games/generate/numeric", {
+                const { data, status } = await api.get("/users/games/generate/numeric", {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 if (status === 200) setCombo(Array.isArray(data?.patterns) ? data.patterns : []);
@@ -387,7 +390,7 @@ export default function MultiPlayPage() {
                     else if (rightUpper) moveIdx = 3;
 
                     if (moveIdx !== null) {
-                        setAction("punch");
+                        setAction("punch"); // Pixi가 이 값을 기대한다고 가정
                         setTimeout(() => setAction("idle"), 0);
 
                         const curr = combo?.[patternIdx];
@@ -451,6 +454,13 @@ export default function MultiPlayPage() {
             setRemoteTracks((prev) => prev.filter((t) => t.sid !== publication.trackSid));
         };
 
+        const recalcExpected = (r) => {
+            const ids = new Set([r.localParticipant.identity]);
+            for (const p of r.remoteParticipants.values()) ids.add(p.identity);
+            expectedIdsRef.current = ids;
+            // setExpectedCount(ids.size);
+        };
+
         (async () => {
             const token = await getToken(roomName, nickname || "player", userUuid);
 
@@ -460,6 +470,9 @@ export default function MultiPlayPage() {
 
             r.on(RoomEvent.TrackSubscribed, onTrackSubscribed);
             r.on(RoomEvent.TrackUnsubscribed, onTrackUnsubscribed);
+
+            r.on(RoomEvent.ParticipantConnected, () => recalcExpected(r));
+            r.on(RoomEvent.ParticipantDisconnected, () => recalcExpected(r));
 
             const onData = (payload, from) => {
                 let obj;
@@ -479,7 +492,7 @@ export default function MultiPlayPage() {
                         return next;
                     });
                 } else if (obj.type === "game_over") {
-                    if (!isEnding) triggerGameOver("remote");
+                    // 사용 안 함(배리어로 동기화)
                 } else if (obj.type === "final_stat") {
                     const { user, stat, sentAt } = obj;
                     if (!user?.id || !stat) return;
@@ -494,7 +507,15 @@ export default function MultiPlayPage() {
                             playTimeSec: stat.playTimeSec ?? 0,
                             arrivedAt: sentAt || Date.now(),
                         });
+                        // setFinalCount(finalsRef.current.size);
                     }
+                    maybeAnnounceResults(); // 누군가 끝날 때마다 체크
+                } else if (obj.type === "results_ready") {
+                    if (resultsReady) return; // 한 번만 처리
+                    setResultsReady(true);
+                    setWaitingOverlay(false);
+                    const delay = Math.max(0, (obj.goAt ?? Date.now()) - Date.now());
+                    setTimeout(() => goToResultWithPayload(obj), delay);
                 }
             };
 
@@ -510,7 +531,10 @@ export default function MultiPlayPage() {
                 setLocalVideoTrack(video);
             }
 
-            // 시딩
+            // 참가자 집합 초기화
+            recalcExpected(r);
+
+            // 기존 원격 트랙 시딩
             const remotes = Array.from(r.remoteParticipants?.values?.() || []);
             remotes.forEach((p) => {
                 p.videoTracks?.forEach?.((pub) => {
@@ -534,7 +558,7 @@ export default function MultiPlayPage() {
             setLocalVideoTrack(null);
             setRemoteStats(new Map());
         };
-    }, [roomName, userUuid, nickname, isEnding]);
+    }, [roomName, userUuid, nickname, resultsReady]);
 
     async function getToken(roomName, nickName, userUuid) {
         const res = await fetch(`${APPLICATION_SERVER_URL}token`, {
@@ -550,7 +574,7 @@ export default function MultiPlayPage() {
         return data.token;
     }
 
-    /* ───────── 게임 타이머(벽시계 기반) ───────── */
+    /* ───────── 게임 타이머 ───────── */
     useEffect(() => {
         if (!startTimeRef.current) startTimeRef.current = Date.now();
         const it = setInterval(() => {
@@ -605,7 +629,7 @@ export default function MultiPlayPage() {
         setTimeout(() => (advanceLockRef.current = false), 250);
     }
 
-    /* ───────── 브로드캐스트/종료 ───────── */
+    /* ───────── 브로드캐스트 ───────── */
     const broadcast = (type, payload = {}) => {
         if (!room) return;
         const msg = JSON.stringify({ type, ...payload });
@@ -622,13 +646,15 @@ export default function MultiPlayPage() {
         const snap = {
             id: userUuid,
             nick: nickname || "me",
-            destroyed: destroyedCount,
-            coin: coinCount,
-            kcal: kcal,
+            destroyed: destroyedRef.current,
+            coin: coinRef.current,
+            kcal: Math.round(kcalRef.current),
             playTimeSec,
             arrivedAt: Date.now(),
         };
         finalsRef.current.set(userUuid, snap);
+        // setFinalCount(finalsRef.current.size);
+
         broadcast("final_stat", {
             user: { id: userUuid, nick: nickname || "me" },
             stat: snap,
@@ -637,39 +663,74 @@ export default function MultiPlayPage() {
         return snap;
     };
 
-    const goToResult = () => {
-        // 전체 정렬로 내 순위 계산
-        const allSorted = sortAll(finalsRef.current);
-        const top3 = allSorted.slice(0, 3).map((x, i) => ({ rank: i + 1, ...x }));
-        const myIdx = allSorted.findIndex(x => x.id === userUuid);
-        const myRank = myIdx >= 0 ? myIdx + 1 : undefined;
-        const meSnap = finalsRef.current.get(userUuid) || {
-            id: userUuid, nick: nickname || "me",
-            destroyed: destroyedCount, coin: coinCount, kcal, playTimeSec: 0,
+    /* ───────── 배리어: 모두 끝나면 결과 공표 ───────── */
+    const haveAllFinals = () => {
+        const ids = expectedIdsRef.current;
+        for (const id of ids) {
+            if (!finalsRef.current.has(id)) return false;
+        }
+        return true;
+    };
+
+    const maybeAnnounceResults = () => {
+        if (resultsAnnouncedRef.current) return;
+        if (!haveAllFinals()) return;
+
+        resultsAnnouncedRef.current = true;
+
+        // 전체 정렬 + 랭크 부여
+        const full = sortAll(finalsRef.current).map((x, i) => ({ rank: i + 1, ...x }));
+        const top3 = full.slice(0, 3);
+
+        const payload = {
+            type: "results_ready",
+            top3,
+            full,                     // 왼쪽 "내 순위" 계산용
+            endedAt: Date.now(),
+            goAt: Date.now() + 1200,  // 1.2초 뒤 동시 이동
         };
-        const me = (myRank ? { ...meSnap, rank: myRank } : meSnap);
+
+        // 모두에게 공표
+        broadcast("results_ready", payload);
+
+        // 나 자신도 동일 타이밍에 이동 예약
+        const delay = Math.max(0, payload.goAt - Date.now());
+        setTimeout(() => goToResultWithPayload(payload), delay);
+    };
+
+    const goToResultWithPayload = (payload) => {
+        const full = payload.full || sortAll(finalsRef.current).map((x, i) => ({ rank: i + 1, ...x }));
+        const top3 = payload.top3 || full.slice(0, 3);
+        const meEntry =
+            full.find((x) => x.id === userUuid) ||
+            finalsRef.current.get(userUuid) || {
+                id: userUuid, nick: nickname || "me",
+                destroyed: destroyedRef.current, coin: coinRef.current, kcal: Math.round(kcalRef.current),
+                playTimeSec: 0,
+            };
+        const me = meEntry.rank ? meEntry : { ...meEntry, rank: full.findIndex((x) => x.id === meEntry.id) + 1 };
 
         navigate("/multi-result", {
             replace: true,
             state: {
                 roomName,
-                meId: userUuid,   // 기존 키 유지
-                me,               // ← 내 스냅샷/순위 별도 전달
-                results: top3,    // ← 보드에는 Top3만
-                endedAt: Date.now(),
+                meId: userUuid,
+                me,
+                results: top3,              // 우측 보드(전원 동일)
+                endedAt: payload.endedAt || Date.now(),
             },
         });
     };
 
-    const triggerGameOver = (reason = "timeup") => {
-        if (isEnding) return;
-        setIsEnding(true);
-        broadcast("game_over", { reason, sentAt: Date.now() });
-        sendMyFinal();
-        setTimeout(goToResult, FINAL_WAIT_MS); // 수집 후 이동
+    const triggerGameOver = () => {
+        if (isGameOverRef.current) return;
+        setIsGameOver(true);
+        setWaitingOverlay(true);     // 회색 반투명 오버레이
+        sendMyFinal();               // 내 스냅샷 브로드캐스트
+        maybeAnnounceResults();      // 내가 마지막이면 즉시 공표
     };
 
-    /* ───────── 로그/스탯 브로드캐스트(파괴 시) ───────── */
+    /* ───────── 로그/스탯 브로드캐스트 ───────── */
     const broadcastDestroyLog = (buildingObj) => {
         if (!room) return;
         const name =
@@ -696,6 +757,27 @@ export default function MultiPlayPage() {
         room.localParticipant
             .publishData(new TextEncoder().encode(payload), { reliable: true })
             .catch(() => {});
+    };
+
+    /* ───────── 파괴 핸들러(단일) ───────── */
+    const handleDestroyed = () => {
+        if (isGameOverRef.current) return;
+
+        const nextDestroyed = destroyedRef.current + 1;
+        const nextCoin = coinRef.current + 1;
+
+        setDestroyedCount(nextDestroyed);
+        setCoinCount(nextCoin);
+
+        broadcastMyStat(nextDestroyed, nextCoin);
+
+        if (startTimeRef.current) startTimeRef.current += addTimeMs;
+
+        broadcastDestroyLog(currentBuilding);
+
+        setBuildingIndex((prev) =>
+            buildingList.length === 0 ? 0 : (prev + 1) % buildingList.length
+        );
     };
 
     /* ───────── UI 데이터 ───────── */
@@ -735,28 +817,16 @@ export default function MultiPlayPage() {
 
                 <div className="mp-game">
                     <PixiCanvas
+                        key={currentBuilding?.id || buildingIndex}   // HP 초기화
                         action={action}
                         building={currentBuilding}
                         playerSkin={playerSkin}
                         combo={combo}
-                        onBuildingDestroyed={() => {
-                            setBuildingIndex((prev) =>
-                                buildingList.length === 0 ? 0 : (prev + 1) % buildingList.length
-                            );
-
-                            setDestroyedCount((c) => {
-                                const next = c + 1;
-                                broadcastMyStat(next, coinCount + 1);
-                                return next;
-                            });
-                            setCoinCount((c) => c + 1);
-
-                            if (startTimeRef.current) startTimeRef.current += addTimeMs;
-
-                            broadcastDestroyLog(currentBuilding);
-                        }}
-                        setKcal={setKcal}
-                        showBuildingHp={true}
+                        onBuildingDestroyed={handleDestroyed}
+                        onDestroyed={handleDestroyed}
+                        setKcal={(v) => { setKcal(v); kcalRef.current = v; }}
+                        onKcalChange={(v) => { setKcal(v); kcalRef.current = v; }}
+                        showBuildingHp
                     />
                 </div>
 
@@ -773,7 +843,6 @@ export default function MultiPlayPage() {
                         <MyCamera stream={localStream} overlayRef={overlayCanvasRef} />
                     </div>
 
-                    {/* 칩 + 텍스트(둘 다 유지) */}
                     <div className="me-stats chips">
                         <span className="chip fire">🔥 <b>{Math.round(kcal)}</b> KCAL</span>
                         <span className="chip bldg">🏢 <b>{destroyedCount}</b></span>
@@ -785,6 +854,18 @@ export default function MultiPlayPage() {
                     </div>
                 </div>
             </aside>
+
+            {waitingOverlay && !resultsReady && (
+                <div
+                    style={{
+                        position: "fixed",
+                        inset: 0,
+                        background: "rgba(0,0,0,.55)",
+                        filter: "grayscale(1)",
+                        zIndex: 9999,
+                    }}
+                />
+            )}
         </div>
     );
 }

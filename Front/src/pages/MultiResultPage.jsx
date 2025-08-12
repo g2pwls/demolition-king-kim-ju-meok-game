@@ -8,26 +8,31 @@ export default function MultiResultPage() {
     const { state } = useLocation();
     const { roomName, meId, me: meFromState, results = [], endedAt } = state || {};
 
-    // 보드는 항상 Top3만 온다고 가정(혹시 몰라 한 번 더 방어)
     const top3 = Array.isArray(results) ? results.slice(0, 3) : [];
 
-    // 내 카드 데이터: state.me 우선 → (top3에서 찾기) → 기본값
     const me = useMemo(() => {
         if (meFromState) return meFromState;
-        const inTop3 = top3.find(r => r.id === meId);
-        return inTop3 || {
-            id: meId, nick: "me", destroyed: 0, coin: 0, kcal: 0, playTimeSec: 0, rank: undefined,
-        };
+        const inTop3 = top3.find((r) => r.id === meId);
+        return (
+            inTop3 || {
+                id: meId,
+                nick: "me",
+                destroyed: 0,
+                coin: 0,
+                kcal: 0,
+                playTimeSec: 0,
+                rank: undefined,
+            }
+        );
     }, [meFromState, top3, meId]);
 
     useEffect(() => {
-        // TODO: 서버 집계 필요시 호출
+        // 서버 집계 필요 시 호출 지점
     }, []);
 
     return (
         <div className="mr-root">
             <div className="mr-panel">
-                {/* 제목 */}
                 <header className="mr-header">
                     <h1>GAME OVER</h1>
                     {roomName ? <div className="mr-sub">ROOM · {roomName}</div> : null}
@@ -49,12 +54,8 @@ export default function MultiResultPage() {
               </span>
                         </div>
 
-                        <div className="mr-mini">
-                            🔥 {Math.round(me.kcal ?? 0)} KCAL · ⏱ {me.playTimeSec ?? 0}s
-                        </div>
-
                         <div className="mr-mybadge">
-                            내 순위 · {me.rank ?? (top3.find(x => x.id === me.id)?.rank || "—")}위
+                            내 순위 · {me.rank ?? (top3.find((x) => x.id === me.id)?.rank || "—")}위
                         </div>
 
                         <div className="mr-actions">
@@ -92,9 +93,7 @@ export default function MultiResultPage() {
                 </div>
 
                 <footer className="mr-footer">
-          <span className="hint">
-            종료시각 · {endedAt ? new Date(endedAt).toLocaleTimeString() : "-"}
-          </span>
+                    <span className="hint">종료시각 · {endedAt ? new Date(endedAt).toLocaleTimeString() : "-"}</span>
                 </footer>
             </div>
         </div>
