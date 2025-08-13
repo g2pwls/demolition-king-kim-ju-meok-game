@@ -15,10 +15,14 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.Duration;
 
 @RestController
 @Log4j2
@@ -218,16 +222,47 @@ public class UserController {
             description = "리프레쉬 토큰을 이용하여 토근 재발급",
             tags = {"회원&권한"}
     )
+//    @PostMapping("/tokenrefresh")
+//    public BaseResponse<TokenResponseVo> tokenrefresh(
+//            @Parameter(
+//                    name = "RefreshToken",
+//                    description = "쿠키 {리프레시 토큰}",
+//                    required = true,
+//                    example = "쿠키에 있는 리프레시 토큰을 가져오기"
+//            )
+//            @CookieValue("refreshToken") String refreshToken ) {
+//        return BaseResponse.of(userService.tokenRefresh(refreshToken));
+//    }
     @PostMapping("/tokenrefresh")
-    public BaseResponse<TokenResponseVo> tokenrefresh(
-            @Parameter(
-                    name = "RefreshToken",
-                    description = "쿠키 {리프레시 토큰}",
-                    required = true,
-                    example = "쿠키에 있는 리프레시 토큰을 가져오기"
-            )
-            @CookieValue("refreshToken") String refreshToken ) {
-        return BaseResponse.of(userService.tokenRefresh(refreshToken));
+    public ResponseEntity<BaseResponse<TokenResponseVo>> tokenrefresh(
+            @CookieValue(value = "refreshToken", required = false) String refreshToken,
+            HttpServletResponse response
+    ) {
+        if (refreshToken == null || refreshToken.isBlank()) {
+            // 쿠키 없음 → 401
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(BaseResponse.error(BaseResponseStatus.WRONG_JWT_TOKEN));
+        }
+
+        TokenResponseVo out = userService.tokenRefresh(refreshToken);
+
+        // ★ 새 리프레시가 생성되었으면 쿠키로 다시 내려준다
+        if (out.getRefreshToken() != null) {
+            ResponseCookie cookie = ResponseCookie.from("refreshToken", out.getRefreshToken())
+                    .httpOnly(true)
+                    .secure(true)             // 배포(HTTPS)에서 필수
+                    .sameSite("None")         // 다른 도메인/포트 프론트에서 사용 시 필수
+                    .path("/")
+                    .maxAge(Duration.ofDays(7))// Redis TTL과 맞추기
+                    .build();
+            response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        }
+
+        return ResponseEntity.ok(BaseResponse.of(
+                TokenResponseVo.builder()
+                        .accessToken(out.getAccessToken())
+                        .build() // refresh는 쿠키로만 내려도 됨
+        ));
     }
 
     @DeleteMapping("/withdraw")

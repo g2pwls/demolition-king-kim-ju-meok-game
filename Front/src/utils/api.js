@@ -111,4 +111,21 @@ api.interceptors.response.use(
   }
 );
 
+export async function bootstrapAuth() {
+  try {
+    const { data } = await axios.post(
+      'https://i13e106.p.ssafy.io/api/user/auth/tokenrefresh',
+      {},
+      { withCredentials: true }
+    );
+    const newAccess = data?.result?.accessToken ?? data?.accessToken;
+    if (newAccess) {
+      localStorage.setItem('accessToken', newAccess);
+    }
+  } catch (e) {
+    // 실패하면 그냥 무시 → 비로그인 상태로 시작
+    localStorage.removeItem('accessToken');
+  }
+}
+
 export default api;
