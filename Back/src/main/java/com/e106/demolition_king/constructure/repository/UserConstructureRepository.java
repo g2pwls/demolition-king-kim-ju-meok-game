@@ -12,4 +12,12 @@ public interface UserConstructureRepository extends JpaRepository<UserConstructu
 
     // 특정 유저가 이미 보유한 건물인지 확인 (중복 방지용)
     boolean existsByUserUuidAndConstructureSeq(String userUuid, Integer constructureSeq);
+
+    // user.userUuid(연관 엔티티의 필드)로 일괄 삭제
+    long deleteByUserUuid(String userUuid);
+
+    // (선택) 존재 여부 체크
+    boolean existsByUserUuid(String userUuid);
+
+
 }
