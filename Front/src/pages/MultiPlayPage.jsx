@@ -106,7 +106,6 @@ function LogPanel({ messages }) {
             <div className="mp-chat-list">
                 {messages.map((m, i) => (
                     <div key={i} className="mp-chat-item">
-                        <span className="nick">{m.sender}</span>
                         <span className="msg"> {m.message}</span>
                     </div>
                 ))}
@@ -199,6 +198,12 @@ export default function MultiPlayPage() {
     const isGameOverRef = useRef(false);
     useEffect(() => { isGameOverRef.current = isGameOver; }, [isGameOver]);
 
+    /* 🔹 시작 카운트다운 (추가) */
+    const READY_SECONDS = 5;
+    const [isPlaying, setIsPlaying] = useState(false);
+    const isPlayingRef = useRef(false);
+    const [readyLeft, setReadyLeft] = useState(READY_SECONDS);
+
     /* ===== 누적 스탯 (state + ref 동기화) ===== */
     const [kcal, setKcal] = useState(0);
     const [coinCount, setCoinCount] = useState(0);
@@ -219,13 +224,9 @@ export default function MultiPlayPage() {
 
     /* ===== 참가자 집합(배리어) ===== */
     const expectedIdsRef = useRef(new Set()); // identity(userUuid) 집합
-    // const [expectedCount, setExpectedCount] = useState(1);
-    // const [finalCount, setFinalCount] = useState(0);
     const resultsAnnouncedRef = useRef(false);
     const [waitingOverlay, setWaitingOverlay] = useState(false);
     const [resultsReady, setResultsReady] = useState(false);
-
-    const FINAL_WAIT_MS = 3000; // 사용 안 함(배리어로 대체)
 
     /* ───────── 유저 정보 ───────── */
     useEffect(() => {
@@ -285,6 +286,24 @@ export default function MultiPlayPage() {
         }
     }, [combo]);
 
+    /* 🔹 시작 카운트다운 (추가) */
+    useEffect(() => {
+        setReadyLeft(READY_SECONDS);
+        const t = setInterval(() => {
+            setReadyLeft((prev) => {
+                if (prev <= 1) {
+                    clearInterval(t);
+                    setIsPlaying(true);
+                    isPlayingRef.current = true;
+                    startTimeRef.current = Date.now(); // 타이머 기준 시각
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+        return () => clearInterval(t);
+    }, []);
+
     /* ───────── Mediapipe (내 화면만) ───────── */
     useEffect(() => {
         let stream;
@@ -327,7 +346,7 @@ export default function MultiPlayPage() {
                 let lastTs = 0;
 
                 pose.onResults((res) => {
-                    if (isGameOverRef.current) return;
+                    if (isGameOverRef.current || !isPlayingRef.current) return; // ← 추가
                     const lm = res.poseLandmarks;
                     const cvs = overlayCanvasRef.current;
 
@@ -416,7 +435,7 @@ export default function MultiPlayPage() {
 
                 cam = new Camera(inputVideoRef.current, {
                     onFrame: async () => {
-                        if (isGameOverRef.current) return;
+                        if (isGameOverRef.current || !isPlayingRef.current) return; // ← 추가
                         try { await pose.send({ image: inputVideoRef.current }); } catch {}
                     },
                     width: 640,
@@ -458,7 +477,6 @@ export default function MultiPlayPage() {
             const ids = new Set([r.localParticipant.identity]);
             for (const p of r.remoteParticipants.values()) ids.add(p.identity);
             expectedIdsRef.current = ids;
-            // setExpectedCount(ids.size);
         };
 
         (async () => {
@@ -491,8 +509,6 @@ export default function MultiPlayPage() {
                         });
                         return next;
                     });
-                } else if (obj.type === "game_over") {
-                    // 사용 안 함(배리어로 동기화)
                 } else if (obj.type === "final_stat") {
                     const { user, stat, sentAt } = obj;
                     if (!user?.id || !stat) return;
@@ -507,7 +523,6 @@ export default function MultiPlayPage() {
                             playTimeSec: stat.playTimeSec ?? 0,
                             arrivedAt: sentAt || Date.now(),
                         });
-                        // setFinalCount(finalsRef.current.size);
                     }
                     maybeAnnounceResults(); // 누군가 끝날 때마다 체크
                 } else if (obj.type === "results_ready") {
@@ -574,15 +589,16 @@ export default function MultiPlayPage() {
         return data.token;
     }
 
-    /* ───────── 게임 타이머 ───────── */
+    /* ───────── 게임 타이머 (시작 후에만 동작) ───────── */
     useEffect(() => {
+        if (!isPlaying) return;
         if (!startTimeRef.current) startTimeRef.current = Date.now();
         const it = setInterval(() => {
             const now = Date.now();
             setElapsedTime(Math.floor((now - startTimeRef.current) / 1000));
         }, 250);
         return () => clearInterval(it);
-    }, []);
+    }, [isPlaying]);
 
     useEffect(() => {
         const remaining = Math.max(TIME_LIMIT_SEC - elapsedTime, 0);
@@ -653,7 +669,6 @@ export default function MultiPlayPage() {
             arrivedAt: Date.now(),
         };
         finalsRef.current.set(userUuid, snap);
-        // setFinalCount(finalsRef.current.size);
 
         broadcast("final_stat", {
             user: { id: userUuid, nick: nickname || "me" },
@@ -678,22 +693,19 @@ export default function MultiPlayPage() {
 
         resultsAnnouncedRef.current = true;
 
-        // 전체 정렬 + 랭크 부여
         const full = sortAll(finalsRef.current).map((x, i) => ({ rank: i + 1, ...x }));
         const top3 = full.slice(0, 3);
 
         const payload = {
             type: "results_ready",
             top3,
-            full,                     // 왼쪽 "내 순위" 계산용
+            full,
             endedAt: Date.now(),
-            goAt: Date.now() + 1200,  // 1.2초 뒤 동시 이동
+            goAt: Date.now() + 1200,
         };
 
-        // 모두에게 공표
         broadcast("results_ready", payload);
 
-        // 나 자신도 동일 타이밍에 이동 예약
         const delay = Math.max(0, payload.goAt - Date.now());
         setTimeout(() => goToResultWithPayload(payload), delay);
     };
@@ -716,7 +728,7 @@ export default function MultiPlayPage() {
                 roomName,
                 meId: userUuid,
                 me,
-                results: top3,              // 우측 보드(전원 동일)
+                results: top3,
                 endedAt: payload.endedAt || Date.now(),
             },
         });
@@ -725,9 +737,9 @@ export default function MultiPlayPage() {
     const triggerGameOver = () => {
         if (isGameOverRef.current) return;
         setIsGameOver(true);
-        setWaitingOverlay(true);     // 회색 반투명 오버레이
-        sendMyFinal();               // 내 스냅샷 브로드캐스트
-        maybeAnnounceResults();      // 내가 마지막이면 즉시 공표
+        setWaitingOverlay(true);
+        sendMyFinal();
+        maybeAnnounceResults();
     };
 
     /* ───────── 로그/스탯 브로드캐스트 ───────── */
@@ -798,6 +810,13 @@ export default function MultiPlayPage() {
 
     return (
         <div className="mp-root">
+            {/* 🔹 시작 전 카운트다운 오버레이 (추가) */}
+            {!isGameOver && !isPlaying && (
+                <div className="prestart-overlay">
+                    <div className="countdown">{readyLeft}</div>
+                </div>
+            )}
+
             {/* 좌: 원격 참가자 3명 */}
             <aside className="mp-sidebar">
                 {sidebarPeers.map((p, idx) => (
@@ -841,13 +860,6 @@ export default function MultiPlayPage() {
                 <div className="me-card">
                     <div className="me-video-wrap">
                         <MyCamera stream={localStream} overlayRef={overlayCanvasRef} />
-                    </div>
-
-                    <div className="me-stats chips">
-                        <span className="chip fire">🔥 <b>{Math.round(kcal)}</b> KCAL</span>
-                        <span className="chip bldg">🏢 <b>{destroyedCount}</b></span>
-                        <span className="chip coin">💰 <b>{coinCount}</b></span>
-                        <span className="chip time">⏱ <b>{timeover}</b>s</span>
                     </div>
                     <div className="me-stats">
                         ⏱ {timeover}s · 🔥 {kcal} KCAL · 💰 {coinCount} · 🏢 {destroyedCount}
