@@ -22,7 +22,6 @@ import karina_final_anim_05 from '../../assets/images/karina/karina_final_anim_0
 import karina_upper from '../../assets/images/karina/karina_upper.png';
 
 // 로니 프레임
-
 import ronnie_01 from '../../assets/images/karina/ronnie_01.png';
 import ronnie_02 from '../../assets/images/karina/ronnie_02.png';
 import ronnie_03 from '../../assets/images/karina/ronnie_03.png';
@@ -30,8 +29,7 @@ import ronnie_upper from '../../assets/images/karina/ronnie_upper.png';
 import ronnie_main_1 from '../../assets/images/karina/ronnie_main_1.png';
 import ronnie_main_2 from '../../assets/images/karina/ronnie_main_2.png';
 
-
-// 캐릭터 이미지들
+// 캐릭터 이미지들 (기본 캐릭터들 있을 경우)
 import army from '../../assets/images/character/army.png';
 import jennie from '../../assets/images/character/jennie.png';
 import police from '../../assets/images/character/police.png';
@@ -41,66 +39,6 @@ import worker from '../../assets/images/character/worker.png';
 import winter from '../../assets/images/character/winter.png';
 import ufc from '../../assets/images/character/ufc.png';
 import character from '../../assets/images/character/character.png';
-
-// ========= 애니메이션 프레임 =========
-
-// 복서
-const jabFrames = [
-  boxer_idle,
-  boxer_punch_1,
-  boxer_punch_2,
-  boxer_punch_2,
-  boxer_punch_1,
-  boxer_idle,
-];
-
-const uppercutFrames = [
-  boxer_idle,
-  boxer_punch_1,
-  boxer_upper,
-  boxer_upper,
-  boxer_punch_1,
-  boxer_idle,
-];
-
-
-// 카리나
-// const jabFrames = [
-//   karina_final_anim_01,
-//   karina_final_anim_03,
-//   karina_final_anim_05,
-//   karina_final_anim_05,
-//   karina_final_anim_03,
-//   karina_final_anim_01,
-// ];
-
-// const uppercutFrames = [
-//   karina_final_anim_01,
-//   karina_final_anim_03,
-//   karina_upper,
-//   karina_upper,
-//   karina_final_anim_03,
-//   karina_final_anim_01,
-// ];
-
-// 로니
-// const jabFrames = [
-//   ronnie_01,
-//   ronnie_02,
-//   ronnie_03,
-//   ronnie_03,
-//   ronnie_02,
-//   ronnie_01,
-// ];    
-
-// const uppercutFrames = [
-//   ronnie_01,
-//   ronnie_02,
-//   ronnie_upper,
-//   ronnie_upper,
-//   ronnie_02,
-//   ronnie_01,
-// ];
 
 const dustFrames = [buildingDust1, buildingDust2, buildingDust3, buildingDust2, buildingDust1];
 
@@ -182,10 +120,7 @@ const PixiCanvas = ({
   const healthBarRef = useRef(null);
   const dustSpriteRef = useRef(null);
 
-  // // HP 단계용 크랙(원본 유지) — 필요하면 계속 사용 가능
-  // const crackSpritesRef = useRef([]);
-
-  // ★ 타격 순간 임팩트 크랙(딱 1장만 사용)
+  // ★ 히트 순간 임팩트 크랙(딱 1장만 사용)
   const impactCrackRef = useRef(null);
   const impactHideTimerRef = useRef(null);
   const impactFadeTickerRef = useRef(null);
@@ -201,6 +136,10 @@ const PixiCanvas = ({
 
   const boxerWidth = 250;
   const boxerHeight = 250;
+
+  // ✅ 변경 1) 선택 캐릭터에 맞춰 교체 가능한 프레임 레퍼런스
+  const jabFramesRef = useRef([]);
+  const uppercutFramesRef = useRef([]);
 
   // ========== PIXI 초기화 ==========
   useEffect(() => {
@@ -233,14 +172,7 @@ const PixiCanvas = ({
         b.y = bottomY; // 바닥 붙임
         placeHpAndDust(b, hpBgRef.current, healthBarRef.current, dustSpriteRef.current);
 
-        // HP 단계 크랙은 위치만 재배치
-        // crackSpritesRef.current.forEach((cr) => {
-        //   const p = randomCrackPosition(b);
-        //   cr.x = p.x;
-        //   cr.y = p.y;
-        // });
-
-        // 임팩트 크랙도 중앙 근처로 보정 (안보일 때도 위치만 업데이트)
+        // 임팩트 크랙도 중앙 근처로 보정
         if (impactCrackRef.current) {
           impactCrackRef.current.x = b.x;
           impactCrackRef.current.y = b.y - b.height * 0.2;
@@ -279,69 +211,50 @@ const PixiCanvas = ({
     background.x = app.renderer.width / 2;
     background.y = app.renderer.height / 2;
     background.zIndex = 0;
-    // 이미지 크기 조정 (비율 무시하고 화면 꽉 차게 설정)
-    background.width = app.renderer.width;  // 화면 너비에 맞게 조정
-    background.height = app.renderer.height; // 화면 높이에 맞게 조정
+    background.width = app.renderer.width;
+    background.height = app.renderer.height;
     safeAddChild(background);
-    
-    // 선택한 캐릭터 이미지 로드 (로컬 스토리지에서 불러오기)
-    const selectedCharacter = localStorage.getItem('selectedCharacter');
-    const selectedCharacterNum = localStorage.getItem('selectedCharacternum');
 
-    let jabFrames, uppercutFrames, boxerImage;
+    // ✅ 변경 2) 선택한 캐릭터 프레임을 ref에 주입
+    const selectedCharacter = localStorage.getItem('selectedCharacter');       // 이미지 URL
+    const selectedCharacterNum = localStorage.getItem('selectedCharacternum'); // ex) "6"
+    let boxerImage;
 
-// 카리나가 선택되었을 때만 애니메이션 프레임 적용
-if (selectedCharacterNum === '6') { // 카리나 번호가 6번
-  jabFrames = [
-    karina_final_anim_01,
-    karina_final_anim_03,
-    karina_final_anim_05,
-    karina_final_anim_05,
-    karina_final_anim_03,
-    karina_final_anim_01,
-  ];
-
-  uppercutFrames = [
-    karina_final_anim_01,
-    karina_final_anim_03,
-    karina_upper,
-    karina_upper,
-    karina_final_anim_03,
-    karina_final_anim_01,
-  ];
-
-  // 카리나 기본 이미지
-  boxerImage = karina_final_anim_01;
-} else {
-  // 카리나가 아닐 경우 다른 캐릭터 설정 (예시로 군인 이미지 사용)
-  jabFrames = [selectedCharacter, // 선택된 캐릭터 이미지로 설정
-    selectedCharacter, 
-    selectedCharacter,
-    selectedCharacter,
-    selectedCharacter,
-    selectedCharacter]; // 다른 캐릭터 애니메이션 예시
-  uppercutFrames = [selectedCharacter, // 선택된 캐릭터 이미지로 설정
-    selectedCharacter, 
-    selectedCharacter,
-    selectedCharacter,
-    selectedCharacter,
-    selectedCharacter];
-  boxerImage = selectedCharacter; // 다른 캐릭터의 이미지 사용
-}
-    if (selectedCharacter) {
-      const boxer = new PIXI.Sprite(PIXI.Texture.from(boxerImage));
-      boxer.anchor.set(0.5);
-      boxer.width = boxerWidth;
-      boxer.height = boxerHeight;
-      boxer.x = app.renderer.width * 0.3;
-      boxer.y = app.renderer.height * 0.75;
-      boxer.zIndex = 1;
-      safeAddChild(boxer);
+    if (selectedCharacterNum === '6') { // 카리나
+      jabFramesRef.current = [
+        karina_final_anim_01,
+        karina_final_anim_03,
+        karina_final_anim_05,
+        karina_final_anim_05,
+        karina_final_anim_03,
+        karina_final_anim_01,
+      ];
+      uppercutFramesRef.current = [
+        karina_final_anim_01,
+        karina_final_anim_03,
+        karina_upper,
+        karina_upper,
+        karina_final_anim_03,
+        karina_final_anim_01,
+      ];
+      boxerImage = karina_final_anim_01;
+    } else if (selectedCharacterNum === '1') { // 예: 복서
+      jabFramesRef.current = [boxer_idle, boxer_punch_1, boxer_punch_2, boxer_punch_2, boxer_punch_1, boxer_idle];
+      uppercutFramesRef.current = [boxer_idle, boxer_punch_1, boxer_upper, boxer_upper, boxer_punch_1, boxer_idle];
+      boxerImage = boxer_idle;
+    } else if (selectedCharacterNum === '3') { // 예: 로니
+      jabFramesRef.current = [ronnie_01, ronnie_02, ronnie_03, ronnie_03, ronnie_02, ronnie_01];
+      uppercutFramesRef.current = [ronnie_01, ronnie_02, ronnie_upper, ronnie_upper, ronnie_02, ronnie_01];
+      boxerImage = ronnie_01;
     } else {
-      console.error('선택된 캐릭터 이미지가 없습니다.');
+      // 그 외 캐릭터는 정지 이미지(선택 이미지)로 프레임 구성
+      const idle = selectedCharacter || boxer_idle;
+      jabFramesRef.current = [idle, idle, idle, idle, idle, idle];
+      uppercutFramesRef.current = [idle, idle, idle, idle, idle, idle];
+      boxerImage = idle;
     }
-  
-    // 복서
+
+    // ✅ 변경 3) 복서 스프라이트 “한 번만” 추가 (중복 제거)
     const boxer = new PIXI.Sprite(PIXI.Texture.from(boxerImage));
     boxer.anchor.set(0.5);
     boxer.width = boxerWidth;
@@ -390,23 +303,6 @@ if (selectedCharacterNum === '6') { // 카리나 번호가 6번
 
     placeHpAndDust(bld, hpBgRef.current, healthBarRef.current, dustSpriteRef.current);
 
-    // HP 단계 크랙(3장) — 기본은 숨김
-    // const cracks = [];
-    // for (let i = 0; i < 3; i++) {
-    //   const crack = new PIXI.Sprite(PIXI.Texture.from(crackTexture));
-    //   crack.alpha = 0.6;
-    //   crack.anchor.set(0.5);
-    //   crack.scale.set(0.5);
-    //   const p = randomCrackPosition(bld);
-    //   crack.x = p.x;
-    //   crack.y = p.y;
-    //   crack.visible = false;
-    //   crack.zIndex = 3;
-    //   cracks.push(crack);
-    //   safeAddChild(crack);
-    // }
-    // crackSpritesRef.current = cracks;
-
     // ★ 임팩트 크랙 1장 (히트 순간만 잠깐 보였다 사라짐)
     const impact = new PIXI.Sprite(PIXI.Texture.from(crackTexture));
     impact.alpha = 0.9;
@@ -436,15 +332,6 @@ if (selectedCharacterNum === '6') { // 카리나 번호가 6번
     b.x = cx;
     fitSpriteToBox(b, boxW, boxH, 'fit');
     b.y = bottomY;
-
-    // if (crackSpritesRef.current?.length) {
-    //   crackSpritesRef.current.forEach((cr) => {
-    //     const p = randomCrackPosition(b);
-    //     cr.x = p.x;
-    //     cr.y = p.y;
-    //     cr.visible = false;
-    //   });
-    // }
 
     if (impactCrackRef.current) {
       impactCrackRef.current.x = b.x;
@@ -486,7 +373,7 @@ if (selectedCharacterNum === '6') { // 카리나 번호가 6번
         impactHideTimerRef.current = null;
       }, duration);
     } else {
-      // (옵션) 페이드 아웃 쓰고 싶을 때
+      // (옵션) 페이드 아웃
       let elapsed = 0;
       const total = duration;
       const ticker = (delta) => {
@@ -518,7 +405,8 @@ if (selectedCharacterNum === '6') { // 카리나 번호가 6번
         !isBuildingFalling &&
         !isNewBuildingDropping) {
 
-      const frames = isUpper ? uppercutFrames : jabFrames;
+      // ✅ 변경 4) 전역 상수 대신 ref 프레임 사용
+      const frames = isUpper ? uppercutFramesRef.current : jabFramesRef.current;
 
       let i = 0;
       const interval = setInterval(() => {
@@ -536,7 +424,7 @@ if (selectedCharacterNum === '6') { // 카리나 번호가 6번
         setKcal((prev) => Math.round((prev + 0.1) * 10) / 10);
       }
 
-      // 임팩트 크랙 (200ms만)
+      // 임팩트 크랙
       showCrackOnce(200, false);
     }
 
@@ -553,17 +441,6 @@ if (selectedCharacterNum === '6') { // 카리나 번호가 6번
       healthBarRef.current.beginFill(0xff3333).drawRect(0, 0, newWidth, HP_BAR_HEIGHT).endFill();
       placeHpAndDust(buildingSpriteRef.current, hpBgRef.current, healthBarRef.current, dustSpriteRef.current);
     }
-
-    // HP 단계 크랙(원래 로직 유지 – 필요 없으면 모두 false로 두면 됨)
-    // if (crackSpritesRef.current) {
-    //   crackSpritesRef.current.forEach((sprite, index) => {
-    //     const pct = buildingHP / (maxHPRef.current || 100);
-    //     if (pct <= 0.25 && index <= 2) sprite.visible = true;
-    //     else if (pct <= 0.5 && index <= 1) sprite.visible = true;
-    //     else if (pct <= 0.75 && index === 0) sprite.visible = true;
-    //     else sprite.visible = false;
-    //   });
-    // }
 
     if (buildingHP <= 0 && !isBuildingFalling) {
       setIsBuildingFalling(true);
@@ -630,7 +507,7 @@ if (selectedCharacterNum === '6') { // 카리나 번호가 6번
 
       b.anchor.set(0.5, 1);
       b.x = cx;
-      b.y = -50; // 화면 위에서 시작(바닥 기준이니까 -50이면 완전 위)
+      b.y = -50; // 화면 위에서 시작
       b.texture = PIXI.Texture.from(building.imageUrl || building1);
       b.visible = true;
 
