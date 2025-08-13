@@ -4,17 +4,22 @@ import com.e106.demolition_king.constructure.entity.Constructure;
 import com.e106.demolition_king.constructure.entity.UserConstructure;
 import com.e106.demolition_king.constructure.repository.ConstructureRepository;
 import com.e106.demolition_king.constructure.repository.UserConstructureRepository;
+import com.e106.demolition_king.constructure.vo.in.ConstructureByEventInVo;
 import com.e106.demolition_king.constructure.vo.out.ConstructureResponseVo;
 import com.e106.demolition_king.constructure.vo.out.GetConstructureResponseVo;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
 import java.util.concurrent.ThreadLocalRandom;
 
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @Transactional
 @Service
@@ -117,4 +122,37 @@ public class ConstructureServiceImpl implements ConstructureService {
                 ))
                 .toList();
     }
+    @Override
+    public ConstructureResponseVo getByEvent(ConstructureByEventInVo inVo) {
+        String prefix = inVo.isEventK() ? "eventk" : "eventw";
+        String nameKey = prefix + inVo.getId(); // ex) eventk1
+
+        Constructure c = constructureRepository.findByName(nameKey)
+                .orElseThrow(() -> new ResponseStatusException(
+                        NOT_FOUND, "건물을 찾을 수 없습니다: " + nameKey));
+
+        return ConstructureResponseVo.builder()
+                .constructureSeq(c.getConstructureSeq())
+                .name(c.getName())
+                .imageUrl(c.getImageUrl())
+                .hp(c.getHp())
+                .tier(c.getTier())
+                .build();
+    }
+    @Override
+    @Transactional
+    public List<GetConstructureResponseVo> getUserEventConstructures(String userUuid) {
+
+        // 1) 유저가 보유한 건물 SEQ -> Set
+        Set<Integer> ownedSeqSet = userConstructureRepository.findByUserUuid(userUuid).stream()
+                .map(UserConstructure::getConstructureSeq)
+                .collect(Collectors.toSet());
+        // 2) 이벤트 건물 전체 조회
+        List<Constructure> targets = constructureRepository.findAllEventConstructures();
+        // 3) isOpen 태깅 후 반환
+        return targets.stream()
+                .map(c -> GetConstructureResponseVo.fromEntityWithOpen(c, ownedSeqSet.contains(c.getConstructureSeq())))
+                .toList();
+    }
+
 }

@@ -184,8 +184,6 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             }
             // 쿠키 삭제
             response.addHeader("Set-Cookie", "refreshToken=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=None");
-            // (ACCESS_TOKEN 쿠키를 쓰고 있다면 아래도 함께)
-            // response.addHeader("Set-Cookie", "ACCESS_TOKEN=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=None");
 
             // 요청대로 탈퇴 후 /login 으로
             safeRedirect(response, "https://i13e106.p.ssafy.io/login");

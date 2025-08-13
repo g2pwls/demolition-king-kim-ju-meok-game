@@ -3,6 +3,7 @@ package com.e106.demolition_king.constructure.controller;
 
 import com.e106.demolition_king.common.base.BaseResponse;
 import com.e106.demolition_king.constructure.service.ConstructureService;
+import com.e106.demolition_king.constructure.vo.in.ConstructureByEventInVo;
 import com.e106.demolition_king.constructure.vo.in.ConstructureSaveRequestVo;
 import com.e106.demolition_king.constructure.vo.out.ConstructureResponseVo;
 import com.e106.demolition_king.constructure.vo.out.GetConstructureResponseVo;
@@ -61,4 +62,29 @@ public class ConstructureController {
         return BaseResponse.of(generated);
     }
 
+    @Operation(summary = "이벤트 건물 정보 반환",
+            description = "isEventK + id로 name(eventk{id}|eventw{id})을 만들고, 해당 건물을 반환합니다.")
+    @GetMapping("/by-event")
+    public BaseResponse<ConstructureResponseVo> getByEvent(@ParameterObject ConstructureByEventInVo inVo) {
+        return BaseResponse.of(constructureService.getByEvent(inVo));
+    }
+
+    @Operation(summary = "사용자 이벤트 건물 전체 조회",
+            description = "이벤트 건물만 대상으로, 유저 해금 여부(isOpen)를 포함하여 전체 목록을 반환합니다.")
+    @GetMapping("/events")
+    public BaseResponse<List<GetConstructureResponseVo>> getUserEventConstructures(
+            @RequestHeader("Authorization") String authorizationHeader
+    ) {
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            throw new RuntimeException("Authorization 헤더가 잘못되었습니다.");
+        }
+        String token = authorizationHeader.substring(7);
+        if (!jwtUtil.validateToken(token)) {
+            throw new RuntimeException("유효하지 않은 토큰입니다.");
+        }
+        String userUuid = jwtUtil.getUserUuid(token);
+
+        List<GetConstructureResponseVo> result = constructureService.getUserEventConstructures(userUuid);
+        return BaseResponse.of(result);
+    }
 }
