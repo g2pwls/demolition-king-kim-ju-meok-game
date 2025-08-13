@@ -2,6 +2,7 @@ package com.e106.demolition_king.user.service;
 
 import com.e106.demolition_king.common.base.BaseResponseStatus;
 import com.e106.demolition_king.common.exception.BaseException;
+import com.e106.demolition_king.constructure.repository.UserConstructureRepository;
 import com.e106.demolition_king.friend.repository.FriendRepository;
 import com.e106.demolition_king.game.entity.Gold;
 import com.e106.demolition_king.game.entity.Report;
@@ -38,6 +39,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     private final UserRepository userRepository;         // JPA 레포지토리
     private final ProfileRepository profileRepository;
     private final FriendRepository friendRepository;
+    private final UserConstructureRepository userConstructureRepository;
     private final PasswordEncoder passwordEncoder;       // SecurityConfig에서 주입된 BCrypt 인코더
     private final JwtUtil jwtUtil;                       // 토큰 생성·검증 유틸
     private final RedisTemplate<String, String> redisTemplate; // 토큰 저장요 레디스 템플릿
@@ -61,8 +63,8 @@ public class UserServiceImpl implements UserService, UserDetailsService {
                 .createdAt(new Timestamp(System.currentTimeMillis()))
                 .updatedAt(new Timestamp(System.currentTimeMillis()))
                 .build();
-        // 2) PlayerSkin 초기화 (1번 선택, 나머지 2~11 잠금/비선택)
-        for (int i = 1; i <= 12; i++) {
+        // 2) PlayerSkin 초기화 (1번 선택, 나머지 2~13 잠금/비선택)
+        for (int i = 1; i <= 13; i++) {
             user.getPlayerSkins().add(
                     PlayerSkin.builder()
                             .user(user)
@@ -276,6 +278,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         }
         // 3) 탈퇴 처리: 실제 삭제 or isDeleted 플래그
         friendRepository.deleteAllByUserUuidInvolved(userUuid);
+        userConstructureRepository.deleteByUserUuid(userUuid);
         userRepository.delete(user);
         // 4) 로그아웃 처리: 남아 있는 RefreshToken 삭제
         redisTemplate.delete("RT:" + userUuid);
