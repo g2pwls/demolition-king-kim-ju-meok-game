@@ -10,7 +10,7 @@ import coinImg from '../assets/images/main/coin.png';
 import AnimatedPage from '../components/AnimatedPage';
 import timerIcon from '../assets/images/singlemode/timer.png';
 import singleBgm from '../assets/sounds/single_bgm.wav';
-
+import { useLocation } from 'react-router-dom';
 
 /*
 // 시간상 관계로 코드 하드코딩 세팅 이용해야함. Cntrl + F
@@ -68,6 +68,21 @@ const EventGamePage = () => {
   const canvasRef = useRef(null);
   const videoRef = useRef(null);
   const [userUuid, setUserUuid] = useState("");             // 사용자 UUID
+
+  const location = useLocation(); // 이벤트맵
+  // ---- 이벤트 파라미터 수신 (state 우선, 없으면 URL 쿼리 폴백) ----
+  const search = new URLSearchParams(window.location.search);
+  const eventKFromState = location.state?.eventK;
+  const eventIdFromState = location.state?.eventId;
+  const eventK =
+    typeof eventKFromState === 'boolean'
+      ? eventKFromState
+      : (search.get('eventK') === 'true'); // true/false
+  const eventId =
+    typeof eventIdFromState === 'number'
+      ? eventIdFromState
+      : Number(search.get('id') || NaN);
+
 
   // 게임
   const [action, setAction] = useState('idle');             // ?
@@ -507,22 +522,45 @@ const EventGamePage = () => {
   const [buildingList, setBuildingList] = useState([]);
   const currentBuilding = buildingList[buildingIndex] ?? null;
   const [playerSkin, setPlayerSkin] = useState("");
+  // ✅ 변경: 이벤트 선택값이 있으면 그 건물만 불러오기
   useEffect(() => {
-    const fetchBuildings = async () => {
+    const fetchEventBuilding = async () => {
       try {
-        const { data, status } = await api.get('/constructures/generate', {
-          params: { count: 50 }, // #BUILDINGCNT
-        });
-        if (status !== 200 || !data.isSuccess) {
-          throw new Error(data.message || `HTTP ${status}`);
+        // 필수 파라미터 확인
+        if (typeof eventK !== 'boolean' || Number.isNaN(eventId)) {
+          console.error('[EventGame] eventK / eventId 누락 또는 형식 오류', { eventK, eventId });
+          alert('이벤트 건물 정보가 없습니다. 이벤트 맵에서 다시 선택해주세요.');
+          // 필요시 메인으로 이동: window.location.href = '/event';
+          return;
         }
-        if (!isGameOverRef.current) setBuildingList(data.result); // [GAMEOVER]
+
+        const { data, status } = await api.get('/constructures/by-event', {
+          params: { eventK, id: eventId },
+          // headers: { Authorization: `Bearer ${token}` }, // 필요 시 토큰 추가
+        });
+
+        if (status !== 200 || !data?.isSuccess) {
+          throw new Error(data?.message || `HTTP ${status}`);
+        }
+
+        // Swagger 예시: result = { constructureSeq, hp, imageUrl, name, tier }
+        const result = data.result;
+        if (!result?.imageUrl) {
+          throw new Error('유효하지 않은 건물 데이터(result.imageUrl 없음)');
+        }
+
+        // PixiCanvas는 prop building에 단일 객체를 받으니 배열 하나로 세팅
+        setBuildingList([result]); // ← 길이가 1인 배열
+        setBuildingIndex(0);
       } catch (err) {
-        console.error('건물 리스트 로드 실패:', err);
+        console.error('이벤트 건물 로드 실패:', err);
+        alert('이벤트 건물 정보를 불러오지 못했습니다.');
       }
     };
-    fetchBuildings();
-  }, []);
+
+    fetchEventBuilding();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [eventK, eventId]); // ✅ 이벤트 파라미터가 바뀌면 재조회
 
   useEffect(() => {
     const fetchSkin = async () => {
