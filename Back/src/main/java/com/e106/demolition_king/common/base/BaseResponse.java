@@ -22,9 +22,11 @@ public record BaseResponse<T>(HttpStatusCode httpStatus, Boolean isSuccess, Stri
         return new BaseResponse<>(HttpStatus.OK, true, SUCCESS.getMessage(), SUCCESS.getCode(), null);
     }
 
-    public static BaseResponse<Void> error(BaseResponseStatus status) {
+    public static <T> BaseResponse<T> error(BaseResponseStatus status) {
         return new BaseResponse<>(status.getHttpStatusCode(), status.isSuccess(), status.getMessage(), status.getCode(), null);
     }
+
+
 
     // ✅ 예외 핸들러 등 기존 코드 호환 위한 생성자 유지
     public BaseResponse(T result) {

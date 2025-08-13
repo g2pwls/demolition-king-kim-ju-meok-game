@@ -28,6 +28,7 @@ function parseJwt(token) {
 function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -54,7 +55,6 @@ function LoginPage() {
 
       // ✅ localStorage 저장
       localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('userUuid', userUuid);
       localStorage.setItem('userEmail', email);
 
@@ -105,11 +105,9 @@ function LoginPage() {
             </div>
             <button type="submit" className="login-button">로그인</button>
           </div>
-
-          {/* ⚠️ 자동로그인은 현재 기능 미연결 상태 */}
           <div className="login-options">
             <label>
-              <input type="checkbox" disabled /> 자동로그인 (준비 중)
+              <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} /> 자동로그인
             </label>
           </div>
 
