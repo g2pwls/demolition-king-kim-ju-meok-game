@@ -11,6 +11,7 @@ public class ConstructureResponseVo {
     private Integer hp;
     private String imageUrl;
     private String name;
+    private String tier;
 
     public static ConstructureResponseVo fromEntity(Constructure entity) {
         return ConstructureResponseVo.builder()
@@ -18,6 +19,7 @@ public class ConstructureResponseVo {
                 .hp(entity.getHp())
                 .imageUrl(entity.getImageUrl())
                 .name(entity.getName())
+                .tier(entity.getTier())
                 .build();
     }
 }
