@@ -7,11 +7,12 @@ import mapP from '../assets/images/eventmode/mapp.png';
 import mapM from '../assets/images/eventmode/mapm.png';
 import pinImg from '../assets/images/eventmode/pin.png'; // 핀 이미지 import 추가
 import mapSelectBack from '../assets/images/eventmode/mapselectback.png';
-
+import { useNavigate } from 'react-router-dom';
 
 function EventPage() {
+  const navigate = useNavigate();
   const [isWorldMap, setIsWorldMap] = useState(true);
-  const [selectedRegion, setSelectedRegion] = useState(null);
+  const [selectedPin, setSelectedPin] = useState(null);
   const koreapinData = [
     { id: 1, name: '서울', top: '35.2%', left: '47.4%' },
     { id: 2, name: '제주도', top: '270px', left: '44%' },
@@ -50,6 +51,27 @@ function EventPage() {
     });
   }, []);
 
+  // ✅ 맵을 바꾸면 이전 선택은 초기화(혼동 방지)
+  useEffect(() => { setSelectedPin(null); }, [isWorldMap]);
+
+  // ✅ 선택 확정 → 다음 페이지로 eventK/id 전달
+  const handleSelect = () => {
+    if (!selectedPin) {
+      alert('지역을 먼저 선택하세요!');
+      return;
+    }
+    const eventK = !isWorldMap;         // Korea면 true, World면 false
+    const eventId = selectedPin.id;
+
+    // 라우터 state로 전달 (EventGamePage에서 useLocation().state로 수신)
+    navigate('/eventgame', { state: { eventK, eventId } });
+
+    // 또는 쿼리로 넘기고 싶다면:
+    // navigate(`/eventgame?eventK=${eventK}&id=${eventId}`);
+  };
+
+  const currentPins = isWorldMap ? worldpinData : koreapinData;
+
   return (
     <div className="event-page">
       <div className="event-background" />
@@ -72,7 +94,7 @@ function EventPage() {
               key={pin.id}
               className="pin-button"
               style={{ top: pin.top, left: pin.left }}
-              onClick={() => setSelectedRegion(pin.name)}
+              onClick={() => setSelectedPin(pin)}
             >
               <img src={pinImg} alt={pin.name} />
             </button>
@@ -83,7 +105,7 @@ function EventPage() {
               key={pin.id}
               className="pin-button"
               style={{ top: pin.top, left: pin.left }}
-              onClick={() => setSelectedRegion(pin.name)}
+              onClick={() => setSelectedPin(pin)}
             >
               <img src={pinImg} alt={pin.name} />
             </button>
@@ -91,15 +113,28 @@ function EventPage() {
       </div>
 
       {/* 선택 영역 - 맵 종류 상관없이 표시 */}
-{selectedRegion && (
-  <div className="map-selection-box">
-    <img src={mapSelectBack} alt="선택박스" className="map-select-background" />
-    <div className="selection-content">
-      <p>{selectedRegion}</p>
-      <button onClick={() => alert(`${selectedRegion} 지역 선택됨!`)}>선택</button>
-    </div>
-  </div>
-)}
+      {selectedPin && (
+        <div className="map-selection-box">
+          <img src={mapSelectBack} alt="선택박스" className="map-select-background" />
+          <div className="selection-content">
+            <p>{selectedPin.name}</p>
+            <button onClick={() => {
+                if (!selectedPin) {
+                  alert('지역을 먼저 선택하세요!');
+                  return;
+                }
+
+                const eventK = !isWorldMap;     // Korea → true, World → false
+                const eventId = selectedPin.id; // 선택된 핀 id
+
+                navigate('/eventgame', {
+                  state: { eventK, eventId }
+                });
+              }}
+            >선택</button>
+          </div>
+        </div>
+      )}
 
 
       <div className="event-buttons">

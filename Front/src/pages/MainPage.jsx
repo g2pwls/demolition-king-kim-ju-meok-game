@@ -185,6 +185,9 @@ function MainPage() {
       if (selectedIndex !== -1) {
         setCurrentIndex(selectedIndex);
         setSelectedIndex(selectedIndex);
+              // ✅ 선택된 캐릭터 정보 localStorage 저장
+      localStorage.setItem('selectedCharacter', skinData[selectedIndex].image); 
+      localStorage.setItem('selectedCharacternum', skinData[selectedIndex].playerSkinItemSeq);
       } else {
         setCurrentIndex(0); // 기본값
         setSelectedIndex(null); 
