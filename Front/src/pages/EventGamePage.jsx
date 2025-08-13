@@ -103,7 +103,7 @@ const EventGamePage = () => {
   const [playTime, setPlayTime] = useState(0);
   const [addTime, setAddTime] = useState(3000); // #ADDBUILDINGTIME
 
-  const COIN_PER_BUILDING = 1;
+  const COIN_PER_BUILDING = Math.floor(Math.random() * 100) + 1;
 
   // 콤보(패턴)
   const [patternIdx, setPatternIdx] = useState(0);
@@ -1085,10 +1085,12 @@ useEffect(() => {
             onBuildingDestroyed={(seq) => {
               if (isGameOverRef.current) return;
               if (seq) setDestroyedSeqs((prev) => [...prev, seq]);
-              setBuildingIndex((prev) => (buildingList.length === 0 ? 0 : (prev + 1) % buildingList.length));
+            //   setBuildingIndex((prev) => (buildingList.length === 0 ? 0 : (prev + 1) % buildingList.length));
               setDestroyedCount((c) => c + 1);
               setCoinCount((c) => c + COIN_PER_BUILDING);
-              if (startTimeRef.current) startTimeRef.current += addTime;
+            //   if (startTimeRef.current) startTimeRef.current += addTime;
+            // ✅ 즉시 종료
+            setIsGameOver(true);
             }}
             setKcal={(val) => {
               if (isGameOverRef.current) return;
