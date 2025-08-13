@@ -7,9 +7,10 @@ import mapP from '../assets/images/eventmode/mapp.png';
 import mapM from '../assets/images/eventmode/mapm.png';
 import pinImg from '../assets/images/eventmode/pin.png'; // 핀 이미지 import 추가
 import mapSelectBack from '../assets/images/eventmode/mapselectback.png';
-
+import { useNavigate } from 'react-router-dom';
 
 function EventPage() {
+  const navigate = useNavigate();
   const [isWorldMap, setIsWorldMap] = useState(true);
   const [selectedRegion, setSelectedRegion] = useState(null);
   const koreapinData = [
@@ -96,7 +97,13 @@ function EventPage() {
     <img src={mapSelectBack} alt="선택박스" className="map-select-background" />
     <div className="selection-content">
       <p>{selectedRegion}</p>
-      <button onClick={() => alert(`${selectedRegion} 지역 선택됨!`)}>선택</button>
+      <button onClick={() => {
+          if (selectedRegion) {
+            navigate('/eventgame'); // ✅ 페이지 이동
+          } else {
+            alert('지역을 먼저 선택하세요!');
+          }
+        }}>선택</button>
     </div>
   </div>
 )}
