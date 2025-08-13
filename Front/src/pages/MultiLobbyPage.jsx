@@ -16,6 +16,18 @@ const LIVEKIT_URL = "wss://i13e106.p.ssafy.io/livekit";
 const NEXT_GAME_PATH = "/multiplay";
 const GAME_START_SIGNAL = "__GAME_START__";
 
+// ✅ [추가] JWT에서 즉시 uuid/sub 파싱해오는 헬퍼 (네트워크 없이 동기 반환)
+function getUuidFromJwt() {
+  const at = localStorage.getItem('accessToken');
+  if (!at) return "";
+  try {
+    const payload = JSON.parse(decodeURIComponent(escape(atob(at.split('.')[1]))));
+    return payload.uuid || payload.sub || "";
+  } catch {
+    return "";
+  }
+}
+
 function LKVideoTile({ track, muted }) {
   const vref = useRef(null);
   useEffect(() => {
@@ -45,24 +57,35 @@ export default function MultiLobbyPage() {
   const [localVideoTrack, setLocalVideoTrack] = useState(null);
 
   const [nickName, setNickName] = useState("");
-  const [userUuid, setUserUuid] = useState("");
+  const [userUuid, setUserUuid] = useState(getUuidFromJwt());
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState("");
   const chatListRef = useRef(null);
+  
 
   // 유저 정보
-  useEffect(() => {
+   useEffect(() => {
     const token = localStorage.getItem("accessToken");
-    if (!token) return;
+    // ✅ [수정] 토큰이 없어도 JWT fallback으로 최소 uuid 확보 시도
+    if (!token) {
+      const _fallback = getUuidFromJwt();
+      if (_fallback) setUserUuid((prev) => prev || _fallback);
+      return;
+    }
     fetch("https://i13e106.p.ssafy.io/api/user/auth/getUserInfo", {
       headers: { Authorization: `Bearer ${token}` },
     })
-        .then((r) => r.json())
-        .then((d) => {
-          setUserUuid(d?.result?.userUuid || "");
-          setNickName(d?.result?.userNickname || "player");
-        })
-        .catch(() => {});
+      .then((r) => r.json())
+      .then((d) => {
+        // ✅ [수정] 서버 응답이 비어도 JWT fallback 사용
+        setUserUuid(d?.result?.userUuid || getUuidFromJwt() || "");
+        setNickName(d?.result?.userNickname || "player");
+      })
+      .catch(() => {
+        // ✅ [추가] 실패 시에도 JWT fallback 시도
+        const _fallback = getUuidFromJwt();
+        if (_fallback) setUserUuid((prev) => prev || _fallback);
+      });
   }, []);
 
   // 채팅 자동 스크롤
