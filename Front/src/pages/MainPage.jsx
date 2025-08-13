@@ -1,6 +1,4 @@
-// StartPage.jsx
-import React, { useState, useRef } from 'react';
-import { useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import api from '../utils/api';
 import axios from 'axios';
 import '../styles/MainPage.css';
@@ -26,6 +24,21 @@ import 'react-calendar/dist/Calendar.css';
 import closeIcon from '../assets/images/mypage/close.png';
 import { useLocation } from "react-router-dom";
 import mainBgm from '../assets/sounds/main_bgm.wav';
+
+import karina_1 from '../assets/images/karina/karina_final_anim_01.png';
+import karina_2 from '../assets/images/karina/karina_hair_2.png';  
+import karina_dancing_1 from '../assets/images/karina/karina_dancing_final_1.png';
+import karina_dancing_2 from '../assets/images/karina/karina_dancing_final_2.png';
+
+
+
+import boxer_idle from '../assets/images/karina/boxer_idle.png';
+import boxer_punch_1 from '../assets/images/karina/boxer_punch_1.png';
+import boxer_punch_2 from '../assets/images/karina/boxer_punch_2.png';
+
+import ronnie_1 from '../assets/images/karina/ronnie_01.png';
+import ronnie_2 from '../assets/images/karina/ronnie_main_1.png';
+import ronnie_3 from '../assets/images/karina/ronnie_main_2.png';
 
 import {
   LineChart,
@@ -66,7 +79,6 @@ import building23 from '../assets/images/building/building23.png';
 import building24 from '../assets/images/building/building24.png';
 import building25 from '../assets/images/building/building25.png';
 import building26 from '../assets/images/building/building26.png';
-
 
 // 레어 건물 이미지 import
 import rare1 from '../assets/images/building/rare1.png';
@@ -129,6 +141,34 @@ import firstTrophy from '../assets/images/main/first.png';
 import secondTrophy from '../assets/images/main/second.png';
 import thirdTrophy from '../assets/images/main/third.png';
 
+// ✅ 추가: 스킨 프레임 매핑(지금은 안전 가드용 빈 객체)
+//    나중에 필요하면 예시처럼 채워 사용하세요.
+//    예: { 1: [boxer_idle, boxer_punch_1, boxer_punch_2], 2: [ronnie_1, ronnie_2, ronnie_3] }
+const SKIN_SEQUENCES = {
+  1: [boxer_idle, boxer_punch_1, boxer_punch_2],
+  3: [ronnie_1, ronnie_2, ronnie_3],
+  6: [karina_2, karina_dancing_1, karina_dancing_2],
+};
+function CharacterSequence({ images, durations = [3000, 500, 500], alt="character", className, style }) {
+  const [idx, setIdx] = React.useState(0);
+  const toRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if (!images || images.length === 0) return;
+    let mounted = true;
+
+    const step = (i = 0) => {
+      if (!mounted) return;
+      setIdx(i);
+      toRef.current = setTimeout(() => step((i + 1) % images.length), durations[i] || 500);
+    };
+
+    step(0);
+    return () => { mounted = false; if (toRef.current) clearTimeout(toRef.current); };
+  }, [images, durations]);
+
+  return <img src={images?.[idx] || ""} alt={alt} className={className} style={style} />;
+}
 
 function MainPage() {
 
@@ -690,6 +730,18 @@ const fetchTotalPlayTime = async () => {
       alert('친구 거절에 실패했습니다.');
     }
   };
+  // 현재 선택된 스킨
+  const currentSkin = skins[currentIndex] ?? null;
+
+  const seq = React.useMemo(() => {
+    if (!currentSkin) return [];
+    // 1) ID 매핑 우선
+    const byId = SKIN_SEQUENCES[currentSkin.playerSkinItemSeq];
+    if (byId && byId.length) return byId;
+
+    // 2) 매핑이 없으면 서버 이미지 1장(정지)
+    return currentSkin.image ? [currentSkin.image] : [];
+  }, [currentSkin]);
 
   // 친구 목록 불러오기
   useEffect(() => {
@@ -1552,14 +1604,16 @@ const [token, setToken] = useState(null);
           <div className="nickname-text">{userInfo?.userNickname}</div>
           <div className={`character-selector animate-${animationDirection}`}>
             <img src={arrowLeft} alt="왼쪽" className="arrow-button large" onClick={handleLeft} />
-            {skins.length > 0 && (
-              <img
-                src={skins[currentIndex]?.image}
-                alt="캐릭터"
+            {Array.isArray(seq) && seq.length > 0 && (
+              <CharacterSequence
+                key={currentSkin?.playerSkinItemSeq || currentIndex} // 스킨 바뀔 때 타이머 리셋
+                images={seq}
+                durations={[3000, 500, 500]} // 프레임별 시간(ms): 1프레임=3초, 나머지=0.5초
                 className="main-character large"
-                style={{ opacity: skins[currentIndex]?.isUnlock === 0 ? 0.6 : 1 }} // ⭐ 추가
-                onAnimationEnd={() => setAnimationDirection(null)}/>
+                style={{ opacity: skins[currentIndex]?.isUnlock === 0 ? 0.6 : 1 }}
+              />
             )}
+
             <img src={arrowRight} alt="오른쪽" className="arrow-button large" onClick={handleRight} />
           </div>
 

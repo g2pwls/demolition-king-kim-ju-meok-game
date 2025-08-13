@@ -9,12 +9,29 @@ import buildingDust2 from '../../assets/images/effects/building_dust_2.png';
 import buildingDust3 from '../../assets/images/effects/building_dust_3.png';
 import crackTexture from '../../assets/images/effects/punch_effect.png';
 
-// 기본(카리나) 프레임
+// boxer 프레임
+import boxer_idle from '../../assets/images/karina/boxer_idle.png';
+import boxer_punch_1 from '../../assets/images/karina/boxer_punch_1.png';
+import boxer_punch_2 from '../../assets/images/karina/boxer_punch_2.png';
+import boxer_upper from '../../assets/images/karina/boxer_upper.png';
+
+// 카리나 프레임
 import karina_final_anim_01 from '../../assets/images/karina/karina_final_anim_01.png';
 import karina_final_anim_03 from '../../assets/images/karina/karina_final_anim_03.png';
 import karina_final_anim_05 from '../../assets/images/karina/karina_final_anim_05.png';
-// 어퍼컷 전용 프레임
 import karina_upper from '../../assets/images/karina/karina_upper.png';
+
+// 로니 프레임
+
+import ronnie_01 from '../../assets/images/karina/ronnie_01.png';
+import ronnie_02 from '../../assets/images/karina/ronnie_02.png';
+import ronnie_03 from '../../assets/images/karina/ronnie_03.png';
+import ronnie_upper from '../../assets/images/karina/ronnie_upper.png';
+import ronnie_main_1 from '../../assets/images/karina/ronnie_main_1.png';
+import ronnie_main_2 from '../../assets/images/karina/ronnie_main_2.png';
+
+
+// 캐릭터 이미지들
 import army from '../../assets/images/character/army.png';
 import jennie from '../../assets/images/character/jennie.png';
 import police from '../../assets/images/character/police.png';
@@ -26,23 +43,64 @@ import ufc from '../../assets/images/character/ufc.png';
 import character from '../../assets/images/character/character.png';
 
 // ========= 애니메이션 프레임 =========
+
+// 복서
 const jabFrames = [
-  karina_final_anim_01,
-  karina_final_anim_03,
-  karina_final_anim_05,
-  karina_final_anim_05,
-  karina_final_anim_03,
-  karina_final_anim_01,
+  boxer_idle,
+  boxer_punch_1,
+  boxer_punch_2,
+  boxer_punch_2,
+  boxer_punch_1,
+  boxer_idle,
 ];
 
 const uppercutFrames = [
-  karina_final_anim_01,
-  karina_final_anim_03,
-  karina_upper,
-  karina_upper,
-  karina_final_anim_03,
-  karina_final_anim_01,
+  boxer_idle,
+  boxer_punch_1,
+  boxer_upper,
+  boxer_upper,
+  boxer_punch_1,
+  boxer_idle,
 ];
+
+
+// 카리나
+// const jabFrames = [
+//   karina_final_anim_01,
+//   karina_final_anim_03,
+//   karina_final_anim_05,
+//   karina_final_anim_05,
+//   karina_final_anim_03,
+//   karina_final_anim_01,
+// ];
+
+// const uppercutFrames = [
+//   karina_final_anim_01,
+//   karina_final_anim_03,
+//   karina_upper,
+//   karina_upper,
+//   karina_final_anim_03,
+//   karina_final_anim_01,
+// ];
+
+// 로니
+// const jabFrames = [
+//   ronnie_01,
+//   ronnie_02,
+//   ronnie_03,
+//   ronnie_03,
+//   ronnie_02,
+//   ronnie_01,
+// ];    
+
+// const uppercutFrames = [
+//   ronnie_01,
+//   ronnie_02,
+//   ronnie_upper,
+//   ronnie_upper,
+//   ronnie_02,
+//   ronnie_01,
+// ];
 
 const dustFrames = [buildingDust1, buildingDust2, buildingDust3, buildingDust2, buildingDust1];
 
