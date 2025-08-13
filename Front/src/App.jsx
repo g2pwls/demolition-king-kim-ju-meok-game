@@ -24,6 +24,7 @@ import SingleTestPage from "./pages/SingleTestPage";
 import MultiLobbyPage from "./pages/MultiLobbyPage";
 import MultiPlayPage from "./pages/MultiPlayPage";
 import MultiModeEntryPage from "./pages/MultiModeEntryPage";
+import EventGamePage from "./pages/EventGamePage";
 
 // components
 import AppLayout from "./components/AppLayout";
@@ -48,6 +49,7 @@ function AppRoutes() {
                 <Route path="/game" element={<ProtectedRoute><AppLayout><GamePage /></AppLayout></ProtectedRoute>} />
                 <Route path="/story" element={<AppLayout><StoryPage /></AppLayout>} />
                 <Route path="/event" element={<ProtectedRoute><AppLayout><EventPage /></AppLayout></ProtectedRoute>} />
+                <Route path="/eventgame" element={<ProtectedRoute><AppLayout><EventGamePage /></AppLayout></ProtectedRoute>} />
                 <Route path="/singletest" element={<ProtectedRoute><SingleTestPage /></ProtectedRoute>} />
 
                 {/* ✅ 표준 로비(전체화면: AppLayout X) */}
