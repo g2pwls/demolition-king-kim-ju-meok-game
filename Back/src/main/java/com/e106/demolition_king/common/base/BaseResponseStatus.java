@@ -80,6 +80,7 @@ public enum BaseResponseStatus {
     //스킨 관련 상태
     SKIN_LOCKED(HttpStatus.BAD_REQUEST, false, 400, "스킨이 해금되지 않았습니다.");
 
+
     private final HttpStatusCode httpStatusCode;
     private final boolean isSuccess;
     private final int code;
