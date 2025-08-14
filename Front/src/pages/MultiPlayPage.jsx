@@ -10,7 +10,10 @@ import {
 import * as mpPose from "@mediapipe/pose";
 import { Camera } from "@mediapipe/camera_utils";
 import { drawLandmarks, drawConnectors } from "@mediapipe/drawing_utils";
-
+import jabLeftImage from '../assets/images/ljjap.png';
+import jabRightImage from '../assets/images/rjjap.png';
+import upperLeftImage from '../assets/images/lupper.png';
+import upperRightImage from '../assets/images/rupper.png';
 import PixiCanvas from "../components/pixi/PixiCanvas";
 import api from "../utils/api";
 import "../styles/MultiPlayPage.css";
@@ -34,10 +37,12 @@ const LM = {
 };
 
 const MOVE_META = {
-    0: { label: "왼잽", color: "red" },
-    1: { label: "오잽", color: "red" },
-    2: { label: "왼어퍼", color: "black" },
-    3: { label: "오어퍼", color: "black" },
+  0: { label: '왼잽', imgSrc: jabLeftImage },
+  1: { label: '오잽', imgSrc: jabRightImage },
+  2: { label: '왼어퍼', imgSrc: upperLeftImage },
+  3: { label: '오어퍼', imgSrc: upperRightImage },
+
+
 };
 
 /* -------------------- 공용 비디오 타일 -------------------- */
@@ -85,12 +90,16 @@ function CommandSequence({ combo, patternIdx, stepIdx }) {
     return (
         <div className="command-sequence">
             {moves.map((m, i) => {
-                const meta = MOVE_META[m] || { label: "?", color: "black" };
+                const meta = MOVE_META[m] || { label: "?", imgSrc: '' };
                 const stateClass = i < stepIdx ? "done" : i === stepIdx ? "current" : "";
                 const colorClass = meta.color === "red" ? "red" : "black";
                 return (
                     <div key={i} className={`command-circle ${colorClass} ${stateClass}`}>
-                        {meta.label}
+                        {meta.imgSrc ? (
+                    <img src={meta.imgSrc} alt={meta.label} className="command-image" />
+                    ) : (
+                    meta.label
+                    )}
                     </div>
                 );
             })}

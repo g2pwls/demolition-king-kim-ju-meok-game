@@ -46,7 +46,7 @@
 /* 콤보 원형 아이템 */
 .command-sequence {
     display: flex;
-    gap: 8px;
+    gap: 30px;
     flex-wrap: wrap;
 }
 .command-circle {
@@ -61,6 +61,11 @@
     box-shadow: 0 2px 0 rgba(0,0,0,.25) inset;
     padding: 0 10px;
 }
+.command-image {
+  width: 80px; /* 이미지 크기 조정 */
+  height: 80px; /* 이미지 크기 조정 */
+}
+
 .command-circle.red { background:#ff6b6b; color:#1b1d20; }
 .command-circle.black { background:#2b2f35; }
 .command-circle.done { opacity:.5; outline:2px solid rgba(255,255,255,.25); }
