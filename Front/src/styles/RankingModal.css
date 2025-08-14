@@ -1,6 +1,6 @@
 /* RankingModal.css */
 .modal-overlay {
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
   width: 100%;
@@ -9,7 +9,7 @@
   display: flex;
   justify-content: center; /* 가로 중앙 */
   align-items: center;     /* 세로 중앙 */
-  z-index: 999;
+  z-index: 9999;
 }
 
 .ranking-modal {
@@ -35,7 +35,7 @@
 
 /* 오버레이 공통 */
 .modal-overlay {
-  position: fixed;
+  position: absolute;
   inset: 0;
   background: rgba(0,0,0,0.6);
   display: flex;

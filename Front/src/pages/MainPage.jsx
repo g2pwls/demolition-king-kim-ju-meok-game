@@ -1642,42 +1642,6 @@ const [token, setToken] = useState(null);
           <button className="bottom-icon-button" onClick={openPrestart}>
             <img src={modeSingle} alt="싱글 모드" />
           </button>
-          {prestartOpen && (
-            <div className="modal-overlay">
-              <div className="prestart-modal" onClick={(e) => e.stopPropagation()}>
-                <div className="prestart-title">시작 전, 가드 자세를 취해 주세요</div>
-                <ul className="prestart-tips">
-                  <li>카메라가 상체를 잘 인식하도록 <b>정면</b>에 서세요.</li>
-                  <li>양손을 볼 근처로 올리고 <b>가드 자세</b>를 유지하세요.</li>
-                  <li>배경이 어둡거나 복잡하면 인식률이 떨어질 수 있어요.</li>
-                </ul>
-                
-                 {/* 포즈 이미지 추가 */}
-                <div className="prestart-pose-img">
-                  <img src={poseImg} alt="포즈 이미지" />
-                </div>
-                <ul className="prestart-tips">
-                  <li><span style={{ color: 'red' }}>빨간색</span> 글러브가 표시되면 <span style={{ color: 'red' }}>왼손</span>으로 잽 또는 어퍼를 날리세요.</li>
-                  <li><span style={{ color: 'blue' }}>파란색</span> 글러브가 표시되면 <span style={{ color: 'blue' }}>오른손</span>으로 잽 또는 어퍼를 날리세요.</li>
-                </ul>
-                <div className="prestart-actions">
-                  <label className="prestart-checkbox">
-                    <input
-                      type="checkbox"
-                      checked={dontShowAgain}
-                      onChange={(e) => setDontShowAgain(e.target.checked)}
-                    />
-                    다시 보지 않기
-                  </label>
-                  <div className="prestart-buttons">
-                    <button className="ps-btn ghost" onClick={cancelPrestart}>취소</button>
-                    <button className="ps-btn primary" onClick={startNow}>숙지 완료</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
           <button className="bottom-icon-button" onClick={() => setModalType('multi')}>
             <img src={modeMulti} alt="멀티 모드" />
           </button>
@@ -1768,7 +1732,7 @@ const [token, setToken] = useState(null);
                   {/* 텍스트 */}
                   <div className="tutorial-modal-text">
                     🥊 모션을 따라 건물을 파괴하라!<br /><br />
-                    화면 상단에 뜨는 <strong style={{ color: 'black' }}>콤보 스택(잽, 어퍼컷, 회피)</strong>에 맞춰<br />
+                    화면 상단에 뜨는 <strong style={{ color: 'black' }}>콤보 스택(잽, 어퍼컷)</strong>에 맞춰<br />
                     정확한 모션을 취하세요.<br /><br />
                     올바른 동작을 하면 건물 HP가 깎이고,<br />
                     💥HP가 0이 되면 건물이 철거됩니다!<br /><br />
@@ -1777,8 +1741,7 @@ const [token, setToken] = useState(null);
                   </div>
                 </div>
             )}
-
-
+            
             {modalType === 'mypage' && (
               <div className="mypage-modal-wrapper">
                 <img src={myPageModal} alt="마이페이지 모달" className="mypage-modal-bg" />
@@ -2200,7 +2163,7 @@ const [token, setToken] = useState(null);
                     )}
 
                     {/* 도감 탭 내용 */}
-                    {activeTab === '도감' && (
+                    {activeTab === '도감' && !isEditing && (
                       <div className="collection-section">
                         <span>건물을 철거하고 도감을 채워보세요!</span>
                         <div className="buildingname">COMMON</div>
@@ -2269,6 +2232,212 @@ const [token, setToken] = useState(null);
                         </div>
                       </div>
                     )}
+
+                                        {/* 정보 수정 화면 - 보기 모드 */}
+                    {activeTab === '도감' && isEditing && !isEditingNickname && (
+                      <>
+                        <div className="profile-view">
+                          <div className="info-row">
+                            <label>닉네임:</label>
+                            <div className="info-me">{userInfo?.userNickname}</div>
+                            <button className="edit-icon-btn" onClick={() => setIsEditingNickname(true)}>
+                              <img src={pencilIcon} alt="수정" className="edit-icon" />
+                            </button>
+                          </div>
+                          <div className="info-row">
+                            <label>이메일:</label>
+                            <div className="info-me">{userInfo?.userEmail}</div>
+                          </div>
+                          <div className="info-row password-row">
+                            <button
+                              className="change-password-btn"
+                              onClick={() => {
+                                setIsChangingPassword(true);
+                                setPasswordVerified(false);
+                                setCurrentPassword('');
+                                setNewPassword('');
+                                setConfirmNewPassword('');
+                              }}>비밀번호 변경
+                            </button>
+                          </div>
+                          <div className="delete-account-wrapper">
+                            <button
+                              className="delete-account-btn"
+                              onClick={() => {
+                                if (isGoogle) return handleGoogleDelete();
+                                if (isKakao)  return handleKakaoDelete();
+                                //일반 계정이면 기존 비밀번호 폼 열기
+                                setIsDeletingAccount(true);  // ❗ 폼 열기
+                                setWithdrawPassword('');     // 입력 초기화
+                              }}
+                            >
+                              회원탈퇴
+                            </button>
+                          </div>
+
+                          {/* ✅ 회원탈퇴 폼 */}
+{isDeletingAccount && (
+  <div className="withdraw-form">
+    <div className="password-form-header">
+      <button
+        className="close-password-btn"
+        onClick={() => {
+          setIsDeletingAccount(false);
+          setWithdrawPassword('');
+        }}
+      >
+        닫기 ❌
+      </button>
+    </div>
+
+                              {/* 에러 메시지 */}
+{withdrawError && (
+  <p className="withdraw-error-text">
+    {withdrawError}
+  </p>
+)}
+
+    <input
+  type="password"
+  value={withdrawPassword}
+  onChange={(e) => {
+    setWithdrawPassword(e.target.value);
+    if (withdrawError) setWithdrawError(''); // ⬅️ 타이핑 하면 에러 제거
+  }}
+  placeholder="본인 확인용 비밀번호 입력"
+/>
+
+
+    <div className="password-change-buttons">
+      <button className="cancel-btn" onClick={() => setIsDeletingAccount(false)}>취소</button>
+      <button className="save-btn" onClick={handleWithdraw} disabled={!withdrawPassword}>
+        회원탈퇴
+      </button>
+    </div>
+
+    {/* ✅ 커스텀 확인 모달 */}
+    {showWithdrawConfirm && (
+      <div className="modal-overlay" onClick={() => setShowWithdrawConfirm(false)}>
+        <div className="delete-modal" onClick={(e) => e.stopPropagation()}>
+          <p>정말 탈퇴하시겠습니까? <br />이 작업은 되돌릴 수 없습니다.</p>
+          <div className="modal-buttons">
+            <button onClick={confirmWithdrawNow}>확인</button>
+            <button onClick={() => setShowWithdrawConfirm(false)}>취소</button>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
+)}
+
+
+
+                          {/* ✅ 비밀번호 변경 폼 표시 조건 */}
+                          {isChangingPassword && (
+                            <div className="password-change-form">
+                              {/* 닫기 버튼 상단에 배치 */}
+                              <div className="password-form-header">
+                                <button
+                                  className="close-password-btn"
+                                  onClick={() => {
+                                    setIsChangingPassword(false);
+                                    setPasswordVerified(false);
+                                    setCurrentPassword('');
+                                    setNewPassword('');
+                                    setConfirmNewPassword('');
+                                  }}>닫기 ❌
+                                </button>
+                              </div>
+
+                              {!passwordVerified ? (
+                                <>
+                                  <input
+                                    type="password"
+                                    value={currentPassword}
+                                    onChange={(e) => setCurrentPassword(e.target.value)}
+                                    placeholder="현재 비밀번호 입력"
+                                  />
+                                  <button className="verify-btn" onClick={verifyPassword}>확인</button>
+                                </>
+                              ) : (
+                                <>
+                                  <input
+                                    type="password"
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                    placeholder="새 비밀번호 입력"
+                                  />
+                                  <input
+                                    type="password"
+                                    value={confirmNewPassword}
+                                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                                    placeholder="새 비밀번호 재입력"
+                                  />
+                                  <div className="password-change-buttons">
+                                    <button className="cancel-btn" onClick={() => setIsChangingPassword(false)}>취소</button>
+                                    <button className="save-btn" onClick={changePassword}>저장</button>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* 닫기 버튼: profile-view 밖에 둠 */}
+                        <div className="edit-close-wrapper">
+                          <button
+                            className="close-edit-btn"
+                            onClick={() => {
+                              setIsEditing(false);
+                              setIsEditingNickname(false);
+                              setEditNickname(userInfo.nickname);
+                            }}
+                          >
+                            닫기
+                          </button>
+                        </div>
+                      </>
+                    )}
+
+                    {/* 닉네임 수정 모드 */}
+                    {activeTab === '도감' && isEditing && isEditingNickname && (
+                      <div className="nickname-edit-form">
+                        <label>닉네임:</label>
+                        <input
+                          value={editNickname}
+                          onChange={(e) => setEditNickname(e.target.value)}
+                          className="nickname-input"
+                        />
+                        {/* 중복 확인 메시지 */}
+                        {nicknameCheckResult === 'available' && (
+                          <div className="nickname-check-success">✅ 사용 가능한 닉네임입니다.</div>
+                        )}
+                        {nicknameCheckResult === 'duplicate' && (
+                          <div className="nickname-check-error">❌ 이미 사용 중인 닉네임입니다.</div>
+                        )}
+                        <div className="nickname-edit-buttons">
+                          <button className="check-btn" onClick={handleCheckNickname}>중복확인</button>
+                          <button
+                            className="cancel-btn"
+                            onClick={() => {
+                              setEditNickname(userInfo.nickname);
+                              setIsEditingNickname(false);
+                            }}>
+                            취소
+                          </button>
+
+                          <button
+                            className="save-btn"
+                            onClick={handleSaveNickname}
+                            disabled={
+                              nicknameCheckResult !== 'available' ||  // 중복확인 결과가 사용 가능이 아니면 비활성화
+                              editNickname !== checkedNickname       // 중복확인 후 닉네임이 바뀌었으면 비활성화
+                            }>
+                            저장
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -2289,6 +2458,41 @@ const [token, setToken] = useState(null);
           </div>
         </div>
       )}
+                  {prestartOpen && (
+            <div className="modal-overlay">
+              <div className="prestart-modal" onClick={(e) => e.stopPropagation()}>
+                <div className="prestart-title">시작 전, 가드 자세를 취해 주세요</div>
+                <ul className="prestart-tips">
+                  <li>카메라가 상체를 잘 인식하도록 <b>정면</b>에 서세요.</li>
+                  <li>양손을 볼 근처로 올리고 <b>가드 자세</b>를 유지하세요.</li>
+                  <li>배경이 어둡거나 복잡하면 인식률이 떨어질 수 있어요.</li>
+                </ul>
+                
+                 {/* 포즈 이미지 추가 */}
+                <div className="prestart-pose-img">
+                  <img src={poseImg} alt="포즈 이미지" />
+                </div>
+                <ul className="prestart-tips">
+                  <li><span style={{ color: 'red' }}>빨간색</span> 글러브가 표시되면 <span style={{ color: 'red' }}>왼손</span>으로 잽 또는 어퍼를 날리세요.</li>
+                  <li><span style={{ color: 'blue' }}>파란색</span> 글러브가 표시되면 <span style={{ color: 'blue' }}>오른손</span>으로 잽 또는 어퍼를 날리세요.</li>
+                </ul>
+                <div className="prestart-actions">
+                  <label className="prestart-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={dontShowAgain}
+                      onChange={(e) => setDontShowAgain(e.target.checked)}
+                    />
+                    다시 보지 않기
+                  </label>
+                  <div className="prestart-buttons">
+                    <button className="ps-btn ghost" onClick={cancelPrestart}>취소</button>
+                    <button className="ps-btn primary" onClick={startNow}>숙지 완료</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
       {/* 친구 팝업 버튼 표시 */}
       <div className="friend-buttons">
