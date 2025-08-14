@@ -5,8 +5,8 @@
 }
 
 .story-background {
-  width: 100%; /* 100%로 설정해 화면 크기에 맞게 조정 */
-  height: 100vh; /* 화면 높이에 맞게 설정 */
+  width: 1536px;
+  height: 864px; 
   background-color: black;
   color: white;
   display: flex;
