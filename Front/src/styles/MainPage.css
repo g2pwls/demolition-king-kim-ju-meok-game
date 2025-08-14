@@ -1400,3 +1400,8 @@ width: 100vw;  /* 화면 너비에 맞춤 */
 .ps-btn:hover { transform: translateY(-1px); }
 .ps-btn.primary { background: #0d6efd; border-color: #0d6efd; }
 .ps-btn.ghost { background: transparent; opacity: 0.85; }
+
+.prestart-pose-img img{
+  width: 515px;
+  margin-bottom: 20px;
+}
