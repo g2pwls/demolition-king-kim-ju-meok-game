@@ -12,6 +12,10 @@ import timerIcon from '../assets/images/singlemode/timer.png';
 import singleBgm from '../assets/sounds/single_bgm.wav';
 import { useLocation } from 'react-router-dom';
 
+import jabLeftImage from '../assets/images/ljjap.png';
+import jabRightImage from '../assets/images/rjjap.png';
+import upperLeftImage from '../assets/images/lupper.png';
+import upperRightImage from '../assets/images/rupper.png';
 /*
 // 시간상 관계로 코드 하드코딩 세팅 이용해야함. Cntrl + F
 - #TIMERSETTING : 타이머 값 수정 #TIMERSETTING
@@ -656,10 +660,10 @@ const EventGamePage = () => {
   }, [action, isGameOver]);
 
   const MOVE_META = {
-    0: { label: '왼잽', color: 'red' },
-    1: { label: '오잽', color: 'red' },
-    2: { label: '왼어퍼', color: 'black' },
-    3: { label: '오어퍼', color: 'black' },
+    0: { label: '왼잽', imgSrc: jabLeftImage },
+    1: { label: '오잽', imgSrc: jabRightImage },
+    2: { label: '왼어퍼', imgSrc: upperLeftImage },
+    3: { label: '오어퍼', imgSrc: upperRightImage },
   };
 
   function renderCommandSequence() {
@@ -669,7 +673,7 @@ const EventGamePage = () => {
     return (
       <div className="command-sequence">
         {moves.map((m, i) => {
-          const meta = MOVE_META[m] || { label: '?', color: 'black' };
+          const meta = MOVE_META[m] || { label: '?', imgSrc: '' };
           const stateClass =
             i < stepIdx ? 'done' : i === stepIdx ? 'current' : '';
           const colorClass =
@@ -677,7 +681,11 @@ const EventGamePage = () => {
               meta.color === 'green' ? 'green' : 'black';
           return (
             <div key={i} className={`command-circle ${colorClass} ${stateClass}`}>
-              {meta.label}
+              {meta.imgSrc ? (
+          <img src={meta.imgSrc} alt={meta.label} className="command-image" />
+        ) : (
+          meta.label
+        )}
             </div>
           );
         })}

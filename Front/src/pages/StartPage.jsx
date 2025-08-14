@@ -6,7 +6,8 @@ import character1 from "../assets/images/start/characterpick.png";
 import character2 from "../assets/images/start/charp.png";
 import pressStartImage from "../assets/images/start/pressstart.png";
 import AnimatedPage from "../components/AnimatedPage";
-
+import { useAudio } from "../context/AudioContext";
+import startBgm from "../assets/sounds/start_bgm.wav";
 /* ====== 전체화면 권장 프롬프트 ====== */
 function FullscreenPrompt() {
   const [open, setOpen] = useState(false);
@@ -84,6 +85,37 @@ function StartPage() {
   const [currentCharacter, setCurrentCharacter] = useState(character1);
   const navigate = useNavigate();
 
+  const { audioRef, playAudio } = useAudio();  // 오디오 상태 가져오기
+
+  useEffect(() => {
+    // 스타트 화면에 오면 오디오를 처음부터 재생
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;  // 오디오를 처음부터 설정
+      playAudio();  // 음악을 재생
+    }
+
+    // 페이지 전환 시 현재 시간을 로컬스토리지에 저장
+    const saveAudioTime = () => {
+      if (audioRef.current) {
+        localStorage.setItem('audioTime', audioRef.current.currentTime);
+      }
+    };
+
+    // `audioRef.current`가 HTMLAudioElement인 경우에만 addEventListener 사용
+    const audioElement = audioRef.current;
+    if (audioElement) {
+      audioElement.addEventListener('play', saveAudioTime);
+    }
+
+    return () => {
+      // clean up
+      if (audioElement) {
+        audioElement.removeEventListener('play', saveAudioTime);
+        localStorage.setItem('audioTime', audioElement.currentTime);
+      }
+    };
+  }, [audioRef, playAudio]);
+
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentCharacter((prev) =>
@@ -135,6 +167,9 @@ function StartPage() {
           </div>
         </div>
       </div>
+
+      {/* 배경 음악 */}
+      <audio ref={audioRef} src={startBgm} loop />
     </AnimatedPage>
   );
 }

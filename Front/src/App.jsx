@@ -29,7 +29,7 @@ import EventGamePage from "./pages/EventGamePage";
 // components
 import AppLayout from "./components/AppLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
-
+import { AudioProvider } from "./context/AudioContext";  // AudioProvider 임포트
 
 function AppRoutes() {
     const location = useLocation();
@@ -76,8 +76,10 @@ function AppRoutes() {
 
 export default function App() {
     return (
-        <Router>
-            <AppRoutes />
-        </Router>
+        <AudioProvider>
+            <Router>
+                <AppRoutes />
+            </Router>
+        </AudioProvider>
     );
 }
