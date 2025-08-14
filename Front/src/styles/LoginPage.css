@@ -8,8 +8,8 @@ body, .login-page-background, .login-box, .login-form, .form-row, .login-button,
   font-family: 'DungGeunMo', Arial, sans-serif;
 }
 .login-page-background {
-  width: 100%; /* 100%로 설정해 화면 크기에 맞게 조정 */
-  height: 100vh;
+  width: 1536px;
+  height: 864px; 
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

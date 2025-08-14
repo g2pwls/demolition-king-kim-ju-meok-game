@@ -148,7 +148,7 @@ width: 100vw;  /* 화면 너비에 맞춤 */
 
 /* ===== 모달 ===== */
 .modal-overlay {
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
   width: 1536px;
@@ -157,7 +157,7 @@ width: 100vw;  /* 화면 너비에 맞춤 */
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 999;
+  z-index: 9999;
 }
 
 .modal-content {
@@ -963,7 +963,7 @@ width: 100vw;  /* 화면 너비에 맞춤 */
 }
 
 .modal-overlay {
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
   /* width: 100%;
@@ -1109,9 +1109,9 @@ width: 100vw;  /* 화면 너비에 맞춤 */
 }
 
 .friend-search-popup {
-  position: fixed;
+  position: absolute;
   top: 50%;
-  left: 50%;
+  left: -100%;
   transform: translate(-50%, -50%);
   background: white;
   border: 2px solid #ccc;

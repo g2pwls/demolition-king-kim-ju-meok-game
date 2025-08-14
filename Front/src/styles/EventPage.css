@@ -48,8 +48,8 @@
 
 .event-page {
   position: relative;
-  width: 100vw;  /* 화면 너비에 맞춤 */
-  height: 100vh; /* 화면 높이에 맞춤 */
+  width: 1536px;
+  height: 864px; 
   overflow: hidden;
 }
 
