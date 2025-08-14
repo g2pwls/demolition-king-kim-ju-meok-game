@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import axios from 'axios';
 import '../styles/SignupPage.css';
 import loginBack from '../assets/images/login/loginbackf.png';
@@ -31,6 +31,22 @@ function SignUp() {
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [userNickname, setUserNickname] = useState('');
   const [profileSeq, setProfileSeq] = useState(1); // 기본 캐릭터 번호
+
+  // --- 비밀번호 유효성 규칙: 8~20자, 공백 불가 ---
+  const lenOK = password.length >= 8 && password.length <= 20;
+  const noSpace = !/\s/.test(password);
+  const hasNumber = /\d/.test(password); // 숫자 포함
+  const hasLetter = /[a-zA-Z]/.test(password); // 영문 포함
+  const pwValid = lenOK && noSpace && hasNumber && hasLetter;
+
+  // 비밀번호 일치 여부
+  const pwMatch = password.length > 0 && password === passwordConfirm;
+
+  // 모든 조건
+  const canSubmit = useMemo(() => {
+    return isVerified && pwValid && pwMatch && userNickname && email;
+  }, [isVerified, pwValid, pwMatch, userNickname, email]);
+
 
   // 닉네임 중복검사
   const checkNicknameDuplication = async () => {
@@ -92,7 +108,10 @@ function SignUp() {
       alert('이메일 인증을 완료해주세요.');
       return;
     }
-
+    if (!pwValid) {
+      alert('비밀번호는 영문, 숫자 포함 8~20자이며 공백을 포함할 수 없습니다.');
+      return;
+    }
     if (password !== passwordConfirm) {
       alert('비밀번호가 일치하지 않습니다.');
       return;
@@ -193,6 +212,7 @@ function SignUp() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              placeholder="영문, 숫자 포함 8~20자, 공백 불가"
             />
           </div>
 
@@ -208,7 +228,7 @@ function SignUp() {
 
           {/* 회원가입 */}
           <div className="form-row2 button-row">
-            <button type="submit" className="signup-button">회원가입 하기</button>
+            <button type="submit" className="signup-button" disabled={!canSubmit}>회원가입 하기</button>
           </div>
         </form>
       </div>
