@@ -1122,6 +1122,28 @@ const fetchTotalPlayTime = async () => {
     }
   };
 
+  // MainPage 컴포넌트 내부 최상단 근처
+const [toastMsg, setToastMsg] = useState(null);
+const showToast = (msg) => {
+  setToastMsg(msg);
+  // 3초 후 사라짐 (원하면 시간 조절)
+  setTimeout(() => setToastMsg(null), 3000);
+};
+
+// 🔔 SSE에서 '친구 요청' 이벤트가 오면 실행
+const onIncomingFriendRequest = (payload) => {
+  // 실시간 갱신: 서버에서 친구목록/요청목록 다시 받아오기
+  refreshFriendData();
+
+  // 원하면 친구 팝업 자동으로 열기
+  // setIsFriendPopupOpen(true);
+};
+
+// (선택) 모든 SSE 이벤트 로깅하고 싶으면
+const onAnyEvent = (evt) => {
+  console.log('[SSE EVENT]', evt);
+};
+
   // 상단 state 모음에 추가
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [withdrawPassword, setWithdrawPassword] = useState('');
@@ -1536,7 +1558,23 @@ const [token, setToken] = useState(null);
 
   return (
     <div className="main-page-background">
-      <FriendNotification token={token} />
+      <FriendNotification
+  token={token}
+  onFriendRequest={onIncomingFriendRequest}
+  onAnyEvent={onAnyEvent}   // ← 선택사항(빼도 됨)
+  onToast={(msg) => {                    // ✅ FriendNotification → 메인으로 메시지 전달
+          setToastMsg(msg);
+          setTimeout(() => setToastMsg(""), 5000);
+        }}
+/>
+<div className="inpage-toast-layer">
+{toastMsg && (
+  <div className="inpage-toast">
+    {toastMsg}
+  </div>
+)}
+</div>
+
       <audio ref={audioRef} src={mainBgm} preload="auto" />
       {/* (옵션) 자동재생 차단 시 노출되는 작은 버튼 */}
       {soundLocked && (
