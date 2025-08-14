@@ -140,7 +140,7 @@ import bronzeImg from '../assets/images/mypage/bronze.png';
 import firstTrophy from '../assets/images/main/first.png';
 import secondTrophy from '../assets/images/main/second.png';
 import thirdTrophy from '../assets/images/main/third.png';
-import poseImg from '../assets/images/pose.png';
+import poseImg from '../assets/images/pose1.png';
 // ✅ 추가: 스킨 프레임 매핑(지금은 안전 가드용 빈 객체)
 //    나중에 필요하면 예시처럼 채워 사용하세요.
 //    예: { 1: [boxer_idle, boxer_punch_1, boxer_punch_2], 2: [ronnie_1, ronnie_2, ronnie_3] }
@@ -1618,7 +1618,10 @@ const [token, setToken] = useState(null);
                 <div className="prestart-pose-img">
                   <img src={poseImg} alt="포즈 이미지" />
                 </div>
-
+                <ul className="prestart-tips">
+                  <li><span style={{ color: 'red' }}>빨간색</span> 글러브가 표시되면 <span style={{ color: 'red' }}>왼손</span>으로 잽 또는 어퍼를 날리세요.</li>
+                  <li><span style={{ color: 'blue' }}>파란색</span> 글러브가 표시되면 <span style={{ color: 'blue' }}>오른손</span>으로 잽 또는 어퍼를 날리세요.</li>
+                </ul>
                 <div className="prestart-actions">
                   <label className="prestart-checkbox">
                     <input

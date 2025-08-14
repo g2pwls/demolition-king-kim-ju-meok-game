@@ -667,10 +667,12 @@ width: 100vw;  /* 화면 너비에 맞춤 */
   object-fit: contain;
   filter: grayscale(100%);
   transition: filter 0.3s ease;
+  opacity: 0.5;
 }
 
 .building-image.unlocked {
   filter: none; /* 컬러 */
+  opacity: 1;
 }
 
 .buildingname {
@@ -1346,8 +1348,8 @@ width: 100vw;  /* 화면 너비에 맞춤 */
 /* === 싱글모드 프리스타트 모달 (필요 최소) === */
 .prestart-modal {
   width: min(560px, 92vw);
-  background: #111;
-  color: #fff;
+  background: #ffffff;
+  color: #000000;
   border-radius: 16px;
   padding: 22px;
   box-shadow: 0 18px 40px rgba(0,0,0,0.6);
@@ -1412,6 +1414,7 @@ width: 100vw;  /* 화면 너비에 맞춤 */
 
 .building-item:hover .building-image {
   transform: scale(2); /* 이미지 크기 20% 확대 */
+  z-index: 10; /* 확대된 이미지가 다른 건물 위로 올라오게 함 */
 }
 .insufficient-funds-message {
   color: red;
