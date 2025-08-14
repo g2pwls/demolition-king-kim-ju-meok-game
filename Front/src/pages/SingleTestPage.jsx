@@ -565,7 +565,7 @@ const SingleTestPage = () => {
       return;
     }
 
-    fetch("https://i13e106.p.ssafy.io/api", {
+    fetch("https://i13e106.p.ssafy.io/api/user/auth/getUserInfo", {
       method: "GET",
       headers: { Authorization: `Bearer ${accessToken}` },
     })
