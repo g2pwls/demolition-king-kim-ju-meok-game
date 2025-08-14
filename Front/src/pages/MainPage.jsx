@@ -140,7 +140,7 @@ import bronzeImg from '../assets/images/mypage/bronze.png';
 import firstTrophy from '../assets/images/main/first.png';
 import secondTrophy from '../assets/images/main/second.png';
 import thirdTrophy from '../assets/images/main/third.png';
-
+import poseImg from '../assets/images/pose.png';
 // ✅ 추가: 스킨 프레임 매핑(지금은 안전 가드용 빈 객체)
 //    나중에 필요하면 예시처럼 채워 사용하세요.
 //    예: { 1: [boxer_idle, boxer_punch_1, boxer_punch_2], 2: [ronnie_1, ronnie_2, ronnie_3] }
@@ -1576,6 +1576,11 @@ const [token, setToken] = useState(null);
                   <li>양손을 볼 근처로 올리고 <b>가드 자세</b>를 유지하세요.</li>
                   <li>배경이 어둡거나 복잡하면 인식률이 떨어질 수 있어요.</li>
                 </ul>
+                
+                 {/* 포즈 이미지 추가 */}
+                <div className="prestart-pose-img">
+                  <img src={poseImg} alt="포즈 이미지" />
+                </div>
 
                 <div className="prestart-actions">
                   <label className="prestart-checkbox">
@@ -2111,6 +2116,7 @@ const [token, setToken] = useState(null);
                     {/* 도감 탭 내용 */}
                     {activeTab === '도감' && (
                       <div className="collection-section">
+                        <span>건물을 철거하고 도감을 채워보세요!</span>
                         <div className="buildingname">COMMON</div>
                         <div className="building-grid">
                           {buildingImages.map(({ src, filename }, i) => {

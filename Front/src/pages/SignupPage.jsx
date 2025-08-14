@@ -10,6 +10,7 @@ import boy1 from '../assets/images/character/boy1.png';
 import boy2 from '../assets/images/character/boy2.png';
 import boy3 from '../assets/images/character/boy3.png';
 import { useNavigate } from 'react-router-dom';
+import api from '../utils/api'; // ✅ axios 인스턴스 기반
 
 function SignUp() {
   const navigate = useNavigate();
@@ -35,7 +36,7 @@ function SignUp() {
   // 닉네임 중복검사
   const checkNicknameDuplication = async () => {
   try {
-    const res = await axios.post('https://i13e106.p.ssafy.io/api/user/auth/signup/nickname/check', {
+    const res = await api.post('/user/auth/signup/nickname/check', {
       nickname: userNickname,
     });
 
@@ -54,7 +55,7 @@ function SignUp() {
   // 이메일 인증코드 요청
   const requestAuthCode = async () => {
     try {
-      await axios.post('https://i13e106.p.ssafy.io/api/v1/user/email/signup/send', { email });
+      await api.post('/v1/user/email/signup/send', { email });
 
 // 인증번호 확인
 
@@ -68,7 +69,7 @@ function SignUp() {
   // 인증코드 확인
   const verifyAuthCode = async () => {
     try {
-    const res = await axios.post('https://i13e106.p.ssafy.io/api/v1/user/email/signup/verify', {
+    const res = await api.post('/v1/user/email/signup/verify', {
       email,
       code: authCode,
     });
@@ -99,8 +100,8 @@ function SignUp() {
     }
 
     try {
-      const response = await axios.post(
-        'https://i13e106.p.ssafy.io/api/user/auth/signup',
+      const response = await api.post(
+        '/user/auth/signup',
         null,
         {
           params: {
