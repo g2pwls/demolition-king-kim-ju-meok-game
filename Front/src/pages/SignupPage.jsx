@@ -213,7 +213,7 @@ function SignUp() {
               }}
             />
             <div className="nickname-check-container">
-              <button type="button" onClick={checkNicknameDuplication}>
+              <button type="button" onClick={checkNicknameDuplication} disabled={!userNickname.trim()}>
                 중복확인
               </button>
               {/* 상태 표시 */}
