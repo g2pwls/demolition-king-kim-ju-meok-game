@@ -1,0 +1,43 @@
+@font-face {
+  font-family: 'DungGeunMo';
+  src: url('../assets/fonts/DungGeunMo.ttf') format('truetype');
+  font-style: normal;
+}
+
+body, .login-page-background, .login-box, .login-form, .form-row, .login-button, .login-options, .social-login, .login-links {
+  font-family: 'DungGeunMo', Arial, sans-serif;
+}
+.admin-page-background {
+  width: 1536px;
+  height: 864px; 
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.admin-buttons-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+  margin-top: 50px;
+}
+
+.admin-button {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 15px 32px;
+  text-align: center;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background-color 0.3s;
+}
+
+.admin-button:hover {
+  background-color: #45a049;
+}
