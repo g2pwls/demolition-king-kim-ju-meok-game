@@ -76,7 +76,7 @@
 
 .overlay-ui1 {
   position: absolute;
-  top: 140%;
+  top: 180%;
   left: 50%;
   transform: translateX(-50%);
   z-index: 10;
@@ -108,12 +108,12 @@
 
 .command-sequence {
   display: flex;
-  gap: 15px;
+  gap: 20px;
 }
 
 .command-circle {
-  width: 60px;
-  height: 60px;
+  width: 70px;
+  height: 70px;
   border-radius: 50%;
   display: flex;
   justify-content: center;
@@ -121,10 +121,13 @@
   font-size: 14px;
   font-weight: bold;
   color: white;
-  border: 2px solid #333;
+  /* border: 2px solid #333; */
 }
-
-.command-circle.red {
+.command-image {
+  width: 80px; /* 이미지 크기 조정 */
+  height: 80px; /* 이미지 크기 조정 */
+}
+/* .command-circle.red {
   background-color: #ff4444;
 }
 
@@ -134,7 +137,7 @@
 
 .command-circle.black {
   background-color: #333333;
-}
+} */
 
 .right-panel {
   width: 25%;
