@@ -88,7 +88,7 @@ const SingleTestPage = () => {
   const [playTime, setPlayTime] = useState(0);
   const [addTime, setAddTime] = useState(3000); // #ADDBUILDINGTIME
 
-  const COIN_PER_BUILDING = 1;
+  const COIN_PER_BUILDING = 10;
 
   // 콤보(패턴)
   const [patternIdx, setPatternIdx] = useState(0);
@@ -565,7 +565,7 @@ const SingleTestPage = () => {
       return;
     }
 
-    fetch("https://i13e106.p.ssafy.io/api/user/auth/getUserInfo", {
+    fetch("https://i13e106.p.ssafy.io/api", {
       method: "GET",
       headers: { Authorization: `Bearer ${accessToken}` },
     })
