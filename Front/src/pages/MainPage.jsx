@@ -294,14 +294,46 @@ function MainPage() {
   // 모달 상태 추가
   const [showBuyModal, setShowBuyModal] = useState(false);
   const [pendingSkin, setPendingSkin] = useState(null);
+// 상태 추가
+const [insufficientFundsMessage, setInsufficientFundsMessage] = useState(''); // 금액 부족 메시지 상태 추가
 
-  // 구매 버튼 클릭 시
-  const handleBuyClick = () => {
-    const currentSkin = skins[currentIndex];
-    setPendingSkin(currentSkin);
+// 구매 버튼 클릭 시
+const handleBuyClick = async () => {
+  const currentSkin = skins[currentIndex];
+  setPendingSkin(currentSkin);
+
+  // 금액 확인 로직 추가
+  const token = localStorage.getItem('accessToken');
+  const userUuid = userInfo.userUuid; // userUuid를 가져옴
+
+  try {
+    // 사용자의 금액 확인 (위 API를 사용)
+    const res = await api.get(`/users/games/${userUuid}/getGoldByUuid`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const userGold = res.data.result; // 사용자의 금액
+    const skinPrice = currentSkin.price; // 스킨 가격
+
+    // 금액이 부족하면 메시지 설정
+    if (userGold < skinPrice) {
+      setInsufficientFundsMessage('돈이 부족합니다!'); // 화면에 금액 부족 메시지 표시
+      setShowBuyModal(false); // 금액 부족 시 모달 닫기
+      return;
+    }
+
+    // 금액이 충분한 경우에만 모달 열기
     setShowBuyModal(true);
-  };
-  // console.log('✅ 현재 스킨:', skins[currentIndex]);
+    setInsufficientFundsMessage(''); // 금액이 충분하면 메시지 초기화
+  } catch (err) {
+    console.error('금액 확인 실패:', err);
+    setInsufficientFundsMessage('금액 확인 실패'); // 에러 발생 시 메시지 표시
+    alert('금액 확인 실패');
+    setShowBuyModal(false); // 에러 발생 시 모달 닫기
+  }
+};
   // 실제 구매 처리
   const confirmBuy = async () => {
     const token = localStorage.getItem('accessToken');
@@ -326,6 +358,8 @@ function MainPage() {
       setPendingSkin(null);
     }
   };
+
+
 
   // 건물 이미지
   const buildingImages = [
@@ -1616,7 +1650,7 @@ const [token, setToken] = useState(null);
               <CharacterSequence
                 key={currentSkin?.playerSkinItemSeq || currentIndex} // 스킨 바뀔 때 타이머 리셋
                 images={seq}
-                durations={[3000, 500, 500]} // 프레임별 시간(ms): 1프레임=3초, 나머지=0.5초
+                durations={[900, 500, 500]} // 프레임별 시간(ms): 1프레임=3초, 나머지=0.5초
                 className="main-character large"
                 style={{ opacity: skins[currentIndex]?.isUnlock === 0 ? 0.6 : 1 }}
               />
@@ -1651,6 +1685,14 @@ const [token, setToken] = useState(null);
               onCancel={() => setShowBuyModal(false)}
             />
           )}
+          {/* 금액 부족 메시지 출력 */}
+          {insufficientFundsMessage && (
+              <div className="insufficient-funds-modal">
+                <p>{insufficientFundsMessage}</p>
+                <button className="close-button" onClick={() => setInsufficientFundsMessage('')}>닫기</button>
+              </div>
+          )}
+
         </div>
 
       {/* 모달들 */}
