@@ -8,6 +8,7 @@ import pressStartImage from "../assets/images/start/pressstart.png";
 import AnimatedPage from "../components/AnimatedPage";
 import { useAudio } from "../context/AudioContext";
 import startBgm from "../assets/sounds/start_bgm.wav";
+
 /* ====== 전체화면 권장 프롬프트 ====== */
 function FullscreenPrompt() {
   const [open, setOpen] = useState(false);
@@ -50,28 +51,48 @@ function FullscreenPrompt() {
     setOpen(false);
   };
 
+  // 키보드 이벤트 처리
+  const handleKeyDown = (e) => {
+    if (e.key === "Escape") {
+      closeToday();
+    } else if (e.key === "Enter") {
+      requestFullscreen();
+    }
+  };
+
   if (!open) return null;
 
   return (
-    <div className="fs-notice-overlay">
-      <div className="fs-notice-card">
+    <div className="fs-notice-overlay" onClick={(e) => e.stopPropagation()}>
+      <div className="fs-notice-card" onKeyDown={handleKeyDown} tabIndex={0}>
         <div className="fs-notice-title">크롬 전체화면을 권장해요</div>
         <div className="fs-notice-desc">
           더 좋은 몰입감을 위해 <b>Chrome</b>에서{" "}
           <b>{shortcutText}</b> 키(또는 아래 버튼)를 사용해 <br/>전체화면으로
           플레이해 보세요.<br/>
           화면이 꽉 차도록 크기를 확대해도 좋아요.
-
         </div>
 
         <div className="fs-notice-actions">
-          <button className="fs-btn primary" onClick={requestFullscreen}>
+          <button 
+            className="fs-btn primary" 
+            onClick={requestFullscreen}
+            onKeyDown={(e) => e.key === "Enter" && requestFullscreen()}
+          >
             전체화면으로 전환
           </button>
-          <button className="fs-btn" onClick={closeToday}>
+          <button 
+            className="fs-btn" 
+            onClick={closeToday}
+            onKeyDown={(e) => e.key === "Enter" && closeToday()}
+          >
             나중에
           </button>
-          <button className="fs-btn ghost" onClick={neverShow}>
+          <button 
+            className="fs-btn ghost" 
+            onClick={neverShow}
+            onKeyDown={(e) => e.key === "Enter" && neverShow()}
+          >
             다시 보지 않기
           </button>
         </div>
@@ -83,6 +104,7 @@ function FullscreenPrompt() {
 
 function StartPage() {
   const [currentCharacter, setCurrentCharacter] = useState(character1);
+  const [isPressed, setIsPressed] = useState(false);
   const navigate = useNavigate();
 
   const { audioRef, playAudio } = useAudio();  // 오디오 상태 가져오기
@@ -135,10 +157,30 @@ function StartPage() {
     }
   };
 
+  // 터치 이벤트 처리
+  const handleTouchStart = () => {
+    setIsPressed(true);
+  };
+
+  const handleTouchEnd = () => {
+    setIsPressed(false);
+    handleStartClick();
+  };
+
+  // 키보드 이벤트 처리
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handleStartClick();
+    }
+  };
+
   const characterClass =
     currentCharacter === character2
       ? "start-character punch-style"
       : "start-character";
+
+  const buttonClass = `start-button ${isPressed ? 'pressed' : ''}`;
 
   return (
     <AnimatedPage>
@@ -148,21 +190,27 @@ function StartPage() {
       <div className="start-page-background">
         <div className="start-content">
           <div className="logo-wrapper">
-            <img src={logoImage} alt="Logo" className="start-logo" />
+            <img src={logoImage} alt="Demolition King Logo" className="start-logo" />
           </div>
           <div className="character-wrapper">
             <img
               src={currentCharacter}
-              alt="Character"
+              alt="Game Character"
               className={characterClass}
             />
           </div>
           <div className="button-wrapper">
             <img
               src={pressStartImage}
-              alt="Press Start"
-              className="start-button"
+              alt="Press Start Button"
+              className={buttonClass}
               onClick={handleStartClick}
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+              onKeyDown={handleKeyDown}
+              tabIndex={0}
+              role="button"
+              aria-label="게임 시작하기"
             />
           </div>
         </div>
