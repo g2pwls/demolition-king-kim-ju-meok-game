@@ -16,13 +16,13 @@ function SignUp() {
   const navigate = useNavigate();
 
   const profileList = [
-  { image: girl1 },
-  { image: boy1 },
-  { image: girl2 },
-  { image: boy2 },
-  { image: girl3 },
-  { image: boy3 }
-];
+    { image: girl1 },
+    { image: boy1 },
+    { image: girl2 },
+    { image: boy2 },
+    { image: girl3 },
+    { image: boy3 }
+  ];
 
   const [email, setEmail] = useState('');
   const [authCode, setAuthCode] = useState('');
@@ -32,32 +32,30 @@ function SignUp() {
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [userNickname, setUserNickname] = useState('');
   const [profileSeq, setProfileSeq] = useState(1); // 기본 캐릭터 번호
+  const [nicknameStatus, setNicknameStatus] = useState(null); // 닉네임 상태
 
   // 닉네임 중복검사
   const checkNicknameDuplication = async () => {
-  try {
-    const res = await api.post('/user/auth/signup/nickname/check', {
-      nickname: userNickname,
-    });
+    try {
+      const res = await api.post('/user/auth/signup/nickname/check', {
+        nickname: userNickname,
+      });
 
-    if (res.data.result.available) {
-      alert('사용 가능한 닉네임입니다.');
-    } else {
-      alert('이미 사용 중인 닉네임입니다.');
+      if (res.data.result.available) {
+        setNicknameStatus('available');
+      } else {
+        setNicknameStatus('unavailable');
+      }
+    } catch (err) {
+      console.error(err);
+      setNicknameStatus('error');
     }
-  } catch (err) {
-    console.error(err);
-    alert('닉네임 중복 확인 실패');
-  }
-};
-
+  };
 
   // 이메일 인증코드 요청
   const requestAuthCode = async () => {
     try {
       await api.post('/v1/user/email/signup/send', { email });
-
-// 인증번호 확인
 
       alert('인증번호가 이메일로 전송되었습니다.');
     } catch (err) {
@@ -66,20 +64,20 @@ function SignUp() {
     }
   };
 
-  // 인증코드 확인
+  // 인증번호 확인
   const verifyAuthCode = async () => {
     try {
-    const res = await api.post('/v1/user/email/signup/verify', {
-      email,
-      code: authCode,
-    });
+      const res = await api.post('/v1/user/email/signup/verify', {
+        email,
+        code: authCode,
+      });
 
-    if (res.data.result.available === true) {
-      alert('이메일 인증 성공!');
-      setIsVerified(true);
-    } else {
-      alert('인증번호가 올바르지 않습니다.');
-    }
+      if (res.data.result.available === true) {
+        alert('이메일 인증 성공!');
+        setIsVerified(true);
+      } else {
+        alert('인증번호가 올바르지 않습니다.');
+      }
     } catch (err) {
       console.error(err);
       alert('인증 확인 실패');
@@ -125,7 +123,6 @@ function SignUp() {
   return (
     <div className="signup-page" style={{ backgroundImage: `url(${loginBack})` }}>
       <div className="signup-box">
-        
         <div
           className="character-select-box"
           style={{ backgroundImage: `url(${profileBack})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
@@ -141,7 +138,6 @@ function SignUp() {
               </div>
             ))}
           </div>
-
         </div>
 
         <form className="signup-form" onSubmit={handleSignup}>
@@ -151,12 +147,28 @@ function SignUp() {
             <input
               type="text"
               value={userNickname}
-              onChange={(e) => setUserNickname(e.target.value)}
+              onChange={(e) => {
+                setUserNickname(e.target.value);
+                setNicknameStatus(null); // 닉네임 변경 시 상태 초기화
+              }}
             />
-            <button type="button" onClick={checkNicknameDuplication}>
-              중복확인
-            </button>
-
+            <div className="nickname-check-container">
+              <button type="button" onClick={checkNicknameDuplication}>
+                중복확인
+              </button>
+              {/* 상태 표시 */}
+              <div className="nickname-status">
+                {nicknameStatus === 'available' && (
+                  <span style={{ color: 'green' }}>사용 가능</span>
+                )}
+                {nicknameStatus === 'unavailable' && (
+                  <span style={{ color: 'red' }}>이미 사용 중</span>
+                )}
+                {nicknameStatus === 'error' && (
+                  <span style={{ color: 'orange' }}>확인 실패</span>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* 이메일 + 인증요청 버튼 */}
