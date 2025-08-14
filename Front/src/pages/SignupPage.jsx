@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo,useEffect } from 'react';
 import axios from 'axios';
 import '../styles/SignupPage.css';
 import loginBack from '../assets/images/login/loginbackf.png';
@@ -11,7 +11,8 @@ import boy2 from '../assets/images/character/boy2.png';
 import boy3 from '../assets/images/character/boy3.png';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api'; // ✅ axios 인스턴스 기반
-
+import { useAudio } from "../context/AudioContext";
+import startBgm from "../assets/sounds/start_bgm.wav";
 function SignUp() {
   const navigate = useNavigate();
 
@@ -139,6 +140,46 @@ function SignUp() {
     }
   };
 
+    const { audioRef, playAudio } = useAudio();  // 오디오 상태 가져오기
+  
+    useEffect(() => {
+      // 페이지 로딩 시, 저장된 오디오 시간으로 설정
+      if (audioRef.current) {
+        const savedTime = localStorage.getItem('audioTime');
+        const parsedTime = parseFloat(savedTime);
+  
+        // 값이 유효한 숫자인지 확인하고, 아니면 기본값(0) 설정
+        if (!isNaN(parsedTime) && isFinite(parsedTime)) {
+          audioRef.current.currentTime = parsedTime; // 유효한 값일 경우에만 설정
+        } else {
+          audioRef.current.currentTime = 0; // 기본값 0으로 설정
+        }
+        
+        playAudio();  // 음악을 이어서 재생
+      }
+  
+      // 페이지 전환 시 현재 시간을 로컬스토리지에 저장
+      const saveAudioTime = () => {
+        if (audioRef.current) {
+          localStorage.setItem('audioTime', audioRef.current.currentTime);
+        }
+      };
+  
+      // `audioRef.current`가 HTMLAudioElement인 경우에만 addEventListener 사용
+      const audioElement = audioRef.current;
+      if (audioElement) {
+        audioElement.addEventListener('play', saveAudioTime);
+      }
+  
+      return () => {
+        // clean up
+        if (audioElement) {
+          audioElement.removeEventListener('play', saveAudioTime);
+          localStorage.setItem('audioTime', audioElement.currentTime);
+        }
+      };
+    }, [audioRef, playAudio]);
+
   return (
     <div className="signup-page" style={{ backgroundImage: `url(${loginBack})` }}>
       <div className="signup-box">
@@ -245,6 +286,8 @@ function SignUp() {
           </div>
         </form>
       </div>
+      {/* 배경 음악 */}
+            <audio ref={audioRef} src={startBgm} loop />
     </div>
   );
 }
