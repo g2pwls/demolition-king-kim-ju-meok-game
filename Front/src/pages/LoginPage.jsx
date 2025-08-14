@@ -85,7 +85,7 @@ function LoginPage() {
           <div className="form-row1 with-button">
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-                <label style={{ width: '100px' }}>아이디</label>
+                <label style={{ width: '100px' }}>이메일</label>
                 <input
                   type="text"
                   value={email}
