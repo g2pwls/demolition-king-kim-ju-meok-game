@@ -122,3 +122,17 @@
   cursor: pointer;
 }
 
+
+.character-item {
+  cursor: pointer;
+}
+
+.nickname-check-container {
+  /* display: flex; */
+  align-items: center;
+}
+
+.nickname-status {
+  margin-left: 10px;
+  font-size: 14px;
+}

@@ -59,7 +59,7 @@ function FullscreenPrompt() {
           더 좋은 몰입감을 위해 <b>Chrome</b>에서{" "}
           <b>{shortcutText}</b> 키(또는 아래 버튼)를 사용해 <br/>전체화면으로
           플레이해 보세요.<br/>
-          화면을 꽉 차도록 크기를 확대해도 좋아요.
+          화면이 꽉 차도록 크기를 확대해도 좋아요.
 
         </div>
 

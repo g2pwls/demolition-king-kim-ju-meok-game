@@ -88,7 +88,7 @@ const SingleTestPage = () => {
   const [playTime, setPlayTime] = useState(0);
   const [addTime, setAddTime] = useState(3000); // #ADDBUILDINGTIME
 
-  const COIN_PER_BUILDING = 1;
+  const COIN_PER_BUILDING = 10;
 
   // 콤보(패턴)
   const [patternIdx, setPatternIdx] = useState(0);
