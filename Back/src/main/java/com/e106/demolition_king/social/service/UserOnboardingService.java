@@ -52,7 +52,7 @@ public class UserOnboardingService {
                 .build();
 
         // PlayerSkin 1~11: 1번은 해제+선택, 나머지는 잠금
-        for (int i = 1; i <= 12; i++) {
+        for (int i = 1; i <= 13; i++) {
             user.getPlayerSkins().add(
                     PlayerSkin.builder()
                             .user(user)
