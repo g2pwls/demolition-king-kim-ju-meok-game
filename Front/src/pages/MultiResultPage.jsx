@@ -43,7 +43,7 @@ export default function MultiResultPage() {
                     <section className="mr-left">
                         <div className="mr-metric">
                             <span className="label">부순 건물 개수</span>
-                            <span className="value">:{me.destroyed ?? 0}</span>
+                            <span className="value">: {me.destroyed ?? 0}</span>
                         </div>
 
                         <div className="mr-metric">

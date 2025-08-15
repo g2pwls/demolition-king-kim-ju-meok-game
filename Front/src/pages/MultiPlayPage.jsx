@@ -928,7 +928,7 @@ export default function MultiPlayPage() {
             buildingObj?.imageName ||
             buildingObj?.filename ||
             "건물";
-        const text = `${nickname || "플레이어"}님이 "${name}"를 부쉈습니다.`;
+        const text = `${nickname || "플레이어"}님이 "${name}"를 철거했습니다.`;
         const payload = JSON.stringify({ type: "log", text, sender: nickname || "me" });
         room.localParticipant
             .publishData(new TextEncoder().encode(payload), { reliable: true })
@@ -1075,14 +1075,16 @@ export default function MultiPlayPage() {
                 <LogPanel messages={log} />
 
                 <EmotePanel onSend={sendEmote} />
-
+                <div className="me-stats">
+                        ⏱ {timeover}s · 🔥 {kcal} KCAL · 💰 {coinCount} · 🏢 {destroyedCount}
+                    </div>
                 <div className="me-card">
                     <div className="me-video-wrap">
                         <MyCamera stream={localStream} overlayRef={overlayCanvasRef} reaction={myReaction}/>
                     </div>
-                    <div className="me-stats">
+                    {/* <div className="me-stats">
                         ⏱ {timeover}s · 🔥 {kcal} KCAL · 💰 {coinCount} · 🏢 {destroyedCount}
-                    </div>
+                    </div> */}
                 </div>
             </aside>
 
