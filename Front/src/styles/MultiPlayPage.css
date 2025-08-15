@@ -47,16 +47,16 @@
 .command-sequence {
     display: flex;
     gap: 30px;
-    flex-wrap: wrap;
+    /* flex-wrap: wrap; */
 }
-.command-circle {
+.command-circle {  
     min-width: 44px;
-    height: 44px;
+    height: 60px;
     border-radius: 999px;
     display: grid;
     place-items: center;
     font-weight: 700;
-    background: #2b2f35;
+    /* background: #2b2f35; */
     color: #e7edf3;
     box-shadow: 0 2px 0 rgba(0,0,0,.25) inset;
     padding: 0 10px;
@@ -67,9 +67,9 @@
 }
 
 .command-circle.red { background:#ff6b6b; color:#1b1d20; }
-.command-circle.black { background:#2b2f35; }
+/* .command-circle.black { background:#2b2f35; } */
 .command-circle.done { opacity:.5; outline:2px solid rgba(255,255,255,.25); }
-.command-circle.current { outline:2px solid #ffd54a; }
+.command-circle.current { outline:3px solid #ffd54a; }
 
 /* 게임 캔버스 래퍼: 16:9 비율 유지 + 가능한 한 크게 */
 .mp-game {
@@ -141,6 +141,7 @@
 
 /* 내 카메라 카드 */
 .me-card {
+    height: 350px;
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -172,7 +173,7 @@
 
 /* 스탯 줄 */
 .me-stats {
-    font-size: 14px;
+    font-size: 20px;
     line-height: 1.35;
     color: #cfd6dd;
     padding: 6px 8px;
