@@ -62,8 +62,8 @@
     padding: 0 10px;
 }
 .command-image {
-    width: 80px; /* 이미지 크기 조정 */
-    height: 80px; /* 이미지 크기 조정 */
+  width: 80px; /* 이미지 크기 조정 */
+  height: 80px; /* 이미지 크기 조정 */
 }
 
 .command-circle.red { background:#ff6b6b; color:#1b1d20; }
@@ -134,7 +134,7 @@
 .mp-right{
     grid-area:right;
     display:grid;
-    grid-template-rows: 1fr auto auto; /* 로그(1fr) + 이모티콘 패널(auto) + 내 카드(auto) */
+    grid-template-rows: 1fr auto;  /* ⬅️ 순서 바꿈: 위 로그가 커지고, 아래 카메라 카드 고정 */
     gap:12px;
     min-height:0;
 }
@@ -271,51 +271,4 @@
     pointer-events:none !important;
     overflow:hidden !important;
     clip-path: inset(50%) !important; /* 접근성 + 확실한 숨김 */
-}
-.emote-panel{
-    display:flex;
-    flex-wrap: wrap;
-    gap:8px;
-    padding:10px;
-    border-radius:10px;
-    background:#0c0e10;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.35);
-}
-.emote-btn{
-    font-size:12px;
-    padding:6px 10px;
-    border-radius:999px;
-    border:1px solid #2b323b;
-    background:#0e1116;
-    color:#eaeef3;
-    cursor:pointer;
-}
-.emote-btn:hover{ filter:brightness(1.15); }
-.emote-overlay.top{
-    position:absolute;
-    top:6px; left:0; right:0;
-    display:flex; justify-content:center;
-    pointer-events:none;
-    z-index:5;
-}
-.emote-bubble{
-    padding:6px 10px;
-    border-radius:999px;
-    background: rgba(0,0,0,.55);
-    color:#ffd54a;
-    border:1px solid rgba(255,255,255,.2);
-    font-weight:800;
-    font-size:14px;
-    text-shadow: 0 1px 2px rgba(0,0,0,.6);
-}
-/* 게임 영역만 회색(대기) 오버레이 */
-.game-dim{
-    position: absolute;
-    inset: 0;
-    background: rgba(0,0,0,.55);
-    filter: grayscale(1);
-    z-index: 10;
-    border-radius: 14px; /* mp-game 자식 캔버스와 라운드 맞춤 */
-    /* pointer-events: auto;  ← 게임 영역 클릭 막고 싶으면 auto 유지
-       pointer-events: none; ← 게임 영역도 클릭되게 하려면 none으로 바꿔 */
 }

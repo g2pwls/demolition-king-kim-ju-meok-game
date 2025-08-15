@@ -7,9 +7,9 @@ import {
     createLocalAudioTrack,
     createLocalVideoTrack,
 } from "livekit-client";
-import * as mpPose from "@mediapipe/pose";
-import { Camera } from "@mediapipe/camera_utils";
-import { drawLandmarks, drawConnectors } from "@mediapipe/drawing_utils";
+// import * as mpPose from "@mediapipe/pose";
+// import { Camera } from "@mediapipe/camera_utils";
+// import { drawLandmarks, drawConnectors } from "@mediapipe/drawing_utils";
 import jabLeftImage from '../assets/images/ljjap.png';
 import jabRightImage from '../assets/images/rjjap.png';
 import upperLeftImage from '../assets/images/lupper.png';
@@ -372,11 +372,13 @@ export default function MultiPlayPage() {
     /* ───────── Mediapipe (내 화면만) ───────── */
     useEffect(() => {
         let stream;
-        let cam = null;
-        let pose = null;
+        let landmarker = null;
+        let rafId = 0;
+        let drawing = null;
 
         (async () => {
             try {
+                // 1) 카메라
                 stream = await navigator.mediaDevices.getUserMedia({
                     video: { width: 640, height: 480, facingMode: "user" },
                     audio: false,
@@ -391,17 +393,42 @@ export default function MultiPlayPage() {
                     await inputVideoRef.current.play().catch(() => {});
                 }
 
-                pose = new mpPose.Pose({
-                    locateFile: (file) =>
-                        `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/${file}`,
-                });
-                pose.setOptions({
-                    modelComplexity: 0,
-                    smoothLandmarks: true,
-                    minDetectionConfidence: 0.5,
-                    minTrackingConfidence: 0.5,
-                });
+                // 2) MediaPipe Tasks Vision 동적 import
+                const { PoseLandmarker, FilesetResolver, DrawingUtils } =
+                    await import(/* @vite-ignore */ 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0');
 
+                const vision = await FilesetResolver.forVisionTasks(
+                    'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm'
+                );
+
+                try {
+                    landmarker = await PoseLandmarker.createFromOptions(vision, {
+                        baseOptions: {
+                            modelAssetPath:
+                                'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task',
+                            delegate: 'GPU',
+                        },
+                        runningMode: 'VIDEO',
+                        numPoses: 1,
+                    });
+                } catch {
+                    landmarker = await PoseLandmarker.createFromOptions(vision, {
+                        baseOptions: {
+                            modelAssetPath:
+                                'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task',
+                            delegate: 'CPU',
+                        },
+                        runningMode: 'VIDEO',
+                        numPoses: 1,
+                    });
+                }
+
+                // 3) 오버레이 캔버스 준비
+                const cvs = overlayCanvasRef.current;
+                const ctx = cvs.getContext('2d');
+                drawing = new DrawingUtils(ctx);
+
+                // === 기존 판정 상수/상태 재사용 ===
                 const LW = LM.LEFT_WRIST, RW = LM.RIGHT_WRIST;
                 const LS = LM.LEFT_SHOULDER, RS = LM.RIGHT_SHOULDER;
                 const LH = LM.LEFT_HIP, RH = LM.RIGHT_HIP;
@@ -410,116 +437,103 @@ export default function MultiPlayPage() {
                 let armed = false;
                 let lastTs = 0;
 
-                pose.onResults((res) => {
-                    if (isGameOverRef.current || !isPlayingRef.current) return; // ← 추가
-                    const lm = res.poseLandmarks;
-                    const cvs = overlayCanvasRef.current;
-
-                    if (cvs) {
-                        const cw = cvs.clientWidth || 0;
-                        const ch = cvs.clientHeight || 0;
-                        if (cw && ch && (cvs.width !== cw || cvs.height !== ch)) {
-                            cvs.width = cw; cvs.height = ch;
-                        }
-                    }
-
-                    const ctx = cvs?.getContext("2d");
-                    if (ctx) ctx.clearRect(0, 0, cvs.width, cvs.height);
-
-                    if (!lm) {
-                        setAction("idle");
-                        armed = false;
+                const loop = () => {
+                    if (!isPlayingRef.current || isGameOverRef.current) {
+                        rafId = requestAnimationFrame(loop);
                         return;
                     }
 
-                    if (ctx) {
-                        drawConnectors(ctx, lm, mpPose.POSE_CONNECTIONS, { lineWidth: 2 });
-                        drawLandmarks(ctx, lm, { radius: 2 });
+                    // 캔버스 크기 동기화
+                    const cw = cvs.clientWidth || 0;
+                    const ch = cvs.clientHeight || 0;
+                    if (cw && ch && (cvs.width !== cw || cvs.height !== ch)) {
+                        cvs.width = cw; cvs.height = ch;
                     }
 
-                    const now = performance.now() / 1000;
-                    const dt = Math.max(0.016, Math.min(0.2, now - (lastTs || now)));
-                    lastTs = now;
+                    const now = performance.now();
+                    landmarker.detectForVideo(inputVideoRef.current, now, (result) => {
+                        ctx.clearRect(0, 0, cvs.width, cvs.height);
 
-                    const shoulderDx = Math.abs(lm[LS].x - lm[RS].x);
-                    const torsoDy = Math.abs((lm[LH].y + lm[RH].y) / 2 - (lm[LS].y + lm[RS].y) / 2);
-
-                    const JAB_X_TH = 0.22 * shoulderDx;
-                    const VEL_X_TH = (0.04 * shoulderDx) / dt;
-
-                    const UPPER_Y_TH = 0.25 * torsoDy;
-                    const VEL_Y_TH = (0.06 * torsoDy) / dt;
-
-                    const L = { x: lm[LW].x, y: lm[LW].y };
-                    const R = { x: lm[RW].x, y: lm[RW].y };
-
-                    if (!armed) { startL = L; startR = R; armed = true; return; }
-
-                    const ldx = L.x - startL.x, ldy = L.y - startL.y;
-                    const rdx = R.x - startR.x, rdy = R.y - startR.y;
-
-                    const lvx = ldx / dt, lvy = ldy / dt;
-                    const rvx = rdx / dt, rvy = rdy / dt;
-
-                    const leftJab = Math.abs(ldx) > JAB_X_TH && Math.abs(lvx) > VEL_X_TH && Math.abs(ldy) < UPPER_Y_TH * 0.6;
-                    const rightJab = Math.abs(rdx) > JAB_X_TH && Math.abs(rvx) > VEL_X_TH && Math.abs(rdy) < UPPER_Y_TH * 0.6;
-
-                    const leftUpper = ldy < -UPPER_Y_TH && lvy < -VEL_Y_TH;
-                    const rightUpper = rdy < -UPPER_Y_TH && rvy < -VEL_Y_TH;
-
-                    let moveIdx = null;
-                    if (leftJab) moveIdx = 0;
-                    else if (rightJab) moveIdx = 1;
-                    else if (leftUpper) moveIdx = 2;
-                    else if (rightUpper) moveIdx = 3;
-
-                    if (moveIdx !== null) {
-                        setAction("punch"); // Pixi가 이 값을 기대한다고 가정
-                        setTimeout(() => setAction("idle"), 0);
-
-                        const curr = combo?.[patternIdx];
-                        const need = curr?.moves?.[stepIdx];
-                        if (need === moveIdx) advanceStepOnce();
-
-                        if (ctx) {
-                            const labels = ["왼잽", "오잽", "왼어퍼", "오어퍼"];
-                            const text = labels[moveIdx];
-                            ctx.save();
-                            ctx.font = "bold 24px sans-serif";
-                            const w = ctx.measureText(text).width + 16;
-                            ctx.fillStyle = "rgba(0,0,0,.65)";
-                            ctx.fillRect(12, 12, w, 34);
-                            ctx.fillStyle = "#ffd54a";
-                            ctx.fillText(text, 20, 38);
-                            ctx.restore();
+                        const lm = result?.landmarks?.[0];
+                        if (!lm) {
+                            setAction('idle');
+                            armed = false;
+                            return;
                         }
 
-                        startL = L; startR = R;
-                    }
-                });
+                        // 포즈 그리기 (원하면 연결선도 가능)
+                        try {
+                            drawing.drawLandmarks(lm);
+                            // drawing.drawConnectors(lm, PoseLandmarker.POSE_CONNECTIONS);
+                        } catch {}
 
-                cam = new Camera(inputVideoRef.current, {
-                    onFrame: async () => {
-                        if (isGameOverRef.current || !isPlayingRef.current) return; // ← 추가
-                        try { await pose.send({ image: inputVideoRef.current }); } catch {}
-                    },
-                    width: 640,
-                    height: 480,
-                });
-                cam.start();
+                        const nowS = now / 1000;
+                        const dt = Math.max(0.016, Math.min(0.2, nowS - (lastTs || nowS)));
+                        lastTs = nowS;
+
+                        const shoulderDx = Math.abs(lm[LS].x - lm[RS].x);
+                        const torsoDy = Math.abs((lm[LH].y + lm[RH].y) / 2 - (lm[LS].y + lm[RS].y) / 2);
+
+                        const JAB_X_TH = 0.22 * shoulderDx;
+                        const VEL_X_TH = (0.04 * shoulderDx) / dt;
+
+                        const UPPER_Y_TH = 0.25 * torsoDy;
+                        const VEL_Y_TH   = (0.06 * torsoDy) / dt;
+
+                        const L = { x: lm[LW].x, y: lm[LW].y };
+                        const R = { x: lm[RW].x, y: lm[RW].y };
+
+                        if (!armed) { startL = L; startR = R; armed = true; return; }
+
+                        const ldx = L.x - startL.x, ldy = L.y - startL.y;
+                        const rdx = R.x - startR.x, rdy = R.y - startR.y;
+
+                        const lvx = ldx / dt, lvy = ldy / dt;
+                        const rvx = rdx / dt, rvy = rdy / dt;
+
+                        const leftJab   = Math.abs(ldx) > JAB_X_TH && Math.abs(lvx) > VEL_X_TH && Math.abs(ldy) < UPPER_Y_TH * 0.6;
+                        const rightJab  = Math.abs(rdx) > JAB_X_TH && Math.abs(rvx) > VEL_X_TH && Math.abs(rdy) < UPPER_Y_TH * 0.6;
+
+                        const leftUpper  = ldy < -UPPER_Y_TH && lvy < -VEL_Y_TH;
+                        const rightUpper = rdy < -UPPER_Y_TH && rvy < -VEL_Y_TH;
+
+                        let moveIdx = null;
+                        if (leftJab)      moveIdx = 0;
+                        else if (rightJab) moveIdx = 1;
+                        else if (leftUpper)  moveIdx = 2;
+                        else if (rightUpper) moveIdx = 3;
+
+                        if (moveIdx !== null) {
+                            setAction('punch');
+                            setTimeout(() => setAction('idle'), 0);
+
+                            const curr = combo?.[patternIdx];
+                            const need = curr?.moves?.[stepIdx];
+                            if (need === moveIdx) advanceStepOnce();
+
+                            // (옵션) 텍스트 오버레이
+                            // ctx.save(); ctx.font = 'bold 24px sans-serif'; ... ctx.restore();
+
+                            startL = L; startR = R;
+                        }
+                    });
+
+                    rafId = requestAnimationFrame(loop);
+                };
+
+                rafId = requestAnimationFrame(loop);
             } catch (e) {
-                console.error("getUserMedia / Mediapipe 실패:", e);
+                console.error('getUserMedia / Tasks-Vision 실패:', e);
             }
         })();
 
         return () => {
-            try { cam?.stop?.(); } catch {}
-            cam = null;
-            try { pose?.close?.(); } catch {}
-            pose = null;
-            try { stream?.getTracks?.().forEach((t) => t.stop()); } catch {}
+            cancelAnimationFrame(rafId);
+            try { landmarker?.close?.(); } catch {}
+            try { stream?.getTracks?.().forEach(t => t.stop()); } catch {}
         };
     }, [combo, patternIdx, stepIdx]);
+
 
     /* ───────── LiveKit 연결 ───────── */
     useEffect(() => {
