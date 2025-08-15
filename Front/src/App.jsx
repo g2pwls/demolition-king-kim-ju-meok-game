@@ -25,6 +25,7 @@ import MultiLobbyPage from "./pages/MultiLobbyPage";
 import MultiPlayPage from "./pages/MultiPlayPage";
 import MultiModeEntryPage from "./pages/MultiModeEntryPage";
 import EventGamePage from "./pages/EventGamePage";
+import MultiResultPage from "./pages/MultiResultPage";
 
 // components
 import AppLayout from "./components/AppLayout";
@@ -68,6 +69,14 @@ function AppRoutes() {
                     <MultiModeEntryPage />
                     </ProtectedRoute>
                 }
+                />
+                <Route
+                    path="/multi-result"
+                    element={
+                        <ProtectedRoute>
+                            <MultiResultPage />
+                        </ProtectedRoute>
+                    }
                 />
             </Routes>
         </AnimatePresence>
