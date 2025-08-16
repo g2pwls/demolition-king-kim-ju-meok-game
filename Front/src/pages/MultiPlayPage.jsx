@@ -376,6 +376,59 @@ export default function MultiPlayPage() {
         let rafId = 0;
         let drawing = null;
 
+        // === 파이썬 이식: 상태/파라미터 ===
+        let STATE = "get_ready";
+        let lastActionAt = 0;
+        const COOLDOWN_MS = 1000;
+        const PIX_THRESHOLD = 60; // 파이썬: threshold=60(px)
+
+        // 시작 기준점
+        let startPos = { left: null, right: null };
+
+        let prevLeft = null, prevRight = null;
+        const SMOOTH = 0.35; // 0.0(즉시) ~ 1.0(매우 스무딩)
+
+
+        // 머리 위 표시 텍스트
+        let motionText = "";
+        let motionTextUntil = 0;
+
+        // 픽셀 좌표 유틸
+        const toPx = (lm, idx, cw, ch) => ({
+            x: Math.round(lm[idx].x * cw),
+            y: Math.round(lm[idx].y * ch),
+        });
+
+        // 레디 자세 판정 (파이썬 로직 그대로)
+        const isReadyPose = (lm, cw, ch) => {
+            const LW = toPx(lm, LM.LEFT_WRIST, cw, ch).y;
+            const RW = toPx(lm, LM.RIGHT_WRIST, cw, ch).y;
+            const LE = toPx(lm, LM.LEFT_ELBOW, cw, ch).y;
+            const RE = toPx(lm, LM.RIGHT_ELBOW, cw, ch).y;
+            const LS = toPx(lm, LM.LEFT_SHOULDER, cw, ch).y;
+            const RS = toPx(lm, LM.RIGHT_SHOULDER, cw, ch).y;
+            const NO = toPx(lm, LM.NOSE, cw, ch).y;
+
+            const hand_in_guard_range =
+                NO < LW && LW < LS + 40 &&
+                NO < RW && RW < RS + 40;
+
+            const elbows_down = (LE > LS) && (RE > RS);
+
+            return hand_in_guard_range && elbows_down;
+        };
+
+        // 모션 분류 (파이썬 classify_motion)
+        const classifyMotion = (start, now, hand /* 'left' | 'right' */) => {
+            const dx = now.x - start.x;
+            const dy = now.y - start.y;
+            if (Math.abs(dy) > Math.abs(dx)) {
+                return hand === "left" ? { idx: 2, label: "LEFT UPPERCUT" } : { idx: 3, label: "RIGHT UPPERCUT" };
+            } else {
+                return hand === "left" ? { idx: 0, label: "LEFT JAB" } : { idx: 1, label: "RIGHT JAB" };
+            }
+        };
+
         (async () => {
             try {
                 // 1) 카메라
@@ -393,7 +446,7 @@ export default function MultiPlayPage() {
                     await inputVideoRef.current.play().catch(() => {});
                 }
 
-                // 2) MediaPipe Tasks Vision 동적 import
+                // 2) MediaPipe Tasks Vision
                 const { PoseLandmarker, FilesetResolver, DrawingUtils } =
                     await import(/* @vite-ignore */ 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0');
 
@@ -410,6 +463,9 @@ export default function MultiPlayPage() {
                         },
                         runningMode: 'VIDEO',
                         numPoses: 1,
+                        minPoseDetectionConfidence: 0.6,
+                        minPosePresenceConfidence: 0.6,
+                        minTrackingConfidence: 0.6,
                     });
                 } catch {
                     landmarker = await PoseLandmarker.createFromOptions(vision, {
@@ -423,99 +479,156 @@ export default function MultiPlayPage() {
                     });
                 }
 
-                // 3) 오버레이 캔버스 준비
+                // 3) 오버레이 캔버스
                 const cvs = overlayCanvasRef.current;
                 const ctx = cvs.getContext('2d');
                 drawing = new DrawingUtils(ctx);
 
-                // === 기존 판정 상수/상태 재사용 ===
-                const LW = LM.LEFT_WRIST, RW = LM.RIGHT_WRIST;
-                const LS = LM.LEFT_SHOULDER, RS = LM.RIGHT_SHOULDER;
-                const LH = LM.LEFT_HIP, RH = LM.RIGHT_HIP;
 
-                let startL = null, startR = null;
-                let armed = false;
-                let lastTs = 0;
+                function drawTopRight(text, y = 16, font = 'bold 22px sans-serif') {
+                    if (!text) return;
+                    ctx.save();
+                    // 캔버스/비디오가 CSS로 mirror일 때 텍스트만 정방향 보이게
+                    ctx.translate(cvs.width, 0);
+                    ctx.scale(-1, 1);
+
+                    ctx.font = font;
+                    ctx.textAlign = 'right';
+                    ctx.textBaseline = 'top';
+
+                    // (선택) 반투명 배경으로 가독성 향상
+                    const pad = 8;
+                    const metrics = ctx.measureText(text);
+                    const w = metrics.width;
+                    const h = parseInt(font.match(/\d+/)?.[0] || '22', 10) + 6;
+                    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+                    ctx.fillRect(cvs.width - (w + pad * 2) - 16, y - 4, w + pad * 2, h + 4);
+
+                    ctx.fillStyle = 'rgba(255,255,0,0.95)';
+                    ctx.fillText(text, cvs.width - 16 - pad, y);
+                    ctx.restore();
+                }
+
 
                 const loop = () => {
-                    if (!isPlayingRef.current || isGameOverRef.current) {
-                        rafId = requestAnimationFrame(loop);
-                        return;
-                    }
+                    const nowMs = performance.now();
 
-                    // 캔버스 크기 동기화
+                    // 1) DPR/캔버스 크기 동기화
                     const cw = cvs.clientWidth || 0;
                     const ch = cvs.clientHeight || 0;
-                    if (cw && ch && (cvs.width !== cw || cvs.height !== ch)) {
-                        cvs.width = cw; cvs.height = ch;
+                    const dpr = window.devicePixelRatio || 1;
+                    if (cw && ch && (cvs.width !== Math.floor(cw * dpr) || cvs.height !== Math.floor(ch * dpr))) {
+                        cvs.width = Math.floor(cw * dpr);
+                        cvs.height = Math.floor(ch * dpr);
+                        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
                     }
 
-                    const now = performance.now();
-                    landmarker.detectForVideo(inputVideoRef.current, now, (result) => {
-                        ctx.clearRect(0, 0, cvs.width, cvs.height);
+                    // 2) 프레임 처리
+                    landmarker.detectForVideo(inputVideoRef.current, nowMs, (result) => {
+                        if (motionText && nowMs < motionTextUntil) {
+                            drawTopRight(motionText, 56, 'bold 22px sans-serif');
+                        }
+                        ctx.save();
+                        ctx.setTransform(1, 0, 0, 1, 0, 0);        // 변환 초기화
+                        ctx.clearRect(0, 0, cvs.width, cvs.height); // 전체 지우기
+                        ctx.restore();
 
                         const lm = result?.landmarks?.[0];
                         if (!lm) {
-                            setAction('idle');
-                            armed = false;
+                            // 포즈 없음 → 레디로 복귀
+                            STATE = "get_ready";
+                            startPos.left = null;
+                            startPos.right = null;
                             return;
                         }
 
-                        // 포즈 그리기 (원하면 연결선도 가능)
+                        // 2-2) 랜드마크 표시
                         try {
                             drawing.drawLandmarks(lm);
                             // drawing.drawConnectors(lm, PoseLandmarker.POSE_CONNECTIONS);
                         } catch {}
 
-                        const nowS = now / 1000;
-                        const dt = Math.max(0.016, Math.min(0.2, nowS - (lastTs || nowS)));
-                        lastTs = nowS;
+                        // 2-3) 머리 위치(텍스트 기준점)
+                        const nose = toPx(lm, LM.NOSE, cw, ch);
 
-                        const shoulderDx = Math.abs(lm[LS].x - lm[RS].x);
-                        const torsoDy = Math.abs((lm[LH].y + lm[RH].y) / 2 - (lm[LS].y + lm[RS].y) / 2);
+                        // 2-4) 상태머신
+                        if (STATE === "get_ready") {
+                            // GET READY 표시
+                            ctx.save();
+                            ctx.font = 'bold 32px sans-serif';
+                            ctx.textBaseline = 'top';
+                            ctx.fillStyle = 'rgba(255,0,0,0.9)';
+                            ctx.fillText('GET READY', 30, 30);
+                            ctx.restore();
 
-                        const JAB_X_TH = 0.22 * shoulderDx;
-                        const VEL_X_TH = (0.04 * shoulderDx) / dt;
+                            if (isReadyPose(lm, cw, ch)) {
+                                STATE = "action";
+                                startPos.left  = toPx(lm, LM.LEFT_WRIST, cw, ch);
+                                startPos.right = toPx(lm, LM.RIGHT_WRIST, cw, ch);
+                                motionText = "";
+                            }
+                        } else if (STATE === "action") {
+                            // 손목 좌표 + EMA 스무딩
+                            const rawL = toPx(lm, LM.LEFT_WRIST, cw, ch);
+                            const rawR = toPx(lm, LM.RIGHT_WRIST, cw, ch);
+                            if (!prevLeft)  prevLeft  = rawL;
+                            if (!prevRight) prevRight = rawR;
 
-                        const UPPER_Y_TH = 0.25 * torsoDy;
-                        const VEL_Y_TH   = (0.06 * torsoDy) / dt;
+                            const leftNow = {
+                                x: prevLeft.x  + (rawL.x - prevLeft.x)   * SMOOTH,
+                                y: prevLeft.y  + (rawL.y - prevLeft.y)   * SMOOTH,
+                            };
+                            const rightNow = {
+                                x: prevRight.x + (rawR.x - prevRight.x)  * SMOOTH,
+                                y: prevRight.y + (rawR.y - prevRight.y)  * SMOOTH,
+                            };
+                            prevLeft = leftNow;
+                            prevRight = rightNow;
 
-                        const L = { x: lm[LW].x, y: lm[LW].y };
-                        const R = { x: lm[RW].x, y: lm[RW].y };
+                            // 이동량으로 동작 판정
+                            const ldx = Math.abs(leftNow.x  - (startPos.left?.x  ?? leftNow.x));
+                            const ldy = Math.abs(leftNow.y  - (startPos.left?.y  ?? leftNow.y));
+                            const rdx = Math.abs(rightNow.x - (startPos.right?.x ?? rightNow.x));
+                            const rdy = Math.abs(rightNow.y - (startPos.right?.y ?? rightNow.y));
 
-                        if (!armed) { startL = L; startR = R; armed = true; return; }
+                            let detected = null;
+                            if (ldx > PIX_THRESHOLD || ldy > PIX_THRESHOLD) {
+                                detected = classifyMotion(startPos.left || leftNow, leftNow, 'left');   // {idx,label}
+                            } else if (rdx > PIX_THRESHOLD || rdy > PIX_THRESHOLD) {
+                                detected = classifyMotion(startPos.right || rightNow, rightNow, 'right');
+                            }
 
-                        const ldx = L.x - startL.x, ldy = L.y - startL.y;
-                        const rdx = R.x - startR.x, rdy = R.y - startR.y;
+                            if (detected) {
+                                // 머리 위 영어 텍스트
+                                const MOTION_SHOW_MS = 1800; // 1.8초 유지 (원하면 2000~2500 으로 더 늘려도 됨)
+                                motionText = detected.label;                 // e.g., LEFT JAB / RIGHT UPPERCUT
+                                motionTextUntil = nowMs + MOTION_SHOW_MS;    // ← 더 오래 보여주기
 
-                        const lvx = ldx / dt, lvy = ldy / dt;
-                        const rvx = rdx / dt, rvy = rdy / dt;
+                                // 콤보 스텝 소모 (즉시 소모)
+                                advanceStepOnce();
+                                // 필요 시 요구 스텝 매칭만 소모하려면:
+                                // const need = combo?.[patternIdx]?.moves?.[stepIdx];
+                                // if (need === detected.idx) advanceStepOnce();
 
-                        const leftJab   = Math.abs(ldx) > JAB_X_TH && Math.abs(lvx) > VEL_X_TH && Math.abs(ldy) < UPPER_Y_TH * 0.6;
-                        const rightJab  = Math.abs(rdx) > JAB_X_TH && Math.abs(rvx) > VEL_X_TH && Math.abs(rdy) < UPPER_Y_TH * 0.6;
+                                // 기준점 갱신 + 쿨다운 이동
+                                startPos.left  = leftNow;
+                                startPos.right = rightNow;
+                                lastActionAt = nowMs;
+                                STATE = "cooldown";
+                            }
+                        } else if (STATE === "cooldown") {
+                            ctx.save();
+                            ctx.font = 'bold 28px sans-serif';
+                            ctx.textBaseline = 'top';
+                            ctx.fillStyle = 'rgba(255,165,0,0.9)';
+                            ctx.fillText('WAIT...', 30, 30);
+                            ctx.restore();
 
-                        const leftUpper  = ldy < -UPPER_Y_TH && lvy < -VEL_Y_TH;
-                        const rightUpper = rdy < -UPPER_Y_TH && rvy < -VEL_Y_TH;
-
-                        let moveIdx = null;
-                        if (leftJab)      moveIdx = 0;
-                        else if (rightJab) moveIdx = 1;
-                        else if (leftUpper)  moveIdx = 2;
-                        else if (rightUpper) moveIdx = 3;
-
-                        if (moveIdx !== null) {
-                            setAction('punch');
-                            setTimeout(() => setAction('idle'), 0);
-
-                            const curr = combo?.[patternIdx];
-                            const need = curr?.moves?.[stepIdx];
-                            if (need === moveIdx) advanceStepOnce();
-
-                            // (옵션) 텍스트 오버레이
-                            // ctx.save(); ctx.font = 'bold 24px sans-serif'; ... ctx.restore();
-
-                            startL = L; startR = R;
+                            if (nowMs - lastActionAt > COOLDOWN_MS) {
+                                STATE = "get_ready";
+                            }
                         }
+
                     });
 
                     rafId = requestAnimationFrame(loop);
@@ -532,7 +645,10 @@ export default function MultiPlayPage() {
             try { landmarker?.close?.(); } catch {}
             try { stream?.getTracks?.().forEach(t => t.stop()); } catch {}
         };
-    }, [combo, patternIdx, stepIdx]);
+        // combo/indices는 외부 advanceStepOnce 사용 → 의존성 최소화
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
 
 
     /* ───────── LiveKit 연결 ───────── */
