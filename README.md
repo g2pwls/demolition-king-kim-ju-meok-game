@@ -106,7 +106,7 @@
       - 게임 코어 로직 구현
       - WebRtc 기반 프론트엔드 배포 환경 구성 (MediaPipe · OpenVidu)  
     - BACKEND
-      - 게임과 관련된 통계, 골드, 건물 생성 API 작업
+      - 게임과 관련된 통계, 골드, 건물 생성, 스킨 API 작업
       - SMTP 기반 이메일 인증 API 작업
       - Spring Security JWT 인증 뼈대구성
       - AWS EC2, Nginx, Openvidu, Livekit 영속성 인프라 작업
