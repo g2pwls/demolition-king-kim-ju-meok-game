@@ -136,3 +136,18 @@
   /* margin-left: 10px; */
   font-size: 14px;
 }
+
+/* 버튼+입력행: 라벨 / 인풋 / 버튼 한 줄 + 상태문구 한 줄 */
+
+
+/* 상태문구는 버튼 아래(오른쪽 두 칸)로 */
+.status-line {
+  grid-column: 2 / span 2;
+  margin-top: 4px;
+  font-size: 14px;
+}
+
+/* 닉네임 중복확인 UI가 흔들리는 문제 예방 */
+.nickname-check-container button {
+  min-width: 84px; /* 버튼 폭 고정 */
+}

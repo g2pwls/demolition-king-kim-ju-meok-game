@@ -1484,3 +1484,15 @@ width: 100vw;  /* 화면 너비에 맞춤 */
   text-align: center;
   pointer-events: none;
 }
+
+/* 입력 아래 안내문 공통 스타일 */
+.status-line {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+/* 상태별 색상 */
+.status-line.success { color: #18a058; }   /* 초록 */
+.status-line.mismatch { color: #ff4d4f; }  /* 빨강 */
+.status-line.error { color: #fa8c16; }     /* 주황 */

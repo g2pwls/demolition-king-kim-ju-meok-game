@@ -28,7 +28,7 @@ export default function ResetPasswordPage() {
         newPassword: pw,
         confirmPassword: pw2,
       });
-      alert('비밀번호가 변경되었습니다!');
+      // alert('비밀번호가 변경되었습니다!');
       navigate('/login'); // 원하는 경로로 변경
     } catch (e) {
       console.error(e);
@@ -49,7 +49,7 @@ export default function ResetPasswordPage() {
 
           <div className="form-row4">
             <label>새 비밀번호</label>
-            <input type="password" value={pw} onChange={(e) => setPw(e.target.value)} required />
+            <input type="password" value={pw} onChange={(e) => setPw(e.target.value)} required placeholder="영문, 숫자 포함 8~20자, 공백 불가"/>
           </div>
 
           <div className="form-row4">
