@@ -52,6 +52,98 @@ const EMOTES = [
     { id: "laugh", text: "😆" },
 ];
 
+const BUILDING_LABELS = {
+    building1:  '노란 벽돌(일반)',
+    building2:  '허름한 건물(일반)',
+    building3:  '갈색 벽돌(일반)',
+    building4:  '회사C(일반)',
+    building5:  '빨간 벽돌(일반)',
+    building6:  '지붕 빨간 벽돌(일반)',
+    building7:  '일그러진 흰 벽돌(일반)',
+    building8:  '유리 건물(일반)',
+    building9:  '회사A(일반)',
+    building10: '회사B(일반)',
+    building11: '울리브용 본사(일반)',
+    building12: '우예스 피시방(일반)',
+    building13: '스타북스(일반)',
+    building14: '쉼터(일반)',
+    building15: '흰 벽돌(일반)',
+    building16: '싸믹아파트(일반)',
+    building17: '그럴싸한 오피스텔(일반)',
+    building18: '숭정삼정 오피스텔(일반)',
+    building19: '천연사우나(일반)',
+    building20: '대왕 오피스텔(일반)',
+    building21: '공사장(일반)',
+    building22: '폐건물(일반)',
+    building23: '고시원(일반)',
+    building24: '아파트(일반)',
+    building25: '주택(일반)',
+    building26: '빌라(일반)',
+
+    rare1:  '바구니(레어)',
+    rare2:  '도넛(레어)',
+    rare3:  '네입버거(레어)',
+    rare4:  '이쁜 회사(레어)',
+    rare5:  '막두날두(레어)',
+    rare6:  '삐까뻔쩍 통유리(레어)',
+    rare7:  'BMW(레어)',
+    rare8:  '루이똥(레어)',
+    rare9:  '빈츠(레어)',
+    rare10: '갱기장(레어)',
+    rare11: 'JwhyP(레어)',
+    rare12: '엔SI(레어)',
+    rare13: '눈이안보여요(레어)',
+    rare14: '룻데리아(레어)',
+    rare15: '삼마트(레어)',
+
+    legendary1: '샘숭(레전더리)',
+    legendary2: '샘숭 서울(레전더리)',
+    legendary3: '샘숭 부울경(레전더리)',
+    legendary4: '샘숭 대전(레전더리)',
+};
+
+// "이름(타입)" → "(타입) 이름"
+function formatLabelStyle(label) {
+    const m = String(label).match(/^\s*(.+?)\s*\(([^)]+)\)\s*$/);
+    return m ? `(${m[2]}) ${m[1].trim()}` : label;
+}
+
+function resolveBuildingKey(b) {
+    if (!b) return null;
+    const seq =
+        b?.constructureSeq ?? b?.seq ?? b?.id ?? b?.constructureId ?? null;
+    if (Number.isInteger(seq) && seq >= 1 && seq <= 26) return `building${seq}`;
+
+    const raw =
+        b?.imageUrl || b?.imageName || b?.filename || b?.name || b?.title || '';
+    const base = String(raw).toLowerCase();
+    const onlyName = base.split('/').pop()?.replace(/\.[a-z0-9]+$/i, '') || base;
+    const m = onlyName.match(/\b(building|rare|legendary)\s*[-_ ]?\s*(\d+)\b/i);
+    if (m) return `${m[1].toLowerCase()}${parseInt(m[2], 10)}`;
+
+    const m2 = String(raw).match(/\b(building|rare|legendary)\s*[-_ ]?\s*(\d+)\b/i);
+    if (m2) return `${m2[1].toLowerCase()}${parseInt(m2[2], 10)}`;
+    return null;
+}
+
+function getDisplayBuildingName(b) {
+    const key = resolveBuildingKey(b);
+    if (key && BUILDING_LABELS[key]) return formatLabelStyle(BUILDING_LABELS[key]);
+
+    let raw =
+        b?.constructureName || b?.name || b?.title || b?.imageName || b?.filename || b?.imageUrl || '건물';
+    raw = String(raw);
+    try {
+        const u = new URL(raw);
+        raw = u.pathname.split('/').pop() || raw;
+    } catch {}
+    raw = raw.replace(/\.[a-z0-9]+$/i, '').replace(/[_-]+/g, ' ').trim();
+
+    const mm = raw.match(/^\s*(.+?)\s*\(([^)]+)\)\s*$/);
+    if (mm) raw = `(${mm[2]}) ${mm[1].trim()}`;
+    return raw || '건물';
+}
+
 function getUuidFromJwt() {
     const at = localStorage.getItem('accessToken');
     if (!at) return "";
@@ -62,6 +154,7 @@ function getUuidFromJwt() {
         return "";
     }
 }
+
 /* -------------------- 공용 비디오 타일 -------------------- */
 function LKVideoTile({ track, muted, className = "" }) {
     const vref = useRef(null);
@@ -84,25 +177,15 @@ function LKVideoTile({ track, muted, className = "" }) {
 }
 
 /* -------------------- 좌측 원격 타일 -------------------- */
-function RemotePeerTile({ track, nickname = "대기 중...", uuid, stat, reaction}) {
+function RemotePeerTile({ track, reaction }) {
     const on = !!track;
     return (
         <div className={`peer-tile ${on ? "on" : "off"}`}>
             {track ? <LKVideoTile track={track} /> : null}
-
-            {/* ✅ 원격 타일 상단 리액션 버블 */}
             {reaction ? (
                 <div className="emote-overlay top">
-                    <div className="emote-bubble">{reaction}</div>
+                    <div className="emote-bubble emote-large">{reaction}</div>
                 </div>
-            ) : null}
-
-            <div className="peer-badge">
-                <span className="name">{nickname}</span>
-                {uuid ? <span className="uuid">{String(uuid).slice(0, 6)}…</span> : null}
-            </div>
-            {stat ? (
-                <div className="peer-stat">🏢 {stat.destroyed ?? 0} · 💰 {stat.coin ?? 0}</div>
             ) : null}
         </div>
     );
@@ -162,7 +245,8 @@ function EmotePanel({ onSend }) {
 }
 
 /* -------------------- 내 카메라 + 오버레이 -------------------- */
-function MyCamera({ stream, overlayRef, reaction}) {
+// [NO-VISUAL-MP] 오버레이 캔버스는 유지하되 화면에서 숨김
+function MyCamera({ stream, overlayRef, reaction, poseStatus, statsText }) {
     const vref = useRef(null);
     useEffect(() => {
         if (!vref.current) return;
@@ -180,14 +264,21 @@ function MyCamera({ stream, overlayRef, reaction}) {
                 className="mirror"
                 style={{ width: "100%", height: "100%", objectFit: "contain" }}
             />
-            <canvas ref={overlayRef} className="overlay mirror" style={{ width: "100%", height: "100%" }} />
-            {/* ✅ 내 화면 상단 리액션 버블 */}
+            {/* MP 캔버스는 숨김(연산만) */}
+            <canvas ref={overlayRef} className="overlay mirror" style={{ display: 'none' }} />
+
+            {/* 상태등 */}
+            <div className={`status-dot ${poseStatus}`} />
+
+            {/* 🔹 내 스탯 오버레이 (비디오 상단 중앙) */}
+            <div className="me-stats-overlay">{statsText}</div>
+
+            {/* 이모티콘 말풍선 */}
             {reaction ? (
-                <div className="emote-overlay top">
-                    <div className="emote-bubble">{reaction}</div>
+                <div className="emote-overlay">
+                    <div className="emote-bubble emote-large">{reaction}</div>
                 </div>
             ) : null}
-
         </div>
     );
 }
@@ -222,6 +313,16 @@ export default function MultiPlayPage() {
     const [remoteTracks, setRemoteTracks] = useState([]);
     const [localVideoTrack, setLocalVideoTrack] = useState(null);
 
+    // === 포즈 상태 표시 (빨강/파랑/노랑) ===
+    const [poseStatus, setPoseStatus] = useState('need_ready');
+    const poseStatusRef = useRef('need_ready');
+    const setPose = (s) => {
+        if (poseStatusRef.current !== s) {
+            poseStatusRef.current = s;
+            setPoseStatus(s);
+        }
+    };
+
     /* ===== 게임 로그 ===== */
     const [log, setLog] = useState([]);
 
@@ -231,9 +332,10 @@ export default function MultiPlayPage() {
     const overlayCanvasRef = useRef(null);
 
     /* ✅ 리액션 상태 */
-    const [reactions, setReactions] = useState(new Map()); // 참가자ID -> 표시중 문자열
+    const [reactions, setReactions] = useState(new Map());
     const [myReaction, setMyReaction] = useState("");
-    const EMOTE_TTL = 2500; // 표시 시간(ms)
+    const EMOTE_TTL = 2500;
+
     /* ===== 게임 상태 ===== */
     const [action, setAction] = useState("idle");
     const [timeover, setTimeover] = useState(100);
@@ -248,6 +350,13 @@ export default function MultiPlayPage() {
     const [stepIdx, setStepIdx] = useState(0);
     const advanceLockRef = useRef(false);
 
+    const comboRef = useRef([]);
+    const patternIdxRef = useRef(0);
+    const stepIdxRef = useRef(0);
+    useEffect(() => { comboRef.current = combo; }, [combo]);
+    useEffect(() => { patternIdxRef.current = patternIdx; }, [patternIdx]);
+    useEffect(() => { stepIdxRef.current = stepIdx; }, [stepIdx]);
+
     /* ===== 타이머/게임오버 ===== */
     const TIME_LIMIT_SEC = 100;
     const startTimeRef = useRef(null);
@@ -256,13 +365,13 @@ export default function MultiPlayPage() {
     const isGameOverRef = useRef(false);
     useEffect(() => { isGameOverRef.current = isGameOver; }, [isGameOver]);
 
-    /* 🔹 시작 카운트다운 (추가) */
+    /* 🔹 시작 카운트다운 */
     const READY_SECONDS = 5;
     const [isPlaying, setIsPlaying] = useState(false);
     const isPlayingRef = useRef(false);
     const [readyLeft, setReadyLeft] = useState(READY_SECONDS);
 
-    /* ===== 누적 스탯 (state + ref 동기화) ===== */
+    /* ===== 누적 스탯 ===== */
     const [kcal, setKcal] = useState(0);
     const [coinCount, setCoinCount] = useState(0);
     const [destroyedCount, setDestroyedCount] = useState(0);
@@ -278,18 +387,20 @@ export default function MultiPlayPage() {
 
     /* ===== 원격 스탯/파이널 ===== */
     const [remoteStats, setRemoteStats] = useState(new Map());
-    const finalsRef = useRef(new Map()); // id -> 최종 스냅샷
+    const finalsRef = useRef(new Map());
 
     /* ===== 참가자 집합(배리어) ===== */
-    const expectedIdsRef = useRef(new Set()); // identity(userUuid) 집합
+    const expectedIdsRef = useRef(new Set());
     const resultsAnnouncedRef = useRef(false);
     const [waitingOverlay, setWaitingOverlay] = useState(false);
     const [resultsReady, setResultsReady] = useState(false);
 
-
     const [destroyedSeqs, setDestroyedSeqs] = useState([]);
     const destroyedSeqsRef = useRef([]);
     useEffect(() => { destroyedSeqsRef.current = destroyedSeqs; }, [destroyedSeqs]);
+
+    const [hitToken, setHitToken] = useState(0);
+
     /* ───────── 유저 정보 ───────── */
     useEffect(() => {
         const token = localStorage.getItem("accessToken");
@@ -311,7 +422,6 @@ export default function MultiPlayPage() {
                 if (fb) setUserUuid((prev) => prev || fb);
             });
     }, []);
-
 
     /* ───────── 리소스 로드 ───────── */
     useEffect(() => {
@@ -351,7 +461,7 @@ export default function MultiPlayPage() {
         }
     }, [combo]);
 
-    /* 🔹 시작 카운트다운 (추가) */
+    /* 🔹 시작 카운트다운 */
     useEffect(() => {
         setReadyLeft(READY_SECONDS);
         const t = setInterval(() => {
@@ -360,7 +470,7 @@ export default function MultiPlayPage() {
                     clearInterval(t);
                     setIsPlaying(true);
                     isPlayingRef.current = true;
-                    startTimeRef.current = Date.now(); // 타이머 기준 시각
+                    startTimeRef.current = Date.now();
                     return 0;
                 }
                 return prev - 1;
@@ -369,12 +479,54 @@ export default function MultiPlayPage() {
         return () => clearInterval(t);
     }, []);
 
-    /* ───────── Mediapipe (내 화면만) ───────── */
+    /* ───────── Mediapipe (감지만, 화면 출력 없음) ───────── */
     useEffect(() => {
         let stream;
         let landmarker = null;
         let rafId = 0;
-        let drawing = null;
+
+        // --- 상태/파라미터 ---
+        let STATE = "get_ready";
+        let lastActionAt = 0;
+        const COOLDOWN_MS = 1000;
+        const PIX_THRESHOLD = 60;
+
+        let startPos = { left: null, right: null };
+        let prevLeft = null, prevRight = null;
+        const SMOOTH = 0.35;
+
+        const toPx = (lm, idx, cw, ch) => ({
+            x: Math.round(lm[idx].x * cw),
+            y: Math.round(lm[idx].y * ch),
+        });
+
+        const isReadyPose = (lm, cw, ch) => {
+            const LW = toPx(lm, LM.LEFT_WRIST, cw, ch).y;
+            const RW = toPx(lm, LM.RIGHT_WRIST, cw, ch).y;
+            const LE = toPx(lm, LM.LEFT_ELBOW, cw, ch).y;
+            const RE = toPx(lm, LM.RIGHT_ELBOW, cw, ch).y;
+            const LS = toPx(lm, LM.LEFT_SHOULDER, cw, ch).y;
+            const RS = toPx(lm, LM.RIGHT_SHOULDER, cw, ch).y;
+            const NO = toPx(lm, LM.NOSE, cw, ch).y;
+
+            const handInGuard =
+                NO < LW && LW < LS + 40 &&
+                NO < RW && RW < RS + 40;
+            const elbowsDown = (LE > LS) && (RE > RS);
+            return handInGuard && elbowsDown;
+        };
+
+        const classifyMotion = (start, now, hand) => {
+            const dx = now.x - start.x;
+            const dy = now.y - start.y;
+            if (Math.abs(dy) > Math.abs(dx)) {
+                return hand === "left" ? { idx: 2, label: "LEFT UPPERCUT" }
+                    : { idx: 3, label: "RIGHT UPPERCUT" };
+            } else {
+                return hand === "left" ? { idx: 0, label: "LEFT JAB" }
+                    : { idx: 1, label: "RIGHT JAB" };
+            }
+        };
 
         (async () => {
             try {
@@ -393,8 +545,8 @@ export default function MultiPlayPage() {
                     await inputVideoRef.current.play().catch(() => {});
                 }
 
-                // 2) MediaPipe Tasks Vision 동적 import
-                const { PoseLandmarker, FilesetResolver, DrawingUtils } =
+                // 2) MediaPipe Tasks Vision (시각화 없이 감지만)
+                const { PoseLandmarker, FilesetResolver } =
                     await import(/* @vite-ignore */ 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0');
 
                 const vision = await FilesetResolver.forVisionTasks(
@@ -410,6 +562,9 @@ export default function MultiPlayPage() {
                         },
                         runningMode: 'VIDEO',
                         numPoses: 1,
+                        minPoseDetectionConfidence: 0.6,
+                        minPosePresenceConfidence: 0.6,
+                        minTrackingConfidence: 0.6,
                     });
                 } catch {
                     landmarker = await PoseLandmarker.createFromOptions(vision, {
@@ -423,98 +578,95 @@ export default function MultiPlayPage() {
                     });
                 }
 
-                // 3) 오버레이 캔버스 준비
-                const cvs = overlayCanvasRef.current;
-                const ctx = cvs.getContext('2d');
-                drawing = new DrawingUtils(ctx);
-
-                // === 기존 판정 상수/상태 재사용 ===
-                const LW = LM.LEFT_WRIST, RW = LM.RIGHT_WRIST;
-                const LS = LM.LEFT_SHOULDER, RS = LM.RIGHT_SHOULDER;
-                const LH = LM.LEFT_HIP, RH = LM.RIGHT_HIP;
-
-                let startL = null, startR = null;
-                let armed = false;
-                let lastTs = 0;
-
                 const loop = () => {
-                    if (!isPlayingRef.current || isGameOverRef.current) {
+                    const nowMs = performance.now();
+
+                    if (!inputVideoRef.current) {
                         rafId = requestAnimationFrame(loop);
                         return;
                     }
 
-                    // 캔버스 크기 동기화
-                    const cw = cvs.clientWidth || 0;
-                    const ch = cvs.clientHeight || 0;
-                    if (cw && ch && (cvs.width !== cw || cvs.height !== ch)) {
-                        cvs.width = cw; cvs.height = ch;
-                    }
-
-                    const now = performance.now();
-                    landmarker.detectForVideo(inputVideoRef.current, now, (result) => {
-                        ctx.clearRect(0, 0, cvs.width, cvs.height);
-
-                        const lm = result?.landmarks?.[0];
-                        if (!lm) {
-                            setAction('idle');
-                            armed = false;
+                    landmarker.detectForVideo(inputVideoRef.current, nowMs, (result) => {
+                        // 카운트다운 중엔 판정 안함
+                        if (!isPlayingRef.current) {
+                            setPose('need_ready');
                             return;
                         }
 
-                        // 포즈 그리기 (원하면 연결선도 가능)
-                        try {
-                            drawing.drawLandmarks(lm);
-                            // drawing.drawConnectors(lm, PoseLandmarker.POSE_CONNECTIONS);
-                        } catch {}
+                        const lm = result?.landmarks?.[0];
+                        if (!lm) {
+                            // 포즈 없음 → 레디 대기
+                            setPose('need_ready');
+                            return;
+                        }
 
-                        const nowS = now / 1000;
-                        const dt = Math.max(0.016, Math.min(0.2, nowS - (lastTs || nowS)));
-                        lastTs = nowS;
+                        // 화면 그리기 없음 [NO-VISUAL-MP]
+                        const vw = inputVideoRef.current.videoWidth || 640;
+                        const vh = inputVideoRef.current.videoHeight || 480;
 
-                        const shoulderDx = Math.abs(lm[LS].x - lm[RS].x);
-                        const torsoDy = Math.abs((lm[LH].y + lm[RH].y) / 2 - (lm[LS].y + lm[RS].y) / 2);
+                        if (STATE === "get_ready") {
+                            if (isReadyPose(lm, vw, vh)) {
+                                STATE = "action";
+                                startPos.left  = toPx(lm, LM.LEFT_WRIST, vw, vh);
+                                startPos.right = toPx(lm, LM.RIGHT_WRIST, vw, vh);
+                                setPose('ready');
+                            } else {
+                                setPose('need_ready');
+                            }
+                        } else if (STATE === "action") {
+                            const rawL = toPx(lm, LM.LEFT_WRIST, vw, vh);
+                            const rawR = toPx(lm, LM.RIGHT_WRIST, vw, vh);
+                            if (!prevLeft)  prevLeft  = rawL;
+                            if (!prevRight) prevRight = rawR;
 
-                        const JAB_X_TH = 0.22 * shoulderDx;
-                        const VEL_X_TH = (0.04 * shoulderDx) / dt;
+                            const leftNow = {
+                                x: prevLeft.x  + (rawL.x - prevLeft.x)   * SMOOTH,
+                                y: prevLeft.y  + (rawL.y - prevLeft.y)   * SMOOTH,
+                            };
+                            const rightNow = {
+                                x: prevRight.x + (rawR.x - prevRight.x)  * SMOOTH,
+                                y: prevRight.y + (rawR.y - prevRight.y)  * SMOOTH,
+                            };
+                            prevLeft = leftNow;
+                            prevRight = rightNow;
 
-                        const UPPER_Y_TH = 0.25 * torsoDy;
-                        const VEL_Y_TH   = (0.06 * torsoDy) / dt;
+                            const ldx = Math.abs(leftNow.x  - (startPos.left?.x  ?? leftNow.x));
+                            const ldy = Math.abs(leftNow.y  - (startPos.left?.y  ?? leftNow.y));
+                            const rdx = Math.abs(rightNow.x - (startPos.right?.x ?? rightNow.x));
+                            const rdy = Math.abs(rightNow.y - (startPos.right?.y ?? rightNow.y));
 
-                        const L = { x: lm[LW].x, y: lm[LW].y };
-                        const R = { x: lm[RW].x, y: lm[RW].y };
+                            let detected = null;
+                            if (ldx > PIX_THRESHOLD || ldy > PIX_THRESHOLD) {
+                                detected = classifyMotion(startPos.left || leftNow, leftNow, 'left');
+                            } else if (rdx > PIX_THRESHOLD || rdy > PIX_THRESHOLD) {
+                                detected = classifyMotion(startPos.right || rightNow, rightNow, 'right');
+                            }
 
-                        if (!armed) { startL = L; startR = R; armed = true; return; }
+                            if (detected) {
+                                setAction('punch');
+                                setTimeout(() => setAction('idle'), 0);
+                                setPose('detected');
+                                setTimeout(() => {
+                                    if (poseStatusRef.current === 'detected') setPose('ready');
+                                }, 400);
 
-                        const ldx = L.x - startL.x, ldy = L.y - startL.y;
-                        const rdx = R.x - startR.x, rdy = R.y - startR.y;
+                                const need = comboRef.current?.[patternIdxRef.current]?.moves?.[stepIdxRef.current];
 
-                        const lvx = ldx / dt, lvy = ldy / dt;
-                        const rvx = rdx / dt, rvy = rdy / dt;
-
-                        const leftJab   = Math.abs(ldx) > JAB_X_TH && Math.abs(lvx) > VEL_X_TH && Math.abs(ldy) < UPPER_Y_TH * 0.6;
-                        const rightJab  = Math.abs(rdx) > JAB_X_TH && Math.abs(rvx) > VEL_X_TH && Math.abs(rdy) < UPPER_Y_TH * 0.6;
-
-                        const leftUpper  = ldy < -UPPER_Y_TH && lvy < -VEL_Y_TH;
-                        const rightUpper = rdy < -UPPER_Y_TH && rvy < -VEL_Y_TH;
-
-                        let moveIdx = null;
-                        if (leftJab)      moveIdx = 0;
-                        else if (rightJab) moveIdx = 1;
-                        else if (leftUpper)  moveIdx = 2;
-                        else if (rightUpper) moveIdx = 3;
-
-                        if (moveIdx !== null) {
-                            setAction('punch');
-                            setTimeout(() => setAction('idle'), 0);
-
-                            const curr = combo?.[patternIdx];
-                            const need = curr?.moves?.[stepIdx];
-                            if (need === moveIdx) advanceStepOnce();
-
-                            // (옵션) 텍스트 오버레이
-                            // ctx.save(); ctx.font = 'bold 24px sans-serif'; ... ctx.restore();
-
-                            startL = L; startR = R;
+                                if (Number(need) === Number(detected.idx)) {
+                                    advanceStepOnce();
+                                    setHitToken(t => t + 1);
+                                }
+                                startPos.left  = leftNow;
+                                startPos.right = rightNow;
+                                lastActionAt = nowMs;
+                                STATE = "cooldown";
+                            } else {
+                                setPose('ready');
+                            }
+                        } else if (STATE === "cooldown") {
+                            if (nowMs - lastActionAt > COOLDOWN_MS) {
+                                STATE = "get_ready";
+                            }
                         }
                     });
 
@@ -532,8 +684,8 @@ export default function MultiPlayPage() {
             try { landmarker?.close?.(); } catch {}
             try { stream?.getTracks?.().forEach(t => t.stop()); } catch {}
         };
-    }, [combo, patternIdx, stepIdx]);
-
+// eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     /* ───────── LiveKit 연결 ───────── */
     useEffect(() => {
@@ -603,9 +755,9 @@ export default function MultiPlayPage() {
                             arrivedAt: sentAt || Date.now(),
                         });
                     }
-                    maybeAnnounceResults(); // 누군가 끝날 때마다 체크
+                    maybeAnnounceResults();
                 } else if (obj.type === "results_ready") {
-                    if (resultsReady) return; // 한 번만 처리
+                    if (resultsReady) return;
                     setResultsReady(true);
                     setWaitingOverlay(false);
                     const delay = Math.max(0, (obj.goAt ?? Date.now()) - Date.now());
@@ -629,10 +781,8 @@ export default function MultiPlayPage() {
                 setLocalVideoTrack(video);
             }
 
-            // 참가자 집합 초기화
             recalcExpected(r);
 
-            // 기존 원격 트랙 시딩
             const remotes = Array.from(r.remoteParticipants?.values?.() || []);
             remotes.forEach((p) => {
                 p.videoTracks?.forEach?.((pub) => {
@@ -669,8 +819,7 @@ export default function MultiPlayPage() {
         return data.token;
     }
 
-
-    /* ───────── 게임 타이머 (시작 후에만 동작) ───────── */
+    /* ───────── 게임 타이머 ───────── */
     useEffect(() => {
         if (!isPlaying) return;
         if (!startTimeRef.current) startTimeRef.current = Date.now();
@@ -696,34 +845,26 @@ export default function MultiPlayPage() {
     );
 
     /* ───────── 콤보 진행 ───────── */
-    const lastActionRef = useRef("idle");
-    useEffect(() => {
-        if (isGameOver) return;
-        const isHit = action === "punch";
-        if (isHit && lastActionRef.current !== action) {
-            advanceStepOnce();
-        }
-        lastActionRef.current = action;
-    }, [action, isGameOver]);
-
     function advanceStepOnce() {
-        if (!Array.isArray(combo) || combo.length === 0) return;
+        const comboNow = comboRef.current;
+        if (!Array.isArray(comboNow) || comboNow.length === 0) return;
         if (advanceLockRef.current) return;
         advanceLockRef.current = true;
 
-        const current = combo[patternIdx];
-        const total = (current?.moves || []).length;
+        const patIdxNow = patternIdxRef.current;
+        const current   = comboNow[patIdxNow];
+        const total     = (current?.moves || []).length;
 
         setStepIdx((prev) => {
             const next = prev + 1;
             if (next >= total) {
-                setPatternIdx((p) => (p + 1) % combo.length);
+                setPatternIdx((p) => (p + 1) % comboRef.current.length);
                 return 0;
             }
             return next;
         });
 
-        setTimeout(() => (advanceLockRef.current = false), 250);
+        setTimeout(() => { advanceLockRef.current = false; }, 250);
     }
 
     /* ───────── 브로드캐스트 ───────── */
@@ -759,7 +900,6 @@ export default function MultiPlayPage() {
         return snap;
     };
 
-    /* ───────── 배리어: 모두 끝나면 결과 공표 ───────── */
     const haveAllFinals = () => {
         const ids = expectedIdsRef.current;
         for (const id of ids) {
@@ -791,59 +931,53 @@ export default function MultiPlayPage() {
         setTimeout(() => goToResultWithPayload(payload), delay);
     };
 
-    // ✅ 멀티 게임 종료 DB 반영 (UUID 기반 + 건물 저장)
+    // DB 반영
     const didPersistRef = useRef(false);
     async function persistMultiGameResults(meSnapshot) {
         if (didPersistRef.current) return;
         didPersistRef.current = true;
 
         try {
-            const userId = userUuid; // LiveKit identity와 동일
+            const userId = userUuid;
             if (!userId) throw new Error("userUuid 없음");
 
-            // meSnapshot: { id, nick, destroyed, coin, kcal, playTimeSec, rank }
             const playMin = Number(((meSnapshot.playTimeSec ?? 0) / 60).toFixed(2));
             const kcalNow = Math.round(meSnapshot.kcal ?? 0);
             const goldCnt = Number(meSnapshot.coin ?? 0);
 
-            // 메달 집계(랭크 기반)
             const goldMedal   = meSnapshot.rank === 1 ? 1 : 0;
             const silverMedal = meSnapshot.rank === 2 ? 1 : 0;
             const bronzeMedal = meSnapshot.rank === 3 ? 1 : 0;
 
-            // 공통 헤더(UUID 기반 패치)
             const uuidHeaders = { "X-User-Uuid": userId };
 
-            // 1) 누적 리포트 (멀티 최고 건물, 플레이카운트/시간, 메달)
             const r1 = api.patch(
                 "/users/games/reportUpdates/uuid",
                 null,
                 {
                     params: {
-                        singleTopBuilding: 0,                     // 멀티이므로 0
+                        singleTopBuilding: 0,
                         multiTopBuilding: meSnapshot.destroyed ?? 0,
                         goldMedal, silverMedal, bronzeMedal,
                         playCnt: 1,
-                        playTime: playMin,                        // 분 단위
+                        playTime: playMin,
                     },
                     headers: uuidHeaders,
                 }
             );
 
-            // 2) 일일 리포트 (kcal, 플레이 시간)
             const r2 = api.patch(
                 "/users/games/reportPerDateUpdates/uuid",
                 null,
                 {
                     params: {
                         kcal: kcalNow,
-                        playTimeDate: playMin,                    // 분 단위
+                        playTimeDate: playMin,
                     },
                     headers: uuidHeaders,
                 }
             );
 
-            // 3) 골드 업데이트
             const r3 = api.patch(
                 "/users/games/addGoldCnt/uuid",
                 null,
@@ -853,7 +987,6 @@ export default function MultiPlayPage() {
                 }
             );
 
-            // 4) 파괴한 건물 저장 (이 API는 바디에 userUuid 포함)
             const token = localStorage.getItem("accessToken") || "";
             const r4 = api.post(
                 "/constructures/save",
@@ -895,7 +1028,6 @@ export default function MultiPlayPage() {
             ? meEntry
             : { ...meEntry, rank: full.findIndex((x) => x.id === meEntry.id) + 1 };
 
-        // ✅ 여기서 비동기 저장 트리거 (화면 전환과 병렬로 진행)
         persistMultiGameResults(me);
 
         navigate("/multi-result", {
@@ -910,7 +1042,6 @@ export default function MultiPlayPage() {
         });
     };
 
-
     const triggerGameOver = () => {
         if (isGameOverRef.current) return;
         setIsGameOver(true);
@@ -922,17 +1053,14 @@ export default function MultiPlayPage() {
     /* ───────── 로그/스탯 브로드캐스트 ───────── */
     const broadcastDestroyLog = (buildingObj) => {
         if (!room) return;
-        const name =
-            buildingObj?.name ||
-            buildingObj?.title ||
-            buildingObj?.imageName ||
-            buildingObj?.filename ||
-            "건물";
-        const text = `${nickname || "플레이어"}님이 "${name}"를 철거했습니다.`;
+        const name = getDisplayBuildingName(buildingObj);
+        const text = `${nickname || "플레이어"}님이 "${name}" 철거했습니다.`;
+
         const payload = JSON.stringify({ type: "log", text, sender: nickname || "me" });
         room.localParticipant
             .publishData(new TextEncoder().encode(payload), { reliable: true })
             .catch(() => {});
+
         setLog((prev) => [...prev, { sender: nickname || "me", message: text }]);
     };
 
@@ -948,12 +1076,10 @@ export default function MultiPlayPage() {
             .catch(() => {});
     };
 
-    /* ───────── 파괴 핸들러(단일) ───────── */
-    // 파괴 핸들러 수정
+    /* ───────── 파괴 핸들러 ───────── */
     const handleDestroyed = () => {
         if (isGameOverRef.current) return;
 
-        // ✅ 현재 건물의 seq/키를 수집 (서버 INSERT용)
         const seq =
             currentBuilding?.constructureSeq ??
             currentBuilding?.seq ??
@@ -980,7 +1106,6 @@ export default function MultiPlayPage() {
         );
     };
 
-
     /* ───────── UI 데이터 ───────── */
     const sidebarPeers = useMemo(() => {
         const ids = Array.from(new Set(remoteTracks.map((t) => t.participantIdentity))).filter(
@@ -998,7 +1123,6 @@ export default function MultiPlayPage() {
         return arr;
     }, [userUuid, remoteTracks, remoteStats, reactions]);
 
-    // 특정 참가자의 리액션을 TTL만큼 보여주기
     const showReactionFor = (id, text) => {
         setReactions(prev => {
             const next = new Map(prev);
@@ -1014,35 +1138,29 @@ export default function MultiPlayPage() {
         }, EMOTE_TTL);
     };
 
-// 내 버튼 클릭 → 내 화면 + 브로드캐스트
     const sendEmote = (emoteId) => {
         const item = EMOTES.find(e => e.id === emoteId);
         if (!item) return;
         setMyReaction(item.text);
         setTimeout(() => setMyReaction(prev => (prev === item.text ? "" : prev)), EMOTE_TTL);
-        broadcast("emote", { emoteId }); // ✅ 데이터채널 전송
+        broadcast("emote", { emoteId });
     };
-
 
     return (
         <div className="mp-root">
-            {/* 🔹 시작 전 카운트다운 오버레이 (추가) */}
             {!isGameOver && !isPlaying && (
                 <div className="prestart-overlay">
                     <div className="countdown">{readyLeft}</div>
                 </div>
             )}
 
-            {/* 좌: 원격 참가자 3명 */}
             <aside className="mp-sidebar">
                 {sidebarPeers.map((p, idx) => (
                     <RemotePeerTile key={idx} track={p.track} uuid={p.uuid} stat={p.stat} reaction={p.reaction}/>
                 ))}
             </aside>
 
-            {/* 가운데: 게임 */}
             <main className="mp-main">
-                {/* HUD: 타이머바 + 콤보 */}
                 <div className="mp-hud">
                     <div className="timer-bar">
                         <div className="timer-fill" style={{ width: `${timePercent}%` }} />
@@ -1052,7 +1170,7 @@ export default function MultiPlayPage() {
 
                 <div className="mp-game">
                     <PixiCanvas
-                        key={currentBuilding?.id || buildingIndex}   // HP 초기화
+                        key={currentBuilding?.id || buildingIndex}
                         action={action}
                         building={currentBuilding}
                         playerSkin={playerSkin}
@@ -1062,6 +1180,7 @@ export default function MultiPlayPage() {
                         setKcal={(v) => { setKcal(v); kcalRef.current = v; }}
                         onKcalChange={(v) => { setKcal(v); kcalRef.current = v; }}
                         showBuildingHp
+                        hitToken={hitToken}
                     />
                     {waitingOverlay && !resultsReady && <div className="game-dim" />}
                 </div>
@@ -1070,24 +1189,33 @@ export default function MultiPlayPage() {
                 <video ref={inputVideoRef} className="mp-hidden-input" muted playsInline autoPlay />
             </main>
 
-            {/* 우: 로그 + 내 카메라 + 스탯 */}
+            // 우: 로그 + 내 카메라 + 스탯
             <aside className="mp-right">
-                <LogPanel messages={log} />
+            <LogPanel messages={log} />
 
-                <EmotePanel onSend={sendEmote} />
-                <div className="me-stats">
-                        ⏱ {timeover}s · 🔥 {kcal} KCAL · 💰 {coinCount} · 🏢 {destroyedCount}
-                    </div>
+            <div className="me-card-wrap">
+                {/* 🔹 내 스탯: 카드 바로 위에 */}
+                <div className="me-stats-bar">
+                    ⏱ {timeover}s · 🔥 {kcal} KCAL · 💰 {coinCount} · 🏢 {destroyedCount}
+                </div>
+
                 <div className="me-card">
                     <div className="me-video-wrap">
-                        <MyCamera stream={localStream} overlayRef={overlayCanvasRef} reaction={myReaction}/>
+                        <MyCamera
+                            stream={localStream}
+                            overlayRef={overlayCanvasRef}
+                            reaction={myReaction}
+                            poseStatus={poseStatus}
+                        />
                     </div>
-                    {/* <div className="me-stats">
-                        ⏱ {timeover}s · 🔥 {kcal} KCAL · 💰 {coinCount} · 🏢 {destroyedCount}
-                    </div> */}
-                </div>
-            </aside>
 
-        </div>
+                    <div className="me-emote-wrap">
+                        <EmotePanel onSend={sendEmote} />
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+</div>
     );
 }

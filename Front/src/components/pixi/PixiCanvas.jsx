@@ -92,10 +92,6 @@ import jjang_upper from '../../assets/images/karina/jjang_upper.png';
 
 
 
-
-
-
-
 // 캐릭터 이미지들 (기본 캐릭터들 있을 경우)
 //import army from '../../assets/images/character/army.png';
 //import jennie from '../../assets/images/character/jennie.png';
@@ -129,23 +125,36 @@ const computeBox = (app) => {
   return { w, h, cx, cy, bottomY };
 };
 
+const isAlive = (obj) => !!obj && !obj.destroyed;
+const safeSetScale = (sprite, s) => {
+     if (!isAlive(sprite)) return;
+     if (sprite.scale && typeof sprite.scale.set === 'function') {
+         sprite.scale.set(s);
+       }
+   };
+
 // 비율 유지 스케일
 const fitSpriteToBox = (sprite, boxW, boxH, mode = 'fit') => {
-  const doResize = () => {
-    const texW = sprite.texture.width || 1;
-    const texH = sprite.texture.height || 1;
-    const sx = boxW / texW;
-    const sy = boxH / texH;
-    const s = mode === 'cover' ? Math.max(sx, sy) : Math.min(sx, sy);
-    sprite.scale.set(s);
+     if (!isAlive(sprite)) return;
+    const doResize = () => {
+        if (!isAlive(sprite)) return;
+        const tex = sprite.texture;
+        if (!tex || !tex.valid) return;
+        const texW = tex.width || 1;
+        const texH = tex.height || 1;
+        const sx = boxW / texW;
+        const sy = boxH / texH;
+        const s  = mode === 'cover' ? Math.max(sx, sy) : Math.min(sx, sy);
+        safeSetScale(sprite, s);
+      };
+    const tex = sprite.texture;
+    if (tex && tex.valid) doResize();
+    else tex && tex.once && tex.once('update', doResize);
   };
-  if (sprite.texture.valid) doResize();
-  else sprite.texture.once('update', doResize);
-};
 
 // HP/먼지 위치: anchorY = 1(바닥 기준)
 const placeHpAndDust = (buildingSprite, hpBg, hpFill, dust) => {
-  if (!buildingSprite) return;
+  if (!isAlive(buildingSprite)) return;
   const topY = buildingSprite.y - buildingSprite.height; // 바닥기준이라 top = y - height
   if (hpBg) {
     hpBg.x = buildingSprite.x - HP_BAR_WIDTH / 2;
@@ -171,6 +180,7 @@ const randomCrackPosition = (b) => {
 
 const PixiCanvas = ({
   action,
+  hitToken,
   playerSkin,
   onBuildingDestroyed,
   kcal,
@@ -193,6 +203,7 @@ const PixiCanvas = ({
   const impactFadeTickerRef = useRef(null);
 
   const prevActionRef = useRef('idle');
+  const lastHitTokenRef = useRef(0);
   const destroyedLock = useRef(false);
 
   const [buildingHP, setBuildingHP] = useState(building?.hp ?? 100);
@@ -256,6 +267,12 @@ const PixiCanvas = ({
       if (impactFadeTickerRef.current) app.ticker.remove(impactFadeTickerRef.current);
       app.destroy(true, { children: true });
       appRef.current = null;
+      boxerRef.current = null;
+      buildingSpriteRef.current = null;
+      hpBgRef.current = null;
+      healthBarRef.current = null;
+      dustSpriteRef.current = null;
+      impactCrackRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -456,10 +473,10 @@ const PixiCanvas = ({
 
   // ★ 타격 순간 임팩트 크랙 표시/사라짐 — 중첩 방지, 200ms만 노출
   const showCrackOnce = (duration = 200, fadeOut = false) => {
-    const app = appRef.current;
-    const b = buildingSpriteRef.current;
-    const crack = impactCrackRef.current;
-    if (!app || !b || !crack) return;
+       const app = appRef.current;
+       const b = buildingSpriteRef.current;
+       const crack = impactCrackRef.current;
+       if (!app || !isAlive(b) || !isAlive(crack)) return;
 
     // 이전 예약/티커 정리
     if (impactHideTimerRef.current) {
@@ -506,17 +523,14 @@ const PixiCanvas = ({
   useEffect(() => {
     if (!boxerRef.current) return;
 
-    const isJab =
-      action === 'punch' || (typeof action === 'string' && action.endsWith('_jab'));
-    const isUpper =
-      action === 'uppercut' || (typeof action === 'string' && action.endsWith('_uppercut'));
+    const isJab   = action === 'punch' || (typeof action === 'string' && action.endsWith('_jab'));
+    const isUpper = action === 'uppercut' || (typeof action === 'string' && action.endsWith('_uppercut'));
 
     if ((isJab || isUpper) &&
         prevActionRef.current !== action &&
         !isBuildingFalling &&
         !isNewBuildingDropping) {
 
-      // ✅ 변경 4) 전역 상수 대신 ref 프레임 사용
       const frames = isUpper ? uppercutFramesRef.current : jabFramesRef.current;
 
       let i = 0;
@@ -528,20 +542,31 @@ const PixiCanvas = ({
           clearInterval(interval);
         }
       }, 80);
-
-      // 데미지/칼로리
-      setBuildingHP((prev) => Math.max(prev - 20, 0));
-      if (typeof setKcal === 'function') {
-        setKcal((prev) => Math.round((prev + 0.1) * 10) / 10);
-      }
-
-      // 임팩트 크랙
-      showCrackOnce(200, false);
     }
 
     prevActionRef.current = action;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [action, isNewBuildingDropping, isBuildingFalling]);
+
+
+  // 콤보가 실제로 소모되었을 때만 데미지 적용
+  useEffect(() => {
+    if (hitToken == null) return;
+    if (hitToken === lastHitTokenRef.current) return;
+    if (!appRef.current || !isAlive(buildingSpriteRef.current)) return;
+
+    lastHitTokenRef.current = hitToken;
+
+    // 데미지/칼로리
+    setBuildingHP(prev => Math.max(prev - 20, 0));
+    if (typeof setKcal === 'function') {
+      setKcal(prev => Math.round((prev + 0.1) * 10) / 10);
+    }
+
+    // 임팩트 크랙
+    showCrackOnce(200, false);
+  }, [hitToken, setKcal]);
+
+
 
   // ========= HP 변화 =========
   useEffect(() => {
