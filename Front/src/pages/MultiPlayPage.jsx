@@ -1052,7 +1052,6 @@ export default function MultiPlayPage() {
 
                 <div className="mp-game">
                     <PixiCanvas
-                        key={currentBuilding?.id || buildingIndex}   // HP 초기화
                         action={action}
                         building={currentBuilding}
                         playerSkin={playerSkin}
@@ -1062,6 +1061,7 @@ export default function MultiPlayPage() {
                         setKcal={(v) => { setKcal(v); kcalRef.current = v; }}
                         onKcalChange={(v) => { setKcal(v); kcalRef.current = v; }}
                         showBuildingHp
+                        fitMode="cover"
                     />
                     {waitingOverlay && !resultsReady && <div className="game-dim" />}
                 </div>

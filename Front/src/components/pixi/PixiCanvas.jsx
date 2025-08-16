@@ -107,6 +107,7 @@ import worker from '../../assets/images/character/worker.png';
 //import ufc from '../../assets/images/character/ufc.png';
 import character from '../../assets/images/character/character.png';
 
+
 const dustFrames = [buildingDust1, buildingDust2, buildingDust3, buildingDust2, buildingDust1];
 
 // ========= 상수 =========
@@ -120,11 +121,13 @@ const BOX_H_RATIO = 0.55;
 const BOX_POS_X_RATIO = 0.63;
 const BOX_POS_Y_RATIO = 0.63;
 
-const computeBox = (app) => {
-  const w = app.renderer.width * BOX_W_RATIO;
-  const h = app.renderer.height * BOX_H_RATIO;
-  const cx = app.renderer.width * BOX_POS_X_RATIO;
-  const cy = app.renderer.height * BOX_POS_Y_RATIO;
+ const computeBox = (app) => {
+  const W = app.screen.width;
+  const H = app.screen.height;
+  const w = W * BOX_W_RATIO;
+  const h = H * BOX_H_RATIO;
+  const cx = W * BOX_POS_X_RATIO;
+  const cy = H * BOX_POS_Y_RATIO;
   const bottomY = cy + h / 2; // 박스 바닥 라인
   return { w, h, cx, cy, bottomY };
 };
@@ -136,7 +139,17 @@ const fitSpriteToBox = (sprite, boxW, boxH, mode = 'fit') => {
     const texH = sprite.texture.height || 1;
     const sx = boxW / texW;
     const sy = boxH / texH;
-    const s = mode === 'cover' ? Math.max(sx, sy) : Math.min(sx, sy);
+    let s;
+    if (mode === 'cover') {
+      s = Math.max(sx, sy);
+    } else if (mode === 'byHeight') {
+      // 항상 '보이는 높이'가 boxH가 되도록 고정
+      s = sy;
+    } else if (mode === 'byWidth') {
+      s = sx;
+    } else {
+      s = Math.min(sx, sy); // 기본: fit
+    }
     sprite.scale.set(s);
   };
   if (sprite.texture.valid) doResize();
@@ -177,6 +190,7 @@ const PixiCanvas = ({
   setKcal,
   showBuildingHp,
   building, // { constructureSeq, hp, imageUrl, name }
+  fitMode = 'fit',
 }) => {
   const pixiRef = useRef(null);
   const appRef = useRef(null);
@@ -208,15 +222,19 @@ const PixiCanvas = ({
   const jabFramesRef = useRef([]);
   const uppercutFramesRef = useRef([]);
 
+
+
   // ========== PIXI 초기화 ==========
   useEffect(() => {
     if (!pixiRef.current) return;
 
     const app = new PIXI.Application({
-      width: pixiRef.current.clientWidth,
-      height: pixiRef.current.clientHeight,
       backgroundAlpha: 0,
+      antialias: true,
+      // 캔버스 CSS 크기에 자동 맞춤 + 해상도도 여기서 지정
       resizeTo: pixiRef.current,
+      resolution: Math.min(2, window.devicePixelRatio || 1),
+      autoDensity: true, 
     });
 
     appRef.current = app;
@@ -228,14 +246,13 @@ const PixiCanvas = ({
     const handleResize = () => {
       if (!appRef.current) return;
       const app = appRef.current;
-      app.renderer.resize(pixiRef.current.clientWidth, pixiRef.current.clientHeight);
 
       // 리사이즈 시 하단 정렬 유지
       const b = buildingSpriteRef.current;
       if (b) {
-        const { w: boxW, h: boxH, cx, bottomY } = computeBox(app);
+        const { w, h, cx, bottomY } = computeBox(app); // 이제 app.screen 기반
         b.x = cx;
-        fitSpriteToBox(b, boxW, boxH, 'fit');
+        fitSpriteToBox(b, w, h, fitMode);
         b.y = bottomY; // 바닥 붙임
         placeHpAndDust(b, hpBgRef.current, healthBarRef.current, dustSpriteRef.current);
 
@@ -275,11 +292,11 @@ const PixiCanvas = ({
     // 배경
     const background = PIXI.Sprite.from(eventgameback);
     background.anchor.set(0.5);
-    background.x = app.renderer.width / 2;
-    background.y = app.renderer.height / 2;
+    background.x = app.screen.width / 2;
+    background.y = app.screen.height / 2;
     background.zIndex = 0;
-    background.width = app.renderer.width;
-    background.height = app.renderer.height;
+    background.width = app.screen.width;
+    background.height = app.screen.height;
     safeAddChild(background);
 
     // ✅ 변경 2) 선택한 캐릭터 프레임을 ref에 주입
@@ -370,8 +387,8 @@ const PixiCanvas = ({
     boxer.anchor.set(0.5);
     boxer.width = boxerWidth;
     boxer.height = boxerHeight;
-    boxer.x = app.renderer.width * 0.3;
-    boxer.y = app.renderer.height * 0.75;
+    boxer.x = app.screen.width * 0.3;
+    boxer.y = app.screen.height * 0.75;
     boxer.zIndex = 1;
     boxerRef.current = boxer;
     safeAddChild(boxer);
@@ -380,7 +397,7 @@ const PixiCanvas = ({
     const bld = new PIXI.Sprite(PIXI.Texture.from(building?.imageUrl || building1));
     bld.anchor.set(0.5, 1); // ⬅️ 바닥 기준
     bld.x = cx;
-    fitSpriteToBox(bld, boxW, boxH, 'fit');
+    fitSpriteToBox(bld, boxW, boxH, fitMode);
     bld.y = bottomY; // ⬅️ 박스 바닥에 붙임
     bld.zIndex = 1;
     buildingSpriteRef.current = bld;
@@ -441,7 +458,7 @@ const PixiCanvas = ({
     const { w: boxW, h: boxH, cx, bottomY } = computeBox(app);
     b.anchor.set(0.5, 1);
     b.x = cx;
-    fitSpriteToBox(b, boxW, boxH, 'fit');
+    fitSpriteToBox(b, boxW, boxH, fitMode);
     b.y = bottomY;
 
     if (impactCrackRef.current) {
@@ -452,7 +469,7 @@ const PixiCanvas = ({
     }
 
     placeHpAndDust(b, hpBgRef.current, healthBarRef.current, dustSpriteRef.current);
-  }, [building]);
+  }, [building, fitMode]);
 
   // ★ 타격 순간 임팩트 크랙 표시/사라짐 — 중첩 방지, 200ms만 노출
   const showCrackOnce = (duration = 200, fadeOut = false) => {
@@ -625,7 +642,7 @@ const PixiCanvas = ({
       maxHPRef.current = building.hp ?? 100;
       setBuildingHP(maxHPRef.current);
 
-      fitSpriteToBox(b, boxW, boxH, 'fit');
+      fitSpriteToBox(b, boxW, boxH, fitMode);
       placeHpAndDust(b, hpBgRef.current, healthBarRef.current, dustSpriteRef.current);
 
       const ticker = (delta) => {
@@ -640,7 +657,7 @@ const PixiCanvas = ({
       };
       app.ticker.add(ticker);
     }
-  }, [isNewBuildingDropping, building]);
+  }, [isNewBuildingDropping, building, fitMode]);
 
   return (
     <div

@@ -126,6 +126,7 @@
 .command-image {
   width: 80px; /* 이미지 크기 조정 */
   height: 80px; /* 이미지 크기 조정 */
+  transform: translateY(-13px);
 }
 /* .command-circle.red {
   background-color: #ff4444;
