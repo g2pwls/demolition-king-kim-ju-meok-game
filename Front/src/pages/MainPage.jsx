@@ -1005,12 +1005,14 @@ const changePassword = async (e) => {
   const [isAlreadyFriend, setIsAlreadyFriend] = useState(false);
   const [hasReceivedRequest, setHasReceivedRequest] = useState(false);
   const [hasSentRequest, setHasSentRequest] = useState(false);
+  const [isMyself, setIsMyself] = useState(false);
 
   // 친구 검색
   const handleSearchFriend = async () => {
     setHasSearched(true);
     setIsAlreadyFriend(false);
     setHasReceivedRequest(false);
+    setIsMyself(false);
     try {
       const res = await api.get(`/users/friends/search`, {
         params: { nickname: searchNickname },
@@ -1020,6 +1022,13 @@ const changePassword = async (e) => {
       setSearchResult(result);
 
       const token = localStorage.getItem('accessToken');
+      const myUuid = localStorage.getItem('userUuid');
+
+       // ✅ 본인일 경우
+      if (result.userUuid === myUuid) {
+        setIsMyself(true);
+        return;
+      }
 
       // 현재 친구인지 확인
       const statusRes = await api.get('/users/friends/status', {
@@ -1100,29 +1109,42 @@ const changePassword = async (e) => {
   };
 
   // 친구 삭제
-  const handleDeleteFriend = async (friendUuid) => {
+  const [deleteTarget, setDeleteTarget] = useState(null); // 삭제할 친구 UUID
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState(""); // 성공/실패 메시지
+
+// 삭제 버튼 클릭 시 실행 → confirm div 띄움
+const handleDeleteClick = (friendUuid) => {
+  setDeleteTarget(friendUuid);
+  setShowDeleteConfirm(true);
+  setDeleteMessage(""); // 이전 메시지 초기화
+};
+
+// 실제 삭제 실행
+const confirmDeleteFriend = async () => {
   const token = localStorage.getItem('accessToken');
   if (!token) {
-    alert('로그인이 필요합니다.');
+    setDeleteMessage("❌ 로그인이 필요합니다.");
     return;
   }
 
-  const confirmDelete = window.confirm('정말 이 친구를 삭제하시겠습니까?');
-    if (!confirmDelete) return;
+  try {
+    await api.delete('/users/friends', {
+      params: { friendUuid: deleteTarget },
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-    try {
-      await api.delete('/users/friends', {
-        params: { friendUuid },
-        headers: { Authorization: `Bearer ${token}` },
-      });
+    setFriends(prev => prev.filter(friend => friend.friendUuid !== deleteTarget));
+    setDeleteMessage("✅ 친구가 삭제되었습니다.");
+  } catch (error) {
+    console.error("❌ 친구 삭제 실패:", error);
+    setDeleteMessage("❌ 친구 삭제에 실패했습니다.");
+  } finally {
+    setShowDeleteConfirm(false); // 확인창 닫기
+    setDeleteTarget(null);
+  }
+};
 
-      setFriends(prev => prev.filter(friend => friend.friendUuid !== friendUuid));
-      alert('✅ 친구가 삭제되었습니다.');
-    } catch (error) {
-      console.error('❌ 친구 삭제 실패:', error);
-      alert('❌ 친구 삭제에 실패했습니다.');
-    }
-  };
 
   // 친구 새로고침
   const refreshFriendData = async () => {
@@ -2595,12 +2617,14 @@ const [token, setToken] = useState(null);
                             <div className="search-result-row">
                               <div className="nickname-label">닉네임: {searchResult.uerNickname}</div>
 
-                              {isAlreadyFriend ? (
+                              {isMyself ? (
+                                <div className="already-friend-text">🙋‍♂️ 본인입니다</div>
+                              ) : isAlreadyFriend ? (
                                 <div className="already-friend-text">✅ 이미 친구입니다</div>
                               ) : hasReceivedRequest ? (
                                 <div className="already-friend-text">📩 이 사용자가 당신에게 친구 요청을 보냈습니다. 수락해주세요!</div>
                               ) : hasSentRequest ? (
-                                <div className="already-friend-text">✅ 친구 요청을 보냈습니다!</div>
+                                <div className="already-friend-text">✅ 친구 요청을<br />보냈습니다!</div>
                               ) : (
                                 <button
                                   className="friend-request-btn"
@@ -2644,10 +2668,36 @@ const [token, setToken] = useState(null);
                     </div>
 
                     {/* 오른쪽: 삭제 버튼 */}
-                    <button className="friend-delete-btn" onClick={() => handleDeleteFriend(friend.friendUuid)}> 삭제</button>
+                    <button className="friend-delete-btn" onClick={() => {
+    setDeleteTarget(friend.friendUuid);   // ✅ 대상 저장
+    setShowDeleteConfirm(true);           // 모달 오픈
+  }}> 삭제</button>
                   </div>
                 ))}
               </div>
+              {/* ✅ 삭제 확인 모달 */}
+{showDeleteConfirm && (
+  <div className="modal-overlay" onClick={() => setShowDeleteConfirm(false)}>
+    <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+      <h3 className="modal-title">⚠️ 친구 삭제</h3>
+      <p className="modal-message">정말 이 친구를 삭제하시겠습니까?</p>
+      <div className="modal-actions">
+        <button
+          className="confirm-btn"
+          onClick={() => confirmDeleteFriend(deleteTarget)}
+        >
+          삭제
+        </button>
+        <button
+          className="cancel-btn"
+          onClick={() => setShowDeleteConfirm(false)}
+        >
+          취소
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
               {/* 친구 요청 알림 */}
               {friendRequests.length > 0 && (
