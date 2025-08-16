@@ -126,6 +126,7 @@
 .command-image {
   width: 80px; /* 이미지 크기 조정 */
   height: 80px; /* 이미지 크기 조정 */
+  transform: translateY(-11px)
 }
 /* .command-circle.red {
   background-color: #ff4444;
@@ -316,6 +317,7 @@
 .command-circle.done {
   opacity: .35;
   filter: grayscale(40%);
+  outline:5px solid rgba(255,255,255,.25);
 }
 .prestart-overlay {
   position: fixed;

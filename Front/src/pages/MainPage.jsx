@@ -867,14 +867,14 @@ const fetchTotalPlayTime = async () => {
       if (res.data.result.available === true) {
         setNicknameCheckResult('available');
         setCheckedNickname(editNickname);
-        alert('✅ 사용 가능한 닉네임입니다.');
+        // alert('✅ 사용 가능한 닉네임입니다.');
       } else {
         setNicknameCheckResult('duplicate');
-        alert('❌ 이미 사용 중인 닉네임입니다.');
+        // alert('❌ 이미 사용 중인 닉네임입니다.');
       }
     } catch (err) {
       console.error('닉네임 중복확인 실패:', err);
-      alert('중복 확인 중 오류가 발생했습니다.');
+      // alert('중복 확인 중 오류가 발생했습니다.');
     }
   };
 
@@ -892,7 +892,7 @@ const fetchTotalPlayTime = async () => {
         }
       );
 
-      alert('닉네임이 성공적으로 변경되었습니다!');
+      // alert('닉네임이 성공적으로 변경되었습니다!');
       setUserInfo(prev => ({
         ...prev,
         nickname: editNickname,
@@ -913,6 +913,9 @@ const fetchTotalPlayTime = async () => {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
+// 비밀번호 확인 상태
+const [verifyStatus, setVerifyStatus] = useState(null); // 'loading' | 'success' | 'mismatch' | 'error' | null
+const [verifyMsg, setVerifyMsg] = useState('');
 
   const verifyPassword = async () => {
     try {
@@ -929,28 +932,43 @@ const fetchTotalPlayTime = async () => {
         }
       );
 
-      if (res.data.isSuccess === true) {
-        alert('✅ 비밀번호 확인 성공!');
-        setPasswordVerified(true);
-      } else {
-        alert('❌ 비밀번호가 일치하지 않습니다.');
-      }
-    } catch (err) {
-      console.error('비밀번호 확인 실패:', err);
-      alert('⚠️ 서버 오류 또는 비밀번호 확인 실패');
+    if (res.data.isSuccess === true) {
+      setPasswordVerified(true);
+      setVerifyStatus('success');
+      setVerifyMsg('비밀번호가 확인되었습니다.');
+    } else {
+      setVerifyStatus('mismatch');
+      setVerifyMsg('비밀번호가 일치하지 않습니다.');
     }
-  };
+  } catch (err) {
+    console.error('비밀번호 확인 실패:', err);
+    setVerifyStatus('error');
+    setVerifyMsg('비밀번호 확인에 실패했습니다.');
+  }
+};
+useEffect(() => {
+  // 현재 비밀번호가 바뀌면 확인 상태/메시지 초기화
+  setVerifyStatus(null);
+  setVerifyMsg('');
+}, [currentPassword]);
 
-  const changePassword = async () => {
-    if (newPassword !== confirmNewPassword) {
-      alert('❌ 새 비밀번호가 일치하지 않습니다.');
-      return;
-    }
+const [changePwStatus, setChangePwStatus] = useState(null); // 'mismatch' | 'success' | 'error' | null
+const [changePwMsg, setChangePwMsg] = useState('');
+
+const changePassword = async (e) => {
+  e?.preventDefault?.();
+
+  // 새 비밀번호 불일치
+  if (newPassword !== confirmNewPassword) {
+    setChangePwStatus('mismatch');
+    setChangePwMsg('❌ 새 비밀번호가 일치하지 않습니다.');
+    return;
+  }
 
     try {
       const token = localStorage.getItem('accessToken');
       const email = userInfo?.useremail;
-  console.log("📧 이메일:", userInfo?.userEmail);
+  // console.log("📧 이메일:", userInfo?.userEmail);
 
       await api.post('/user/auth/password/reset', {
         email: userInfo.userEmail,
@@ -963,15 +981,19 @@ const fetchTotalPlayTime = async () => {
         },
       });
 
-      alert('✅ 비밀번호가 성공적으로 변경되었습니다!');
+    setChangePwStatus('success');
+    setChangePwMsg('✅ 비밀번호가 성공적으로 변경되었습니다!');
       setIsChangingPassword(false);
       setPasswordVerified(false);
       setCurrentPassword('');
       setNewPassword('');
       setConfirmNewPassword('');
+      setChangePwStatus(null);
+      setChangePwMsg('');
     } catch (err) {
       console.error('비밀번호 변경 실패:', err);
-      alert('❌ 비밀번호 변경에 실패했습니다.');
+      setChangePwStatus('error');
+      setChangePwMsg('❌ 비밀번호 변경에 실패했습니다.');
     }
   };
 
@@ -1207,7 +1229,6 @@ const onAnyEvent = (evt) => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      alert('회원탈퇴가 완료되었습니다.');
       localStorage.clear();
       navigate('/login');
     } catch (err) {
@@ -2068,6 +2089,8 @@ const [token, setToken] = useState(null);
                                     setCurrentPassword('');
                                     setNewPassword('');
                                     setConfirmNewPassword('');
+                                    setVerifyStatus(null);
+                                    setVerifyMsg('');
                                   }}>닫기 ❌
                                 </button>
                               </div>
@@ -2080,6 +2103,12 @@ const [token, setToken] = useState(null);
                                     onChange={(e) => setCurrentPassword(e.target.value)}
                                     placeholder="현재 비밀번호 입력"
                                   />
+                                  {/* ✅ 상태 문구: 현재 비밀번호 입력 바로 아래 */}
+                                  {verifyStatus && (
+                                    <div className={`status-line ${verifyStatus}`}>
+                                      <span>{verifyMsg}</span>
+                                    </div>
+                                  )}
                                   <button className="verify-btn" onClick={verifyPassword}>확인</button>
                                 </>
                               ) : (
@@ -2088,7 +2117,7 @@ const [token, setToken] = useState(null);
                                     type="password"
                                     value={newPassword}
                                     onChange={(e) => setNewPassword(e.target.value)}
-                                    placeholder="새 비밀번호 입력"
+                                    placeholder="새 비밀번호 입력 영문, 숫자 포함 8~20자, 공백 불가"
                                   />
                                   <input
                                     type="password"
@@ -2096,6 +2125,12 @@ const [token, setToken] = useState(null);
                                     onChange={(e) => setConfirmNewPassword(e.target.value)}
                                     placeholder="새 비밀번호 재입력"
                                   />
+                                  {/* ✅ 상태 문구: 새 비밀번호 확인 입력칸 바로 밑 */}
+{changePwStatus && (
+  <div className={`status-line ${changePwStatus}`}>
+    <span>{changePwMsg}</span>
+  </div>
+)}
                                   <div className="password-change-buttons">
                                     <button className="cancel-btn" onClick={() => setIsChangingPassword(false)}>취소</button>
                                     <button className="save-btn" onClick={changePassword}>저장</button>
@@ -2125,7 +2160,7 @@ const [token, setToken] = useState(null);
                     {/* 닉네임 수정 모드 */}
                     {activeTab === '통계' && isEditing && isEditingNickname && (
                       <div className="nickname-edit-form">
-                        <label>닉네임:</label>
+                        <label class="nickname-label">닉네임을 변경해보세요</label>
                         <input
                           value={editNickname}
                           onChange={(e) => setEditNickname(e.target.value)}

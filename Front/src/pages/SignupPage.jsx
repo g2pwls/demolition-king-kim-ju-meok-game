@@ -68,38 +68,54 @@ function SignUp() {
       setNicknameStatus('error');
     }
   };
+// 닉네임 상태 외에 이메일 전송/인증 상태 추가
+const [emailSendStatus, setEmailSendStatus] = useState(null); // 'loading' | 'sent' | 'error' | null
+const [verifyStatus, setVerifyStatus] = useState(null);        // 'loading' | 'success' | 'mismatch' | 'error' | null
 
-  // 이메일 인증코드 요청
-  const requestAuthCode = async () => {
-    try {
-      await api.post('/v1/user/email/signup/send', { email });
+// 이메일 인증코드 요청
+const requestAuthCode = async () => {
+  try {
+    setEmailSendStatus('loading');
+    await api.post('/v1/user/email/signup/send', { email });
+    setEmailSendStatus('sent');
+  } catch (err) {
+    console.error(err);
+    setEmailSendStatus('error');
+  }
+};
 
-      alert('인증번호가 이메일로 전송되었습니다.');
-    } catch (err) {
-      console.error(err);
-      alert('이메일 인증 요청 실패');
+
+// 인증번호 확인
+const verifyAuthCode = async () => {
+  try {
+    setVerifyStatus('loading');
+    const res = await api.post('/v1/user/email/signup/verify', {
+      email,
+      code: authCode,
+    });
+
+    if (res.data.result.available === true) {
+      setIsVerified(true);
+      setVerifyStatus('success');
+    } else {
+      setVerifyStatus('mismatch');
     }
-  };
+  } catch (err) {
+    console.error(err);
+    setVerifyStatus('error');
+  }
+};
+// 이메일 입력 변경 시 전송/인증 상태 초기화
+useEffect(() => {
+  setEmailSendStatus(null);
+  setVerifyStatus(null);
+}, [email]);
 
-  // 인증번호 확인
-  const verifyAuthCode = async () => {
-    try {
-      const res = await api.post('/v1/user/email/signup/verify', {
-        email,
-        code: authCode,
-      });
+// 인증코드 입력 변경 시 인증 상태만 초기화
+useEffect(() => {
+  setVerifyStatus(null);
+}, [authCode]);
 
-      if (res.data.result.available === true) {
-        alert('이메일 인증 성공!');
-        setIsVerified(true);
-      } else {
-        alert('인증번호가 올바르지 않습니다.');
-      }
-    } catch (err) {
-      console.error(err);
-      alert('인증 확인 실패');
-    }
-  };
 
   const handleSignup = async (e) => {
     e.preventDefault();
@@ -132,11 +148,11 @@ function SignUp() {
       );
       
       console.log('회원가입 성공:', response.data);
-      alert('회원가입 성공!');
+      // alert('회원가입 성공!');
       navigate('/login');
     } catch (err) {
       console.error('회원가입 실패:', err);
-      alert('회원가입에 실패했습니다.');
+      // alert('회원가입에 실패했습니다.');
     }
   };
 
@@ -231,33 +247,69 @@ function SignUp() {
             </div>
           </div>
 
-          {/* 이메일 + 인증요청 버튼 */}
-          <div className="form-row2 with-button">
-            <label>이메일</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={isVerified}
-            />
-            <button type="button" onClick={requestAuthCode} disabled={!email || isVerified}>
-              인증요청
-            </button>
-          </div>
+{/* 이메일 + 인증요청 버튼 */}
+<div className="form-row2 with-button">
+  <label>이메일</label>
+  <input
+    type="email"
+    value={email}
+    onChange={(e) => setEmail(e.target.value)}
+    disabled={isVerified}
+  />
+  <div className="nickname-check-container">
+  <button
+    type="button"
+    onClick={requestAuthCode}
+    disabled={!email || isVerified || emailSendStatus === 'loading'}
+  >
+    {emailSendStatus === 'loading' ? '전송 중..' : '인증요청'}
+  </button>
 
-          {/* 인증번호 입력 + 확인 버튼 */}
-          <div className="form-row2 with-button">
-            <label>인증번호</label>
-            <input
-              type="text"
-              value={authCode}
-              onChange={(e) => setAuthCode(e.target.value)}
-              disabled={isVerified}
-            />
-            <button type="button" onClick={verifyAuthCode} disabled={!authCode || isVerified}>
-              확인
-            </button>
-          </div>
+  {/* 상태 문구 (버튼 아래) */}
+  <div className="status-line">
+    {emailSendStatus === 'sent' && (
+      <span style={{ color: 'green' }}>전송 완료</span>
+    )}
+    {emailSendStatus === 'error' && (
+      <span style={{ color: 'orange' }}>전송 실패</span>
+    )}
+  </div>
+  </div>
+</div>
+
+{/* 인증번호 입력 + 확인 버튼 */}
+<div className="form-row2 with-button">
+  <label>인증번호</label>
+  <input
+    type="text"
+    value={authCode}
+    onChange={(e) => setAuthCode(e.target.value)}
+    disabled={isVerified}
+  />
+  <div className="nickname-check-container">
+  <button
+    type="button"
+    onClick={verifyAuthCode}
+    disabled={!authCode || isVerified || verifyStatus === 'loading'}
+  >
+    {verifyStatus === 'loading' ? '확인 중...' : '확인'}
+  </button>
+
+  {/* 상태 문구 (버튼 아래) */}
+  <div className="status-line">
+    {verifyStatus === 'success' && (
+      <span style={{ color: 'green' }}>인증 완료</span>
+    )}
+    {verifyStatus === 'mismatch' && (
+      <span style={{ color: 'red' }}>올바르지 않음</span>
+    )}
+    {verifyStatus === 'error' && (
+      <span style={{ color: 'orange' }}>인증 실패</span>
+    )}
+    </div>
+  </div>
+</div>
+
 
           {/* 비밀번호 */}
           <div className="form-row2">
