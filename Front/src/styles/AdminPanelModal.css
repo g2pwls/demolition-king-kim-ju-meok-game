@@ -1,0 +1,39 @@
+.apm-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.45);
+    display: flex; align-items: center; justify-content: center; z-index: 9999;
+}
+.apm-card {
+    width: min(1100px, 96vw);
+    max-height: 90vh; overflow: auto;
+    background: rgba(20,22,28,0.96);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 16px; padding: 14px 14px 18px;
+    color: #e9eef7;
+}
+.apm-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.apm-tabs { display: flex; gap: 8px; }
+.apm-tabs button {
+    background: transparent; color: #d7def0; border: 1px solid rgba(255,255,255,.18);
+    padding: 8px 12px; border-radius: 10px; cursor: pointer;
+}
+.apm-tabs button.active { background: #4158d0; border-color: transparent; color: #fff; }
+.apm-close { background: transparent; border: none; color: #cfd6e6; font-size: 18px; cursor: pointer; }
+
+.apm-body { margin-top: 8px; }
+.apm-controls { display: flex; gap: 8px; align-items: center; margin: 8px 0 12px; flex-wrap: wrap; }
+.apm-input, .apm-select, .apm-textarea {
+    background: rgba(0,0,0,.35); color: #eaeef3;
+    border: 1px solid rgba(255,255,255,.12); padding: 10px 12px; border-radius: 10px;
+}
+.apm-textarea { width: 100%; }
+.apm-btn { background: #2ecc71; border: none; color: #fff; padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+.apm-ghost { background: transparent; color: #d7def0; border: 1px solid rgba(255,255,255,.18); padding: 8px 12px; border-radius: 10px; cursor: pointer; }
+.apm-danger { background: #e74c3c; color: #fff; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+
+.apm-table { width: 100%; border-collapse: collapse; }
+.apm-table th, .apm-table td { border-bottom: 1px solid rgba(255,255,255,.08); padding: 10px 8px; text-align: left; }
+.apm-table th { background: rgba(255,255,255,.04); font-weight: 600; }
+.apm-pager { display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 10px; }
+.apm-empty { text-align: center; padding: 24px 8px; color: #b7c0d1; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+.apm-form { display: grid; gap: 10px; }
