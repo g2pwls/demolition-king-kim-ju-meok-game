@@ -110,39 +110,59 @@ function formatLabelStyle(label) {
 
 function resolveBuildingKey(b) {
     if (!b) return null;
-    const seq =
-        b?.constructureSeq ?? b?.seq ?? b?.id ?? b?.constructureId ?? null;
-    if (Number.isInteger(seq) && seq >= 1 && seq <= 26) return `building${seq}`;
 
+    // 1) 파일/이름에서 우선 추출 (rare/legendary 포함)
     const raw =
-        b?.imageUrl || b?.imageName || b?.filename || b?.name || b?.title || '';
-    const base = String(raw).toLowerCase();
+        b?.imageName || b?.imageUrl || b?.filename || b?.name || b?.title || '';
+    let base = String(raw);
+    try {
+        const u = new URL(base);
+        base = u.pathname;
+    } catch {}
     const onlyName = base.split('/').pop()?.replace(/\.[a-z0-9]+$/i, '') || base;
-    const m = onlyName.match(/\b(building|rare|legendary)\s*[-_ ]?\s*(\d+)\b/i);
+    const norm = onlyName.toLowerCase().replace(/[_\s\-]+/g, '');
+    // building01 / rare_8 / legendary-3 → 정규화
+    let m = norm.match(/^(building|rare|legendary)(\d{1,3})$/i);
+    if (m) return `${m[1].toLowerCase()}${parseInt(m[2], 10)}`;
+    m = onlyName.match(/\b(building|rare|legendary)\s*[-_ ]?\s*0*([0-9]{1,3})\b/i);
     if (m) return `${m[1].toLowerCase()}${parseInt(m[2], 10)}`;
 
-    const m2 = String(raw).match(/\b(building|rare|legendary)\s*[-_ ]?\s*(\d+)\b/i);
-    if (m2) return `${m2[1].toLowerCase()}${parseInt(m2[2], 10)}`;
+    // 2) 파일명에 패턴이 없을 때만 seq 사용
+    const seq =
+        b?.constructureSeq ?? b?.seq ?? b?.id ?? b?.constructureId ?? null;
+    if (Number.isFinite(seq)) {
+        const n = Number(seq);
+        if (n >= 1 && n <= 26) return `building${n}`;
+        // 필요하면 n 범위로 rare/legendary 매핑 규칙을 추가
+    }
+
     return null;
 }
 
+
 function getDisplayBuildingName(b) {
-    const key = resolveBuildingKey(b);
-    if (key && BUILDING_LABELS[key]) return formatLabelStyle(BUILDING_LABELS[key]);
-
-    let raw =
-        b?.constructureName || b?.name || b?.title || b?.imageName || b?.filename || b?.imageUrl || '건물';
-    raw = String(raw);
-    try {
-        const u = new URL(raw);
-        raw = u.pathname.split('/').pop() || raw;
-    } catch {}
-    raw = raw.replace(/\.[a-z0-9]+$/i, '').replace(/[_-]+/g, ' ').trim();
-
-    const mm = raw.match(/^\s*(.+?)\s*\(([^)]+)\)\s*$/);
-    if (mm) raw = `(${mm[2]}) ${mm[1].trim()}`;
-    return raw || '건물';
-}
+       // 1) 매핑 최우선
+           const key = resolveBuildingKey(b);
+       if (key && BUILDING_LABELS[key]) {
+             return formatLabelStyle(BUILDING_LABELS[key]);
+           }
+       // 2) 서버 제공 이름 우선
+           let name =
+             b?.constructureName || b?.name || b?.title ||
+             b?.imageName || b?.filename || b?.imageUrl || '건물';
+      name = String(name);
+       // URL → 파일명
+           try {
+             const u = new URL(name);
+             name = u.pathname.split('/').pop() || name;
+           } catch {}
+       // 확장자/구분자 정리
+           name = name.replace(/\.[a-z0-9]+$/i, '').replace(/[_\-]+/g, ' ').trim();
+       // “이름(타입)” → “(타입) 이름”
+           const mm = name.match(/^\s*(.+?)\s*\(([^)]+)\)\s*$/);
+      if (mm) return `(${mm[2]}) ${mm[1].trim()}`;
+      return name || '건물';
+    }
 
 function getUuidFromJwt() {
     const at = localStorage.getItem('accessToken');
@@ -764,7 +784,7 @@ export default function MultiPlayPage() {
                     setResultsReady(true);
                     setWaitingOverlay(false);
                     const delay = Math.max(0, (obj.goAt ?? Date.now()) - Date.now());
-                    setTimeout(() => goToResultWithPayload(obj), delay);
+                    setTimeout(() => { void goToResultWithPayload(obj); }, delay);
                 } else if (obj.type === "emote" && from?.identity) {
                     const item = EMOTES.find(e => e.id === obj.emoteId);
                     if (!item) return;
@@ -941,7 +961,8 @@ export default function MultiPlayPage() {
         didPersistRef.current = true;
 
         try {
-            const userId = userUuid;
+            // ✅ uuid 헤더용은 baseId(…)로 정규화해서 사용
+            const userId = baseId(userUuid || "");
             if (!userId) throw new Error("userUuid 없음");
 
             const playMin = Number(((meSnapshot.playTimeSec ?? 0) / 60).toFixed(2));
@@ -952,8 +973,16 @@ export default function MultiPlayPage() {
             const silverMedal = meSnapshot.rank === 2 ? 1 : 0;
             const bronzeMedal = meSnapshot.rank === 3 ? 1 : 0;
 
-            const uuidHeaders = { "X-User-Uuid": userId };
+            const token = localStorage.getItem("accessToken") || "";
 
+            // ✅ uuid 라우트는 서버가 params를 읽도록 구현된 케이스 → body를 비우고 params로 전송
+            const headersUuid = {
+                "X-User-Uuid": userId,
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                Accept: "*/*",
+            };
+
+            // 1) 종합 리포트 (메달, 멀티 최다 파괴, 누적 플레이 수/시간)
             const r1 = api.patch(
                 "/users/games/reportUpdates/uuid",
                 null,
@@ -961,14 +990,17 @@ export default function MultiPlayPage() {
                     params: {
                         singleTopBuilding: 0,
                         multiTopBuilding: meSnapshot.destroyed ?? 0,
-                        goldMedal, silverMedal, bronzeMedal,
+                        goldMedal,
+                        silverMedal,
+                        bronzeMedal,
                         playCnt: 1,
                         playTime: playMin,
                     },
-                    headers: uuidHeaders,
+                    headers: headersUuid,
                 }
             );
 
+            // 2) 일일 리포트 (kcal, 당일 플레이 시간)
             const r2 = api.patch(
                 "/users/games/reportPerDateUpdates/uuid",
                 null,
@@ -977,20 +1009,21 @@ export default function MultiPlayPage() {
                         kcal: kcalNow,
                         playTimeDate: playMin,
                     },
-                    headers: uuidHeaders,
+                    headers: headersUuid,
                 }
             );
 
+            // 3) 골드 누적
             const r3 = api.patch(
                 "/users/games/addGoldCnt/uuid",
                 null,
                 {
                     params: { goldCnt },
-                    headers: uuidHeaders,
+                    headers: headersUuid,
                 }
             );
 
-            const token = localStorage.getItem("accessToken") || "";
+            // 4) 파괴한 건물 저장 (이 API는 body JSON을 받도록 되어있으므로 기존처럼 body 사용)
             const r4 = api.post(
                 "/constructures/save",
                 {
@@ -999,20 +1032,30 @@ export default function MultiPlayPage() {
                 },
                 {
                     headers: {
-                        Authorization: token ? `Bearer ${token}` : undefined,
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
                         "Content-Type": "application/json",
                         Accept: "*/*",
                     },
                 }
             );
 
-            await Promise.allSettled([r1, r2, r3, r4]);
+            const results = await Promise.allSettled([r1, r2, r3, r4]);
+            results.forEach((res, idx) => {
+                if (res.status === "rejected") {
+                    console.warn(
+                        ["reportUpdates/uuid","reportPerDateUpdates/uuid","addGoldCnt/uuid","constructures/save"][idx],
+                        "failed:",
+                        res.reason
+                    );
+                }
+            });
         } catch (e) {
             console.warn("멀티 게임 결과 저장 실패:", e);
         }
     }
 
-    const goToResultWithPayload = (payload) => {
+
+    const goToResultWithPayload = async (payload) => {
         const full = payload.full || sortAll(finalsRef.current).map((x, i) => ({ rank: i + 1, ...x }));
         const top3 = payload.top3 || full.slice(0, 3);
 
@@ -1032,7 +1075,11 @@ export default function MultiPlayPage() {
             ? meEntry
             : { ...meEntry, rank: full.findIndex((x) => x.id === meEntry.id) + 1 };
 
-        persistMultiGameResults(me);
+        try {
+               await persistMultiGameResults(me);
+             } catch (e) {
+               console.warn("persist failed (will navigate anyway):", e);
+             }
 
         navigate("/multi-result", {
             replace: true,
@@ -1083,6 +1130,20 @@ export default function MultiPlayPage() {
     /* ───────── 파괴 핸들러 ───────── */
     const handleDestroyed = () => {
         if (isGameOverRef.current) return;
+
+
+             try {
+                 const dbgKey = resolveBuildingKey(currentBuilding);
+                 const dbgName = getDisplayBuildingName(currentBuilding);
+                 console.log('[BUILDING DEBUG]', {
+                      seq: currentBuilding?.constructureSeq ?? currentBuilding?.seq ?? currentBuilding?.id ?? currentBuilding?.constructureId,
+                       imageName: currentBuilding?.imageName,
+                       imageUrl: currentBuilding?.imageUrl,
+                       name: currentBuilding?.name || currentBuilding?.title,
+                       resolvedKey: dbgKey,
+                       displayName: dbgName,
+                     });
+               } catch {}
 
         const seq =
             currentBuilding?.constructureSeq ??
