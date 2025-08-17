@@ -72,7 +72,7 @@
 
 ### 👤 장준혁
 
-<img src="https://github.com/user-attachments/assets/fac625e8-4af0-4825-8b82-6fadaf2106b1" />
+<img width="161" height="202" alt="Image" src="https://github.com/user-attachments/assets/fac625e8-4af0-4825-8b82-6fadaf2106b1"/>
 
 - **이메일**
     - wnsgur9578@naver.com
@@ -142,7 +142,7 @@
 ![시스템아키텍쳐](/uploads/a35b8af549bf090d7382f960edb4bf2e/시스템아키텍쳐.png)
 
 ### 🧩 ERD
-<img src="https://github.com/user-attachments/assets/98cbc8ca-71e9-4ee6-956d-a9380b32c4b3" />
+<img width="720" height="781" alt="Image" src="https://github.com/user-attachments/assets/98cbc8ca-71e9-4ee6-956d-a9380b32c4b3"/>
 
 ---
 
