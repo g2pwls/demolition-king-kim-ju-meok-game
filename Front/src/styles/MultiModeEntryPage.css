@@ -13,7 +13,7 @@
 .ml-sub{opacity:.9;margin:0 0 18px}
 .ml-buttons{display:flex;gap:12px}
 .ml-btn{
-  padding:.8rem 1.1rem;border:none;border-radius:12px;cursor:pointer;color:#fff;
+  padding:.8rem 1.1rem;border:none;border-radius:12px;color:#fff;
   box-shadow:0 8px 18px rgba(0,0,0,.35);
 }
 .ml-btn.create{background:linear-gradient(180deg,#2fa05e,#237a47)}

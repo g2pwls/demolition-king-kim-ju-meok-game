@@ -1117,7 +1117,7 @@ useEffect(() => {
 
           <div className="webcam-container mirror">
             <video ref={videoRef} autoPlay muted className="webcam-video" />
-            <canvas ref={canvasRef} className="webcam-canvas" width="640" height="480" />
+            <canvas ref={canvasRef} className="webcam-canvas" width="640" height="480" hidden/>
           </div>
         </div>
       </div>
