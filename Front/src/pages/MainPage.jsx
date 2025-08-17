@@ -319,7 +319,7 @@ const handleBuyClick = async () => {
 
     // 금액이 부족하면 메시지 설정
     if (userGold < skinPrice) {
-      setInsufficientFundsMessage('돈이 부족합니다!'); // 화면에 금액 부족 메시지 표시
+      setInsufficientFundsMessage(`${skinPrice}G입니다. 돈이 부족합니다!`); // 화면에 금액 부족 메시지 표시
       setShowBuyModal(false); // 금액 부족 시 모달 닫기
       return;
     }
