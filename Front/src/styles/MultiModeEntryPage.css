@@ -1,5 +1,7 @@
 .ml-entry-root{
-  width:1536px;height:864px;display:grid;place-items:center;
+  width: 100vw;
+  height: 100vh;
+display:grid;place-items:center;
   background:#0e1217;
 }
 .ml-entry-card{
