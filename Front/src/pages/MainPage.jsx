@@ -1083,7 +1083,7 @@ const changePassword = async (e) => {
     // 2. 친구 목록에 있는지 확인
     const isAlreadyFriend = myFriendList.some(friend => friend.friendUuid === friendUuid);
 
-
+    console.log(isAlreadyFriend,"친구목록에 있냐?")
     if (isAlreadyFriend) {
       // alert('⚠️ 이미 친구인 사용자입니다.');
       return;
@@ -1098,7 +1098,7 @@ const changePassword = async (e) => {
         friendUuid,
       },
     });
-
+    console.log(inviteRes,"친구가 맞냐? - 요청")
       // ✅ 요청 성공 시 상태 업데이트
       setHasSentRequest(true);
     } catch (err) {
@@ -1611,9 +1611,9 @@ const [token, setToken] = useState(null);
         }}
 />
 <div className="inpage-toast-layer">
-{toastMsg && (
-  <div className="inpage-toast">
-    {toastMsg}
+  {toastMsg && (
+    <div className={`inpage-toast ${typeof toastMsg === 'object' ? (toastMsg.variant || 'info') : 'info'}`}>
+      {typeof toastMsg === 'string' ? toastMsg : (toastMsg.text ?? '')}
   </div>
 )}
 </div>
