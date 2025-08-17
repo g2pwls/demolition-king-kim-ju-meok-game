@@ -65,6 +65,7 @@ export default function MultiLobbyPage() {
   useEffect(() => {
     hostIdRef.current = hostId;
   }, [hostId]);
+  const hostElectTimerRef = useRef(null);
 
   const [ready, setReady] = useState({});
   const readyRef = useRef({});
@@ -286,6 +287,41 @@ async function inviteFriend(friendUuid) {
   const nonHostIds = allIds.filter((id) => id !== hostId);
   const everyoneReadyExceptHost = nonHostIds.length > 0 && nonHostIds.every((id) => !!ready[id]);
 
+
+// ✅ 참가자 중 사전순 1등을 방장으로 선출 (방장 아직 없을 때만)
+  function electHostIfNeeded(r) {
+    if (!r) return;
+    if (hostIdRef.current) return;
+
+    const local = r.localParticipant?.identity;
+    const remotes = Array.from(r.remoteParticipants.values()).map(p => p.identity);
+    const ids = [local, ...remotes].filter(Boolean);
+
+    if (!ids.length) return;
+    ids.sort(); // 규칙: identity 사전순 1등
+
+    const winner = ids[0];
+    if (winner === local) {
+      setHostId(winner);
+      hostIdRef.current = winner;
+      try {
+        const enc = new TextEncoder();
+        const pkt = JSON.stringify({ type: "host", hostId: winner, senderId: winner });
+        r.localParticipant.publishData(enc.encode(pkt), { reliable: true, topic: "host" });
+      } catch {}
+    }
+  }
+
+// ✅ 일정 딜레이 뒤 선출 시도 (레이스 방지)
+  function scheduleHostElection(r, delay = 600) {
+    if (!r) return;
+    clearTimeout(hostElectTimerRef.current);
+    hostElectTimerRef.current = setTimeout(() => electHostIfNeeded(r), delay);
+  }
+
+
+
+
   /** 👉 편의: 존재/카운트 프리체크 */
   async function checkRoomExists(name) {
     try {
@@ -479,6 +515,8 @@ async function inviteFriend(friendUuid) {
       r.localParticipant.publishData(enc.encode(snap), { reliable: true, topic: "ready" });
     } catch {}
   }
+
+  if (!hostIdRef.current) scheduleHostElection(r, 400);
 });
 
     r.on(RoomEvent.ParticipantDisconnected, (p) => {
@@ -498,29 +536,24 @@ async function inviteFriend(friendUuid) {
         return cp;
       });
 
-      if (p.identity === hostIdRef.current) {
-        const next =
-          Array.from(r.remoteParticipants.values()).map((x) => x.identity)[0] || r.localParticipant?.identity;
-        setHostId(next || null);
-        hostIdRef.current = next || null;
-        if (next && next === r.localParticipant?.identity) {
-          try {
-            const enc = new TextEncoder();
-            const pkt = JSON.stringify({ type: "host", hostId: next, senderId: next });
-            r.localParticipant.publishData(enc.encode(pkt), { reliable: true, topic: "host" });
-          } catch {}
-        }
-      }
+// ✅ 방장이 나갔거나(=hostId가 사라짐) 아직 없으면 선출 트리거
+      if (p.identity === hostIdRef.current || !hostIdRef.current) {
+            setHostId(null);
+            hostIdRef.current = null;
+            scheduleHostElection(r, 400);
+          }
     });
     r.on(RoomEvent.DataReceived, (payload, p) => {
       const text = new TextDecoder().decode(payload);
       if (text === GAME_START_SIGNAL) {
+        try { r.disconnect(); } catch {}
         goToGame();
         return;
       }
       try {
         const msg = JSON.parse(text);
         if (msg.type === "host" && msg.hostId) {
+          clearTimeout(hostElectTimerRef.current);
           setHostId(msg.hostId);
           hostIdRef.current = msg.hostId;
           return;
@@ -617,6 +650,7 @@ async function inviteFriend(friendUuid) {
         setNameMap((prev) => ({ ...prev, [p.identity]: p.name || p.identity }));
         setReady((prev) => ({ ...prev, [p.identity]: false }));
       });
+      if (!hostIdRef.current) scheduleHostElection(r, 700);
     } catch (e) {
       // 연결 도중 오류 → 리소스 정리 후 팝업만 띄우고, 확인 시 메인 이동
       try {
@@ -656,6 +690,12 @@ async function inviteFriend(friendUuid) {
     }
   }, [currentRoomName]);
 
+  useEffect(() => {
+    return () => {
+      clearTimeout(hostElectTimerRef.current);
+    };
+  }, []);
+
   function goToGame() {
     navigate(NEXT_GAME_PATH, {
       state: { roomName: currentRoomName || roomId, members: displayUuids.filter(Boolean) },
@@ -671,6 +711,7 @@ async function inviteFriend(friendUuid) {
     try {
       await room.localParticipant.publishData(enc.encode(GAME_START_SIGNAL), { reliable: true });
     } catch {}
+    try { await room.disconnect(); } catch {}
     goToGame();
   }
 

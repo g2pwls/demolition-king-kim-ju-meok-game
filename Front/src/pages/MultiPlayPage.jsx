@@ -687,6 +687,8 @@ export default function MultiPlayPage() {
 // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    const baseId = (id) => String(id || "").split("#")[0];
+
     /* ───────── LiveKit 연결 ───────── */
     useEffect(() => {
         if (!roomName || !userUuid) return;
@@ -703,12 +705,12 @@ export default function MultiPlayPage() {
             if (publication.kind !== Track.Kind.Video) return;
             setRemoteTracks((prev) => prev.filter((t) => t.sid !== publication.trackSid));
         };
-
         const recalcExpected = (r) => {
-            const ids = new Set([r.localParticipant.identity]);
-            for (const p of r.remoteParticipants.values()) ids.add(p.identity);
-            expectedIdsRef.current = ids;
-        };
+              if (!r?.localParticipant) return;
+              const set = new Set([baseId(r.localParticipant.identity)]);
+              for (const p of r.remoteParticipants.values()) set.add(baseId(p.identity));
+              expectedIdsRef.current = set;
+            };
 
         (async () => {
             const token = await getToken(roomName, nickname || "player", userUuid);
@@ -743,11 +745,12 @@ export default function MultiPlayPage() {
                 } else if (obj.type === "final_stat") {
                     const { user, stat, sentAt } = obj;
                     if (!user?.id || !stat) return;
-                    const cur = finalsRef.current.get(user.id);
+                    const uid = baseId(user.id);
+                    const cur = finalsRef.current.get(uid);
                     if (!cur || (cur.arrivedAt ?? 0) < (sentAt ?? 0)) {
-                        finalsRef.current.set(user.id, {
-                            id: user.id,
-                            nick: user.nick || from?.identity || "player",
+                        finalsRef.current.set(uid, {
+                            id: uid,
+                            nick: user.nick || baseId(from?.identity) || "player",
                             destroyed: stat.destroyed ?? 0,
                             coin: stat.coin ?? 0,
                             kcal: stat.kcal ?? 0,
@@ -890,10 +893,10 @@ export default function MultiPlayPage() {
             playTimeSec,
             arrivedAt: Date.now(),
         };
-        finalsRef.current.set(userUuid, snap);
+        finalsRef.current.set(baseId(userUuid), snap);
 
         broadcast("final_stat", {
-            user: { id: userUuid, nick: nickname || "me" },
+            user: { id: baseId(userUuid), nick: nickname || "me" },
             stat: snap,
             sentAt: snap.arrivedAt,
         });
@@ -1013,10 +1016,11 @@ export default function MultiPlayPage() {
         const full = payload.full || sortAll(finalsRef.current).map((x, i) => ({ rank: i + 1, ...x }));
         const top3 = payload.top3 || full.slice(0, 3);
 
+        const myId = baseId(userUuid);
         const meEntry =
-            full.find((x) => x.id === userUuid) ||
-            finalsRef.current.get(userUuid) || {
-                id: userUuid,
+            full.find((x) => x.id === myId) ||
+            finalsRef.current.get(myId) || {
+                id: myId,
                 nick: nickname || "me",
                 destroyed: destroyedRef.current,
                 coin: coinRef.current,
@@ -1189,7 +1193,6 @@ export default function MultiPlayPage() {
                 <video ref={inputVideoRef} className="mp-hidden-input" muted playsInline autoPlay />
             </main>
 
-            // 우: 로그 + 내 카메라 + 스탯
             <aside className="mp-right">
             <LogPanel messages={log} />
 
