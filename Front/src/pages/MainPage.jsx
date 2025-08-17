@@ -701,43 +701,48 @@ const fetchTotalPlayTime = async () => {
     fetchFriendRequests();
   }, []);
 
-  // 친구 수락
-  const acceptFriend = async (requestId) => {
-    const accepted = friendRequests.find(req => req.id === requestId);
-    if (!accepted) return;
+// 친구 수락
+const acceptFriend = async (requestId) => {
+  const accepted = friendRequests.find(req => req.id === requestId);
+  if (!accepted) return;
 
-    try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
-        alert('로그인이 필요합니다.');
-        return;
-      }
+  try {
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
 
-      await api.patch('/users/friends/accept', null, {
-        params: {
-          friendUuid: accepted.userUuid,
-        },
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+    await api.patch('/users/friends/accept', null, {
+      params: { friendUuid: accepted.userUuid }, // 서버가 친구의 uuid를 userUuid로 넘겨줬다면 유지
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-      setFriends(prev => [
+    // ✅ friends가 사용하는 스키마에 맞춰 추가
+    setFriends(prev => {
+      // 중복 방지
+      if (prev.some(f => f.friendUuid === accepted.userUuid)) return prev;
+      return [
         ...prev,
         {
-          id: accepted.id,
-          nickname: accepted.friendNickname,
-          online: false,
+          id: accepted.id,                 // 키로 쓰면 유지
+          friendUuid: accepted.userUuid,   // 삭제/키 등에서 사용
+          friendNickname: accepted.friendNickname, // 렌더에서 표시
+          status: 'offline',               // 또는 accepted.status ?? 'offline'
+          // 필요하면 avatar 등도 여기서 세팅
         },
-      ]);
+      ];
+    });
 
-      setFriendRequests(prev => prev.filter(req => req.id !== requestId));
-      console.log('✅ 친구 요청 수락 성공');
-    } catch (error) {
-      console.error('❌ 친구 수락 실패:', error);
-      alert('친구 수락에 실패했습니다.');
-    }
-  };
+    // 요청 목록에서 제거
+    setFriendRequests(prev => prev.filter(req => req.id !== requestId));
+    console.log('✅ 친구 요청 수락 성공');
+  } catch (error) {
+    console.error('❌ 친구 수락 실패:', error);
+    alert('친구 수락에 실패했습니다.');
+  }
+};
+
 
   // 친구 거절
   const rejectFriend = async (requestId) => {
@@ -2681,7 +2686,7 @@ const [token, setToken] = useState(null);
     <div className="modal-box" onClick={(e) => e.stopPropagation()}>
       <h3 className="modal-title">⚠️ 친구 삭제</h3>
       <p className="modal-message">정말 이 친구를 삭제하시겠습니까?</p>
-      <div className="modal-actions">
+      <div className="modal-friend-actions">
         <button
           className="confirm-btn"
           onClick={() => confirmDeleteFriend(deleteTarget)}

@@ -1522,7 +1522,7 @@ width: 100vw;  /* 화면 너비에 맞춤 */
 }
 
 /* 버튼 영역 */
-.modal-actions {
+.modal-friend-actions {
   display: flex;
   justify-content: center;
   gap: 10px;
