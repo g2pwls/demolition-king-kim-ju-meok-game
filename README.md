@@ -182,15 +182,16 @@
 | --- |
 | **초기 화면** <br> 게임 첫 진입 페이지로, 사용자의 상호작용을 통해 로그인 페이지로 진입할수있습니다. |
 
-
 | ![image](/uploads/2764f59bf60a895eb28ef51091505e30/image.png){width=1153 height=652} | ![image](/uploads/af57252596ca830031f9b776ac3ab38c/image.png){width=1153 height=648} |
 | --- | --- |
 | **랭킹 상세 조회** <br> 유저들간의 랭킹을 상세 조회할수 있습니다. | **플레이 가이드** <br> 플레이 가이드를 사용자에게 제공해줍니다. |
 
-
-
 | ![invite-ezgif.com-speed](/uploads/ca1d516996e0fe3caaebfca4cbabb19e/invite-ezgif.com-speed.gif) | ![invite_re-ezgif.com-speed](/uploads/1159db49c5a505494f0ad9d66429dffb/invite_re-ezgif.com-speed.gif) |
 | --- | --- |
 | **친구 초대 기능** <br> 닉네임으로 친구를 초대할수 있습니다. | **친구 수락 조회 기능** <br> 친구요청을 수락할수 있고 조회할수 있습니다. |
+
+| ![buy-ezgif.com-speed](/uploads/6f7dc367cd520362072afeaf4f17ebad/buy-ezgif.com-speed.gif)|
+| --- |
+| **캐릭터 구매,선택 화면** <br> 캐릭터를 구매하고 선택할수 있습니다. |
 
 
