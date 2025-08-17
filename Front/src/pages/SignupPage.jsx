@@ -285,6 +285,7 @@ useEffect(() => {
     value={authCode}
     onChange={(e) => setAuthCode(e.target.value)}
     disabled={isVerified}
+    placeholder="대소문자 구분"
   />
   <div className="nickname-check-container">
   <button
