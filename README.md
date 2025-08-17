@@ -61,10 +61,12 @@
 ![조창현](/uploads/f8a8df174c2e1b8b900ddafa01914425/조창현.png)
 
 - **이메일**
-    - 이메일
+    - ch392930@naver.com
 - **담당**
     - FRONTEND
-        
+      - WebRTC 및 OpenVidu 기반 실시간 통신 기능 구현
+      - 멀티 로비 페이지 설계 및 구현
+      - 프로젝트 발표 자료(PPT) 제작
     - BACKEND
 
 
