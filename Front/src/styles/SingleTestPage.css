@@ -181,8 +181,9 @@
 
 .webcam-container {
   position: relative;
-  width: 300px;
-  height: 400px;
+width: 100%;          /* 부모 크기에 맞게 늘어남 */
+  max-width: 300px;     /* 최대 크기 제한 */
+  aspect-ratio: 3 / 4;  /* 3:4 비율 유지 */
   border: 3px solid white;
   border-radius: 8px;
   overflow: hidden;
