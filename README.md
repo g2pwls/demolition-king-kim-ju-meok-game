@@ -47,10 +47,14 @@
 ![윤혜진](/uploads/260e3afc8e0932700e553826c996b72a/윤혜진.png)
 
 - **이메일**
-    - 이메일
+    - yhjyhw1004@naver.com
 - **담당**
     - FRONTEND
-        
+      - Figma로 서비스 전반의 UI/UX를 설계하고 이를 토대로 실제 화면 디자인을 구현
+      - Axios 기반 API 통신 모듈을 작성하고 백엔드와 연동하여 주요 기능을 구현
+      - PixiJS를 활용한 게임 화면 렌더링
+      - 배경음악이 페이지 전환 시에도 이어지도록 AudioContext와 localStorage 적용 
+      - 모달·토스트 알림 및 상태 시각화(초대 버튼 비활성화, 친구 온라인 표시 등)를 통해 UX를 강화
     - BACKEND
 
 
