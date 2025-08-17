@@ -264,7 +264,7 @@
 }
 .start-cta{ background: linear-gradient(180deg,#3aa85b,#2a7e43); }
 .ready-cta{ background: linear-gradient(180deg,#3b7bef,#274db3); }
-.btn.big:disabled{ opacity:.55; cursor:not-allowed; filter:grayscale(.25); }
+.btn.big:disabled{ opacity:.55;  filter:grayscale(.25); }
 
 .leave-cta{
   background: linear-gradient(180deg,#ef5350,#c62828) !important;
@@ -510,3 +510,19 @@ body { margin: 0; }
   inset: 0;
   padding: clamp(12px, 2vw, 28px);
 }
+
+/* 이 두 줄 지우거나 덮어써 */
+.slot-wrapper,
+.chat-wrapper{
+  align-self: center !important; /* was: flex-end */
+}
+
+/* 리프팅 해크 끄기 */
+.character-grid,
+.start-area,
+.chat-card{
+  transform: none !important;
+}
+
+
+
