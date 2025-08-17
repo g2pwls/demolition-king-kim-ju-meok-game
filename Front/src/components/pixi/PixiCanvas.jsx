@@ -92,10 +92,6 @@ import jjang_upper from '../../assets/images/karina/jjang_upper.png';
 
 
 
-
-
-
-
 // 캐릭터 이미지들 (기본 캐릭터들 있을 경우)
 //import army from '../../assets/images/character/army.png';
 //import jennie from '../../assets/images/character/jennie.png';
@@ -106,7 +102,6 @@ import worker from '../../assets/images/character/worker.png';
 //import winter from '../../assets/images/character/winter.png';
 //import ufc from '../../assets/images/character/ufc.png';
 import character from '../../assets/images/character/character.png';
-
 
 const dustFrames = [buildingDust1, buildingDust2, buildingDust3, buildingDust2, buildingDust1];
 
@@ -121,44 +116,45 @@ const BOX_H_RATIO = 0.55;
 const BOX_POS_X_RATIO = 0.63;
 const BOX_POS_Y_RATIO = 0.63;
 
- const computeBox = (app) => {
-  const W = app.screen.width;
-  const H = app.screen.height;
-  const w = W * BOX_W_RATIO;
-  const h = H * BOX_H_RATIO;
-  const cx = W * BOX_POS_X_RATIO;
-  const cy = H * BOX_POS_Y_RATIO;
+const computeBox = (app) => {
+  const w = app.renderer.width * BOX_W_RATIO;
+  const h = app.renderer.height * BOX_H_RATIO;
+  const cx = app.renderer.width * BOX_POS_X_RATIO;
+  const cy = app.renderer.height * BOX_POS_Y_RATIO;
   const bottomY = cy + h / 2; // 박스 바닥 라인
   return { w, h, cx, cy, bottomY };
 };
 
+const isAlive = (obj) => !!obj && !obj.destroyed;
+const safeSetScale = (sprite, s) => {
+     if (!isAlive(sprite)) return;
+     if (sprite.scale && typeof sprite.scale.set === 'function') {
+         sprite.scale.set(s);
+       }
+   };
+
 // 비율 유지 스케일
 const fitSpriteToBox = (sprite, boxW, boxH, mode = 'fit') => {
-  const doResize = () => {
-    const texW = sprite.texture.width || 1;
-    const texH = sprite.texture.height || 1;
-    const sx = boxW / texW;
-    const sy = boxH / texH;
-    let s;
-    if (mode === 'cover') {
-      s = Math.max(sx, sy);
-    } else if (mode === 'byHeight') {
-      // 항상 '보이는 높이'가 boxH가 되도록 고정
-      s = sy;
-    } else if (mode === 'byWidth') {
-      s = sx;
-    } else {
-      s = Math.min(sx, sy); // 기본: fit
-    }
-    sprite.scale.set(s);
+     if (!isAlive(sprite)) return;
+    const doResize = () => {
+        if (!isAlive(sprite)) return;
+        const tex = sprite.texture;
+        if (!tex || !tex.valid) return;
+        const texW = tex.width || 1;
+        const texH = tex.height || 1;
+        const sx = boxW / texW;
+        const sy = boxH / texH;
+        const s  = mode === 'cover' ? Math.max(sx, sy) : Math.min(sx, sy);
+        safeSetScale(sprite, s);
+      };
+    const tex = sprite.texture;
+    if (tex && tex.valid) doResize();
+    else tex && tex.once && tex.once('update', doResize);
   };
-  if (sprite.texture.valid) doResize();
-  else sprite.texture.once('update', doResize);
-};
 
 // HP/먼지 위치: anchorY = 1(바닥 기준)
 const placeHpAndDust = (buildingSprite, hpBg, hpFill, dust) => {
-  if (!buildingSprite) return;
+  if (!isAlive(buildingSprite)) return;
   const topY = buildingSprite.y - buildingSprite.height; // 바닥기준이라 top = y - height
   if (hpBg) {
     hpBg.x = buildingSprite.x - HP_BAR_WIDTH / 2;
@@ -184,13 +180,13 @@ const randomCrackPosition = (b) => {
 
 const PixiCanvas = ({
   action,
+  hitToken,
   playerSkin,
   onBuildingDestroyed,
   kcal,
   setKcal,
   showBuildingHp,
   building, // { constructureSeq, hp, imageUrl, name }
-  fitMode = 'fit',
 }) => {
   const pixiRef = useRef(null);
   const appRef = useRef(null);
@@ -207,6 +203,7 @@ const PixiCanvas = ({
   const impactFadeTickerRef = useRef(null);
 
   const prevActionRef = useRef('idle');
+  const lastHitTokenRef = useRef(0);
   const destroyedLock = useRef(false);
 
   const [buildingHP, setBuildingHP] = useState(building?.hp ?? 100);
@@ -222,19 +219,15 @@ const PixiCanvas = ({
   const jabFramesRef = useRef([]);
   const uppercutFramesRef = useRef([]);
 
-
-
   // ========== PIXI 초기화 ==========
   useEffect(() => {
     if (!pixiRef.current) return;
 
     const app = new PIXI.Application({
+      width: pixiRef.current.clientWidth,
+      height: pixiRef.current.clientHeight,
       backgroundAlpha: 0,
-      antialias: true,
-      // 캔버스 CSS 크기에 자동 맞춤 + 해상도도 여기서 지정
       resizeTo: pixiRef.current,
-      resolution: Math.min(2, window.devicePixelRatio || 1),
-      autoDensity: true, 
     });
 
     appRef.current = app;
@@ -246,13 +239,14 @@ const PixiCanvas = ({
     const handleResize = () => {
       if (!appRef.current) return;
       const app = appRef.current;
+      app.renderer.resize(pixiRef.current.clientWidth, pixiRef.current.clientHeight);
 
       // 리사이즈 시 하단 정렬 유지
       const b = buildingSpriteRef.current;
       if (b) {
-        const { w, h, cx, bottomY } = computeBox(app); // 이제 app.screen 기반
+        const { w: boxW, h: boxH, cx, bottomY } = computeBox(app);
         b.x = cx;
-        fitSpriteToBox(b, w, h, fitMode);
+        fitSpriteToBox(b, boxW, boxH, 'fit');
         b.y = bottomY; // 바닥 붙임
         placeHpAndDust(b, hpBgRef.current, healthBarRef.current, dustSpriteRef.current);
 
@@ -273,6 +267,12 @@ const PixiCanvas = ({
       if (impactFadeTickerRef.current) app.ticker.remove(impactFadeTickerRef.current);
       app.destroy(true, { children: true });
       appRef.current = null;
+      boxerRef.current = null;
+      buildingSpriteRef.current = null;
+      hpBgRef.current = null;
+      healthBarRef.current = null;
+      dustSpriteRef.current = null;
+      impactCrackRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -292,11 +292,11 @@ const PixiCanvas = ({
     // 배경
     const background = PIXI.Sprite.from(eventgameback);
     background.anchor.set(0.5);
-    background.x = app.screen.width / 2;
-    background.y = app.screen.height / 2;
+    background.x = app.renderer.width / 2;
+    background.y = app.renderer.height / 2;
     background.zIndex = 0;
-    background.width = app.screen.width;
-    background.height = app.screen.height;
+    background.width = app.renderer.width;
+    background.height = app.renderer.height;
     safeAddChild(background);
 
     // ✅ 변경 2) 선택한 캐릭터 프레임을 ref에 주입
@@ -387,8 +387,8 @@ const PixiCanvas = ({
     boxer.anchor.set(0.5);
     boxer.width = boxerWidth;
     boxer.height = boxerHeight;
-    boxer.x = app.screen.width * 0.3;
-    boxer.y = app.screen.height * 0.75;
+    boxer.x = app.renderer.width * 0.3;
+    boxer.y = app.renderer.height * 0.75;
     boxer.zIndex = 1;
     boxerRef.current = boxer;
     safeAddChild(boxer);
@@ -397,7 +397,7 @@ const PixiCanvas = ({
     const bld = new PIXI.Sprite(PIXI.Texture.from(building?.imageUrl || building1));
     bld.anchor.set(0.5, 1); // ⬅️ 바닥 기준
     bld.x = cx;
-    fitSpriteToBox(bld, boxW, boxH, fitMode);
+    fitSpriteToBox(bld, boxW, boxH, 'fit');
     bld.y = bottomY; // ⬅️ 박스 바닥에 붙임
     bld.zIndex = 1;
     buildingSpriteRef.current = bld;
@@ -458,7 +458,7 @@ const PixiCanvas = ({
     const { w: boxW, h: boxH, cx, bottomY } = computeBox(app);
     b.anchor.set(0.5, 1);
     b.x = cx;
-    fitSpriteToBox(b, boxW, boxH, fitMode);
+    fitSpriteToBox(b, boxW, boxH, 'fit');
     b.y = bottomY;
 
     if (impactCrackRef.current) {
@@ -469,14 +469,14 @@ const PixiCanvas = ({
     }
 
     placeHpAndDust(b, hpBgRef.current, healthBarRef.current, dustSpriteRef.current);
-  }, [building, fitMode]);
+  }, [building]);
 
   // ★ 타격 순간 임팩트 크랙 표시/사라짐 — 중첩 방지, 200ms만 노출
   const showCrackOnce = (duration = 200, fadeOut = false) => {
-    const app = appRef.current;
-    const b = buildingSpriteRef.current;
-    const crack = impactCrackRef.current;
-    if (!app || !b || !crack) return;
+       const app = appRef.current;
+       const b = buildingSpriteRef.current;
+       const crack = impactCrackRef.current;
+       if (!app || !isAlive(b) || !isAlive(crack)) return;
 
     // 이전 예약/티커 정리
     if (impactHideTimerRef.current) {
@@ -523,17 +523,14 @@ const PixiCanvas = ({
   useEffect(() => {
     if (!boxerRef.current) return;
 
-    const isJab =
-      action === 'punch' || (typeof action === 'string' && action.endsWith('_jab'));
-    const isUpper =
-      action === 'uppercut' || (typeof action === 'string' && action.endsWith('_uppercut'));
+    const isJab   = action === 'punch' || (typeof action === 'string' && action.endsWith('_jab'));
+    const isUpper = action === 'uppercut' || (typeof action === 'string' && action.endsWith('_uppercut'));
 
     if ((isJab || isUpper) &&
         prevActionRef.current !== action &&
         !isBuildingFalling &&
         !isNewBuildingDropping) {
 
-      // ✅ 변경 4) 전역 상수 대신 ref 프레임 사용
       const frames = isUpper ? uppercutFramesRef.current : jabFramesRef.current;
 
       let i = 0;
@@ -545,20 +542,31 @@ const PixiCanvas = ({
           clearInterval(interval);
         }
       }, 80);
-
-      // 데미지/칼로리
-      setBuildingHP((prev) => Math.max(prev - 20, 0));
-      if (typeof setKcal === 'function') {
-        setKcal((prev) => Math.round((prev + 0.1) * 10) / 10);
-      }
-
-      // 임팩트 크랙
-      showCrackOnce(200, false);
     }
 
     prevActionRef.current = action;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [action, isNewBuildingDropping, isBuildingFalling]);
+
+
+  // 콤보가 실제로 소모되었을 때만 데미지 적용
+  useEffect(() => {
+    if (hitToken == null) return;
+    if (hitToken === lastHitTokenRef.current) return;
+    if (!appRef.current || !isAlive(buildingSpriteRef.current)) return;
+
+    lastHitTokenRef.current = hitToken;
+
+    // 데미지/칼로리
+    setBuildingHP(prev => Math.max(prev - 20, 0));
+    if (typeof setKcal === 'function') {
+      setKcal(prev => Math.round((prev + 0.1) * 10) / 10);
+    }
+
+    // 임팩트 크랙
+    showCrackOnce(200, false);
+  }, [hitToken, setKcal]);
+
+
 
   // ========= HP 변화 =========
   useEffect(() => {
@@ -642,7 +650,7 @@ const PixiCanvas = ({
       maxHPRef.current = building.hp ?? 100;
       setBuildingHP(maxHPRef.current);
 
-      fitSpriteToBox(b, boxW, boxH, fitMode);
+      fitSpriteToBox(b, boxW, boxH, 'fit');
       placeHpAndDust(b, hpBgRef.current, healthBarRef.current, dustSpriteRef.current);
 
       const ticker = (delta) => {
@@ -657,7 +665,7 @@ const PixiCanvas = ({
       };
       app.ticker.add(ticker);
     }
-  }, [isNewBuildingDropping, building, fitMode]);
+  }, [isNewBuildingDropping, building]);
 
   return (
     <div
