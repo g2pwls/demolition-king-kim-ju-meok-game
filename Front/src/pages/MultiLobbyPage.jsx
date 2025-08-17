@@ -196,41 +196,74 @@ export default function MultiLobbyPage() {
     return () => clearInterval(t);
   }, [room, loadFriends]);
 
+  // ✅ uuid별 초대 상태: 'sending' | 'done' (없으면 기본 상태)
+const [inviteState, setInviteState] = useState({}); 
+
   /** 초대하기 */
-  async function inviteFriend(friendUuid) {
-    if (!room || !friendUuid) return;
-    const token = localStorage.getItem("accessToken");
-    if (!token) {
-      alert("로그인이 필요합니다.");
+async function inviteFriend(friendUuid) {
+  if (!room || !friendUuid) return;
+  const token = localStorage.getItem("accessToken");
+  if (!token) {
+    alert("로그인이 필요합니다.");
+    return;
+  }
+
+  // 전송중 표시
+  setInviteState(prev => ({ ...prev, [friendUuid]: 'sending' }));
+
+  try {
+    const roomNameForInvite = currentRoomName || roomId;
+    if (!roomNameForInvite) {
+      openModal("방 이름을 확인할 수 없습니다. 잠시 후 다시 시도하세요.", "오류");
+      // 실패 시 상태 원복
+      setInviteState(prev => {
+        const copy = { ...prev };
+        delete copy[friendUuid];
+        return copy;
+      });
       return;
     }
-    setInvitingUuid(friendUuid);
-    try {
-      const roomNameForInvite = currentRoomName || roomId;
-      if (!roomNameForInvite) {
-        alert("방 이름을 확인할 수 없습니다. 잠시 후 다시 시도하세요.");
-        return;
-      }
-      const url = `${API_BASE}/api/users/friends/invite-room?roomName=${encodeURIComponent(roomNameForInvite)}`;
-      const res = await fetch(url, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "X-User-Uuid": userUuid,
-          "Friend-Uuid": friendUuid,
-        },
-      });
-      if (!res.ok) {
-        const txt = await res.text().catch(() => "");
-        throw new Error(txt || `HTTP ${res.status}`);
-      }
-      alert("초대 전송 완료");
-    } catch (e) {
-      alert("초대 실패: " + String(e?.message || e));
-    } finally {
-      setInvitingUuid(null);
+
+    const url = `${API_BASE}/api/users/friends/invite-room?roomName=${encodeURIComponent(roomNameForInvite)}`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "X-User-Uuid": userUuid,
+        "Friend-Uuid": friendUuid,
+      },
+    });
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      throw new Error(txt || `HTTP ${res.status}`);
     }
+
+    // ✅ 성공: '초대완료'로 표시
+    setInviteState(prev => ({ ...prev, [friendUuid]: 'done' }));
+
+    // ✅ 4초 후 자동 복귀(재초대 가능)
+    setTimeout(() => {
+      setInviteState(prev => {
+        // 아직 'done'이면만 지움(그 사이 다시 누른 경우 보존)
+        if (prev[friendUuid] === 'done') {
+          const copy = { ...prev };
+          delete copy[friendUuid];
+          return copy;
+        }
+        return prev;
+      });
+    }, 4000);
+  } catch (e) {
+    alert("초대 실패: " + String(e?.message || e));
+    // 실패 시 상태 원복
+    setInviteState(prev => {
+      const copy = { ...prev };
+      delete copy[friendUuid];
+      return copy;
+    });
   }
+}
+
 
   /** 채팅 자동 스크롤 */
   useEffect(() => {
@@ -812,9 +845,13 @@ export default function MultiLobbyPage() {
                         <button
                           className="btn invite"
                           onClick={() => inviteFriend(f.friendUuid)}
-                          disabled={!!invitingUuid}
+                          disabled={inviteState[f.friendUuid] === 'sending' || inviteState[f.friendUuid] === 'done'} 
                         >
-                          {invitingUuid === f.friendUuid ? "전송중…" : "초대하기"}
+                          {inviteState[f.friendUuid] === 'sending'
+                            ? "전송중…"
+                            : inviteState[f.friendUuid] === 'done'
+                            ? "초대완료"
+                            : "초대하기"}
                         </button>
                       </div>
                     ))}
