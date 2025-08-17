@@ -66,6 +66,7 @@ export default function MultiResultPage() {
                             >
                                 로비로 나가기
                             </button>
+
                             <button className="ghost" onClick={() => navigate("/main", { replace: true })}>
                                 메인화면으로 가기
                             </button>
