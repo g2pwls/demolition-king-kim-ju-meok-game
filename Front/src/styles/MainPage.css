@@ -1,6 +1,7 @@
 .main-page-background {
-  width: 1536px;
-  height: 864px; 
+width: 100vw;
+  height: 100vh;
+ 
   background-image: url('../assets/images/main/mainbackp.png');
   background-size: cover;
   background-position: center;
@@ -151,8 +152,9 @@ width: 100vw;  /* 화면 너비에 맞춤 */
   position: absolute;
   top: 0;
   left: 0;
-  width: 1536px;
-  height: 864px;
+width: 100vw;
+  height: 100vh;
+
   background-color: rgba(0, 0, 0, 0.6);
   display: flex;
   justify-content: center;
@@ -202,7 +204,7 @@ width: 100vw;  /* 화면 너비에 맞춤 */
   position: absolute;
   top: 0;
   left: 0;
-  width: 1536px;
+  width: 100vw;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 1050;
@@ -271,8 +273,9 @@ width: 100vw;  /* 화면 너비에 맞춤 */
 }
 
 .main-fixed-wrapper {
-  width: 1536px;
-  height: 864px;
+width: 100vw;
+  height: 100vh;
+
   position: relative;
   overflow: hidden;
 }

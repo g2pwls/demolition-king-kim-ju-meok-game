@@ -1,5 +1,5 @@
 .mr-root{
-      width: 1536px; height: 864px;  display:grid; place-items:center; background:#0a0c0f; color:#eaeef3;
+    width: 100vw;height: 100vh;display:grid; place-items:center; background:#0a0c0f; color:#eaeef3;
 }
 .mr-panel{
     width:min(1100px, 92vw);
