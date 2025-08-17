@@ -127,6 +127,8 @@ const SingleTestPage = () => {
   const lastTsRef = useRef(0);
 
   const isGameOverRef = useRef(false);
+  const [hitToken, setHitToken] = useState(0);
+
   useEffect(() => { isGameOverRef.current = isGameOver; }, [isGameOver]);
 
   const didReportRef = useRef(false);
@@ -412,6 +414,7 @@ const SingleTestPage = () => {
           if (lHit || rHit) {
             if (!isGameOverRef.current) {
               setAction(upperReady ? 'uppercut' : 'punch'); // ← 잽/어퍼컷 구분
+              setHitToken((t) => t + 1);
               setTimeout(() => setAction('idle'), 0);
             }
             lastActionAtRef.current = nowSec;
@@ -1049,6 +1052,7 @@ useEffect(() => {
 
           <PixiCanvas
             action={action}
+            hitToken={hitToken}
             building={currentBuilding}
             playerSkin={playerSkin}
             combo={combo}
@@ -1077,7 +1081,7 @@ useEffect(() => {
 
           <div className="webcam-container mirror">
             <video ref={videoRef} autoPlay muted className="webcam-video" />
-            <canvas ref={canvasRef} className="webcam-canvas" width="640" height="480" />
+            <canvas ref={canvasRef} className="webcam-canvas" width="640" height="480" hidden/>
           </div>
         </div>
       </div>
