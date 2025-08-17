@@ -16,7 +16,7 @@ export default function MultiModeEntryPage() {
         const actionFromState = location.state?.action;
         const actionFromQuery = params.get("action");
         const initialMode = actionFromState || actionFromQuery;
-
+        console.log("뭐고",initialMode);
         if (initialMode === "create" || initialMode === "join") {
             setMode(initialMode);
         } else {
@@ -45,15 +45,19 @@ export default function MultiModeEntryPage() {
         navigate("/main", { replace: true, state: { openMulti: true } });
     };
     const handleCreate = () => {
-        const code = title.trim();
-        if (!code) { alert("방 제목을 입력하세요."); return; }
-        navigate(`/lobby/${encodeURIComponent(code)}`);
+    const code = title.trim();
+    if (!code) { alert("방 제목을 입력하세요."); return; }
+    navigate(`/lobby/${encodeURIComponent(code)}`, {
+        state: { action: "create", roomName: code, autoJoin: true }, // ★ 이게 필요
+    });
     };
 
     const handleJoin = () => {
-        const code = extractRoomId(title) || title.trim();
-        if (!code) { alert("방 제목(또는 초대 링크)을 입력하세요."); return; }
-        navigate(`/lobby/${encodeURIComponent(code)}`);
+    const code = extractRoomId(title) || title.trim();
+    if (!code) { alert("방 제목(또는 초대 링크)을 입력하세요."); return; }
+    navigate(`/lobby/${encodeURIComponent(code)}`, {
+        state: { action: "join", autoJoin: true }, // ★ join도 명시
+    });
     };
 
     return (
