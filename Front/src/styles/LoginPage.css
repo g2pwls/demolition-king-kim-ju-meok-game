@@ -8,8 +8,9 @@ body, .login-page-background, .login-box, .login-form, .form-row, .login-button,
   font-family: 'DungGeunMo', Arial, sans-serif;
 }
 .login-page-background {
-  width: 1536px;
-  height: 864px; 
+width: 100vw;
+  height: 100vh;
+
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
