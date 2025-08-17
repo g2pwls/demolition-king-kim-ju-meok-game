@@ -72,7 +72,7 @@
 
 ### 👤 장준혁
 
-![증명사진](https://github.com/user-attachments/assets/fac625e8-4af0-4825-8b82-6fadaf2106b1)
+<img width="161" height="202" alt="Image" src="https://github.com/user-attachments/assets/70318020-7e7f-467a-9457-21893ff06cac" />
 
 - **이메일**
     - wnsgur9578@naver.com
@@ -142,8 +142,7 @@
 ![시스템아키텍쳐](/uploads/a35b8af549bf090d7382f960edb4bf2e/시스템아키텍쳐.png)
 
 ### 🧩 ERD
-![ERD](https://github.com/user-attachments/assets/98cbc8ca-71e9-4ee6-956d-a9380b32c4b3)
-
+<img width="720" height="781" alt="Image" src="https://github.com/user-attachments/assets/e461c09f-8e09-4199-b7ef-acd1ef99f972" />
 ---
 
 ## **🖥️ 주요 기능**
