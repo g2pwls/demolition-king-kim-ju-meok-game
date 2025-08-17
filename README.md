@@ -135,8 +135,8 @@
 ![시스템아키텍쳐](/uploads/a35b8af549bf090d7382f960edb4bf2e/시스템아키텍쳐.png)
 
 ### 🧩 ERD
+![alt text](image.png)
 
-!!!추가 예정
 ---
 
 ## **🖥️ 주요 기능**
