@@ -72,15 +72,22 @@
 
 ### 👤 장준혁
 
-![alt text](KEJ_8971(증명화이트).jpg)
+<img width="161" height="202" alt="Image" src="https://github.com/user-attachments/assets/4a9c1259-2b8a-44fa-b045-9062a9dcef47" />
 
 - **이메일**
-    - 이메일
+    - wnsgur9578@naver.com
 - **담당**
     - FRONTEND
-        
+      - 멀티로비 입장 및 openvidu 통신 구현
+      - 멀티플레이 구현
+      - mediapipe를 활용한 함수 기반 모션 인식 개선 및 구현
     - BACKEND
-
+      - REDIS + SSE를 활용한 실시간 통신 로직 구현
+      - 친구기능 실시간 통신을 활용하여 구현, 리더보드 API 작
+      - 멀티플레이에 필요한 API 필요에 맞게 수정
+    - AI
+      - MEDIAPIPE 관절 데이터를 활용하여 LSTM, GRU, TRANSFORMER시계열 모델등을 활용하여 펀치모션 인식 모델 학습
+      - 데이터 직접 수집 및 정제
 
 ---
 
@@ -135,7 +142,7 @@
 ![시스템아키텍쳐](/uploads/a35b8af549bf090d7382f960edb4bf2e/시스템아키텍쳐.png)
 
 ### 🧩 ERD
-![alt text](image.png)
+<img width="720" height="781" alt="Image" src="https://github.com/user-attachments/assets/778b9cf0-01d5-4684-8249-994dc6c267c2" />
 
 ---
 
