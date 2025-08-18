@@ -72,6 +72,7 @@ const EventGamePage = () => {
   const canvasRef = useRef(null);
   const videoRef = useRef(null);
   const [userUuid, setUserUuid] = useState("");             // 사용자 UUID
+  const [hitToken, setHitToken] = useState(0); // ← HP 감소 트리거
 
   const location = useLocation(); // 이벤트맵
   // ---- 이벤트 파라미터 수신 (state 우선, 없으면 URL 쿼리 폴백) ----
@@ -427,6 +428,7 @@ const EventGamePage = () => {
           if (lHit || rHit) {
             if (!isGameOverRef.current) {
               setAction(upperReady ? 'uppercut' : 'punch'); // ← 잽/어퍼컷 구분
+              setHitToken(t => t + 1); // ← PixiCanvas에 히트 신호
               setTimeout(() => setAction('idle'), 0);
             }
             lastActionAtRef.current = nowSec;
@@ -1087,6 +1089,7 @@ useEffect(() => {
 
           <PixiCanvas
             action={action}
+            hitToken={hitToken}
             building={currentBuilding}
             playerSkin={playerSkin}
             combo={combo}
