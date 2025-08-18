@@ -1072,7 +1072,7 @@ useEffect(() => {
           />
         </div>
 
-        <div className="right-panel">
+        <div className="right-panel1">
           <div className="kcal-display">{kcal} KCAL</div>
           <div className="building-status">🏢 부순 건물: {destroyedCount}</div>
           <div className="coin-status">💰 코인: {coinCount}</div>

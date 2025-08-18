@@ -139,7 +139,7 @@
   background-color: #333333;
 } */
 
-.right-panel {
+.right-panel1 {
   width: 25%;
   height: 100%;
   background: #000;
@@ -181,8 +181,9 @@
 
 .webcam-container {
   position: relative;
-  width: 300px;
-  height: 400px;
+  width: 100%;              /* 부모 요소의 너비 기준으로 꽉 차게 */
+  max-width: 1200px;         /* 너무 커지지 않게 최대값 제한 */
+  aspect-ratio: 3 / 4;      /* 3:4 비율 고정 */
   border: 3px solid white;
   border-radius: 8px;
   overflow: hidden;
