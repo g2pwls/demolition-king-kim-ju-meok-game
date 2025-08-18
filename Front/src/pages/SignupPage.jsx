@@ -71,6 +71,7 @@ function SignUp() {
 // 닉네임 상태 외에 이메일 전송/인증 상태 추가
 const [emailSendStatus, setEmailSendStatus] = useState(null); // 'loading' | 'sent' | 'error' | null
 const [verifyStatus, setVerifyStatus] = useState(null);        // 'loading' | 'success' | 'mismatch' | 'error' | null
+const [sendCooldown, setSendCooldown] = useState(false);
 
 // 이메일 인증코드 요청
 const requestAuthCode = async () => {
@@ -78,6 +79,11 @@ const requestAuthCode = async () => {
     setEmailSendStatus('loading');
     await api.post('/v1/user/email/signup/send', { email });
     setEmailSendStatus('sent');
+    setSendCooldown(true);   // ✅ 버튼 비활성화 시작
+    // 4초 후 다시 활성화
+    setTimeout(() => {
+      setSendCooldown(false);
+    }, 4000);
   } catch (err) {
     console.error(err);
     setEmailSendStatus('error');
@@ -223,6 +229,7 @@ useEffect(() => {
             <input
               type="text"
               value={userNickname}
+              maxLength={15}
               onChange={(e) => {
                 setUserNickname(e.target.value);
                 setNicknameStatus(null); // 닉네임 변경 시 상태 초기화
@@ -261,6 +268,13 @@ useEffect(() => {
     type="button"
     onClick={requestAuthCode}
     disabled={!email || isVerified || emailSendStatus === 'loading'}
+    style={{
+    backgroundColor:
+      !email || isVerified || emailSendStatus === 'loading' || sendCooldown
+        ? '#ccc'   // ✅ 비활성화 시 회색
+        : '#4CAF50', // 활성화 시 초록 (원하는 색상으로 바꾸세요)
+    color: 'white',
+  }}
   >
     {emailSendStatus === 'loading' ? '전송 중..' : '인증요청'}
   </button>
