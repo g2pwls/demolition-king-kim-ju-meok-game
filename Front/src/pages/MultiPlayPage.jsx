@@ -1128,6 +1128,7 @@ export default function MultiPlayPage() {
     };
 
     /* ───────── 파괴 핸들러 ───────── */
+    const COIN_REWARD = 10;
     const handleDestroyed = () => {
         if (isGameOverRef.current) return;
 
@@ -1156,7 +1157,7 @@ export default function MultiPlayPage() {
         }
 
         const nextDestroyed = destroyedRef.current + 1;
-        const nextCoin = coinRef.current + 1;
+        const nextCoin = coinRef.current + COIN_REWARD;
 
         setDestroyedCount(nextDestroyed);
         setCoinCount(nextCoin);
