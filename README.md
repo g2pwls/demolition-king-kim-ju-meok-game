@@ -151,7 +151,7 @@
 ![image](/uploads/bf8a54eb3469d9dac00bcb8acd5461cc/image.png){width=539 height=473}
 
 ### 🧩 ERD
-![image](/uploads/a3950dd1e46ce36c5a249033a850e9d4/image.png){width=670 height=704}
+![image](/uploads/343c2f45c061dec181bfd35e0f554c92/image.png){width=1029 height=1019}
 
 ---
 
