@@ -650,7 +650,7 @@ width: 100vw;
 .building-grid {
   display: grid;
   grid-template-columns: repeat(8, 1fr); /* 한 줄에 10개 */
-  gap: 8px;
+  gap: 5px;
   padding: 10px 0;
 }
 

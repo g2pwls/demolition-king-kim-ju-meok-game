@@ -863,7 +863,11 @@ async function inviteFriend(friendUuid) {
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
                     placeholder="채팅을 입력하세요..."
+                    maxLength={100}
                   />
+                  <p style={{ fontSize: "12px", color: chatInput.length > 90 ? "red" : "gray" }}>
+                    {chatInput.length}/100
+                  </p>
                   <button type="submit" className="btn send">
                     전송
                   </button>

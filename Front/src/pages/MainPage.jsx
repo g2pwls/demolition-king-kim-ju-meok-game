@@ -350,7 +350,7 @@ const handleBuyClick = async () => {
 
       await fetchSkins();
       await fetchGold();
-      alert(`"${pendingSkin.name}" 캐릭터를 구매했습니다!`);
+      // alert(`"${pendingSkin.name}" 캐릭터를 구매했습니다!`);
     } catch (err) {
       alert('구매 실패');
     } finally {
