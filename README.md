@@ -151,7 +151,7 @@
 ![image](/uploads/bf8a54eb3469d9dac00bcb8acd5461cc/image.png){width=539 height=473}
 
 ### 🧩 ERD
-![스크린샷_2025-08-17_173416](/uploads/55e26b0799301b385047f0aae235733f/스크린샷_2025-08-17_173416.png)
+![image](/uploads/a3950dd1e46ce36c5a249033a850e9d4/image.png){width=670 height=704}
 
 ---
 
