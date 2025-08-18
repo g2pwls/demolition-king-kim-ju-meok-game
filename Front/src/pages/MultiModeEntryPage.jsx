@@ -40,23 +40,40 @@ export default function MultiModeEntryPage() {
     };
 
     const reset = () => { setMode(null); setTitle(""); };
+    const [error, setError] = useState(""); // 에러 메시지 상태
 
     const goBackToMyEntry = () => {
         navigate("/main", { replace: true, state: { openMulti: true } });
     };
     const handleCreate = () => {
     const code = title.trim();
-    if (!code) { alert("방 제목을 입력하세요."); return; }
+    if (!code) {
+        setError("방 제목을 입력하세요.");
+        return;
+    }
+    if (code.length > 20) {
+        setError("방 제목은 20자 이내로 입력하세요.");
+        return;
+    }
+    setError(""); // 에러 없을 때 초기화
     navigate(`/lobby/${encodeURIComponent(code)}`, {
-        state: { action: "create", roomName: code, autoJoin: true }, // ★ 이게 필요
+        state: { action: "create", roomName: code, autoJoin: true },
     });
     };
 
     const handleJoin = () => {
     const code = extractRoomId(title) || title.trim();
-    if (!code) { alert("방 제목(또는 초대 링크)을 입력하세요."); return; }
+    if (!code) {
+        setError("방 제목(또는 초대 링크)을 입력하세요.");
+        return;
+    }
+    if (code.length > 20) {
+        setError("방 제목은 20자 이내로 입력하세요.");
+        return;
+    }
+    setError(""); // 에러 없을 때 초기화
     navigate(`/lobby/${encodeURIComponent(code)}`, {
-        state: { action: "join", autoJoin: true }, // ★ join도 명시
+        state: { action: "join", autoJoin: true },
     });
     };
 
@@ -82,9 +99,11 @@ export default function MultiModeEntryPage() {
                             className="ml-input"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
-                            placeholder="예) 철거왕들의 아지트"
+                            placeholder="예) 철거왕들의 아지트(20자 이내)"
                             autoFocus
+                            maxLength={20}   // ✅ 글자 수 제한
                         />
+                        {error && <p className="ml-error">{error}</p>} {/* ✅ 에러 표시 */}
                         <div className="ml-actions">
                             <button className="ml-btn ghost" onClick={goBackToMyEntry}>취소</button>
                             <button className="ml-btn create" onClick={handleCreate}>생성하기</button>
@@ -102,6 +121,7 @@ export default function MultiModeEntryPage() {
                             onChange={(e) => setTitle(e.target.value)}
                             placeholder="제목을 입력하거나 /lobby/… 링크를 붙여넣기"
                             autoFocus
+                            maxLength={20}   // ✅ 글자 수 제한
                         />
                         <div className="ml-actions">
                             <button className="ml-btn ghost" onClick={goBackToMyEntry}>취소</button>
