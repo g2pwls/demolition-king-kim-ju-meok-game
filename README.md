@@ -165,11 +165,11 @@
 
 ### 🔐 **로그인 기능**
 
-| ![로그인-_online-video-cutter.com_](/uploads/4b10a07ec6db65dde981d3dc683deae0/로그인-_online-video-cutter.com_.gif) |![소셜로그인-_online-video-cutter.com_](/uploads/ae44de71eaeb656ad5d5c1dff01e4867/소셜로그인-_online-video-cutter.com_.gif)|
+| ![로그인-_online-video-cutter.com_](/uploads/4b10a07ec6db65dde981d3dc683deae0/로그인-_online-video-cutter.com_.gif) |![Image](https://github.com/user-attachments/assets/13ea7111-9b73-4b0d-b412-f572355360d2)|
 | --- | --- |
 | **로그인 화면** <br> 로그인을 진행하며 메인 페이지로 이동 가능합니다. | **소셜로그인 화면** <br> 소셜계정을 통해 회원가입을 진행할 수 있습니다. |
 
-| ![bibun-ezgif.com-speed](/uploads/5a376874c8193929ccf61f85188290ea/bibun-ezgif.com-speed.gif) | ![sing-ezgif.com-speed](/uploads/90b3f16ecd58d7109be358487151eaf9/sing-ezgif.com-speed.gif) |
+| ![Image](https://github.com/user-attachments/assets/d55a22f2-0709-4982-b4ea-070554a56a71) | ![Image](https://github.com/user-attachments/assets/34734c60-e254-4514-b29f-60c2e8dbec54) |
 | --- | --- |
 | **비밀 번호 찾기** <br> 회원의 비밀번호 찾기 기능을 제공해줍니다. | **회원가입 기능** <br> 회원의 프로필을 선택하고 초기정보를 설정합니다. |
 
@@ -180,25 +180,25 @@
 | --- |
 | **초기 화면** <br> 게임 첫 진입 페이지로, 사용자의 상호작용을 통해 로그인 페이지로 진입할수있습니다. |
 
-| ![image](/uploads/2764f59bf60a895eb28ef51091505e30/image.png){width=1153 height=652} | ![image](/uploads/af57252596ca830031f9b776ac3ab38c/image.png){width=1153 height=648} |
+| ![image](https://github.com/user-attachments/assets/01befebf-930d-4aad-ab86-4521df93ac54) | ![image](https://github.com/user-attachments/assets/f7c385ae-ae74-48de-ab0d-4a787cbe1899) |
 | --- | --- |
 | **랭킹 상세 조회** <br> 유저들간의 랭킹을 상세 조회할수 있습니다. | **플레이 가이드** <br> 플레이 가이드를 사용자에게 제공해줍니다. |
 
-| ![invite-ezgif.com-speed](/uploads/ca1d516996e0fe3caaebfca4cbabb19e/invite-ezgif.com-speed.gif) | ![invite_re-ezgif.com-speed](/uploads/1159db49c5a505494f0ad9d66429dffb/invite_re-ezgif.com-speed.gif) |
+| ![Image](https://github.com/user-attachments/assets/09048d66-d57c-4f0d-b417-85e2328495ef) | ![Image](https://github.com/user-attachments/assets/bcd710e3-fc4d-4a56-bf5c-7d231787b1c6) |
 | --- | --- |
 | **친구 초대 기능** <br> 닉네임으로 친구를 초대할수 있습니다. | **친구 수락 조회 기능** <br> 친구요청을 수락할수 있고 조회할수 있습니다. |
 
-| ![buy-ezgif.com-speed](/uploads/6f7dc367cd520362072afeaf4f17ebad/buy-ezgif.com-speed.gif)|
+| ![Image](https://github.com/user-attachments/assets/f96a6f7a-47f1-45e8-b9b4-19c61333031a)|
 | --- |
-| **캐릭터 구매,선택 화면** <br> 캐릭터를 구매하고 선택할수 있습니다. |
+| **캐릭터 구매,선택 화면** <br> 게임 플레이로 얻은 골드로 스킨을 선택하고 구매할수 있습니다. |
 
-| ![gold-ezgif.com-speed](/uploads/19592edec7d008d43cc85345dbc117b9/gold-ezgif.com-speed.gif) | ![list-ezgif.com-speed](/uploads/e1f873784fbe4cf0c1f992072bf3917a/list-ezgif.com-speed.gif) |
+| ![Image](https://github.com/user-attachments/assets/cd6f3850-5397-4db4-8c58-10776c47d3e5) | ![Image](https://github.com/user-attachments/assets/90316644-68cb-4a80-ab31-7ad50aeeda5b) |
 | --- | --- |
-| **플레이어 구매 선택기능** <br> 게임 플레이로 얻은 골드로 스킨을 선택하고 구매할수 있습니다. | **건물 컬렉션 조회** <br> 게임 플레이를 하며 부순 건물을 조회할수 있습니다. |
+| **칼로리 조회 및 정보수정** <br> 일주일 단위로 소모 칼로리를 조회할 수 있습니다. | **건물 컬렉션 조회** <br> 게임 플레이를 하며 부순 건물을 조회할수 있습니다. |
 
 ### 🏠 **게임 화면**
 
-| ![show_note2-ezgif.com-speed](/uploads/5fa79e75a5ea039588c3cc2130cc1885/show_note2-ezgif.com-speed.gif) | ![event-ezgif.com-speed](/uploads/adf4448f0e93769649683c1e6ebc4e3d/event-ezgif.com-speed.gif) |
+| ![Image](https://github.com/user-attachments/assets/2f5474a2-c39c-42a0-8775-275605807aa0) | ![Image](https://github.com/user-attachments/assets/20cd1332-46f0-40e6-b4b4-6c91a67cd7a5) |
 | --- | --- |
 | **싱글 플레이 화면** <br> 싱글 플레이로 혼자서 게임을 즐길수 있습니다. | **이벤트 플레이 화면** <br> 각 지역 랜드마크 건물을 보유한 이벤트 맵을 즐길수 있습니다. |
 
