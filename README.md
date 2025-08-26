@@ -447,61 +447,68 @@
 
 
 ---
-
 ## **🖥️ 주요 기능**
 
 ## 🏠**초기 화면(Web)**
 
-| ![Image](https://github.com/user-attachments/assets/76931d0a-564f-4e77-b463-4953ef50fcd7)|
+| <p align="center"><img width="475" height="500" src="https://github.com/user-attachments/assets/76931d0a-564f-4e77-b463-4953ef50fcd7" /></p>|
 | --- |
 | **초기 화면** <br> 게임 첫 진입 페이지로, 사용자의 상호작용을 통해 로그인 페이지로 진입할수있습니다. |
 
 ### 🔐 **로그인 기능**
 
-| ![Image](https://github.com/user-attachments/assets/bef2ba73-ee61-432e-a16b-89a2eb16498e) |![Image](https://github.com/user-attachments/assets/13ea7111-9b73-4b0d-b412-f572355360d2)|
+| <p align="center"><img width="475" height="500" src="https://github.com/user-attachments/assets/bef2ba73-ee61-432e-a16b-89a2eb16498e" /></p> | <p align="center"><img width="475" height="500" src="https://github.com/user-attachments/assets/13ea7111-9b73-4b0d-b412-f572355360d2" /></p>|
 | --- | --- |
 | **로그인 화면** <br> 로그인을 진행하며 메인 페이지로 이동 가능합니다. | **소셜로그인 화면** <br> 소셜계정을 통해 회원가입을 진행할 수 있습니다. |
 
-| ![Image](https://github.com/user-attachments/assets/d55a22f2-0709-4982-b4ea-070554a56a71) | ![Image](https://github.com/user-attachments/assets/34734c60-e254-4514-b29f-60c2e8dbec54) |
+| <p align="center"><img width="475" height="500" src="https://github.com/user-attachments/assets/d55a22f2-0709-4982-b4ea-070554a56a71" /></p> | <p align="center"><img width="475" height="500" src="https://github.com/user-attachments/assets/34734c60-e254-4514-b29f-60c2e8dbec54" /></p> |
 | --- | --- |
 | **비밀 번호 찾기** <br> 회원의 비밀번호 찾기 기능을 제공해줍니다. | **회원가입 기능** <br> 회원의 프로필을 선택하고 초기정보를 설정합니다. |
 
-
 ### 🏠 **메인 화면**
 
-| ![Image](https://github.com/user-attachments/assets/90e30f8c-11c0-4071-92a8-19951944d562)|
+| <p align="center"><img width="475" height="500" src="https://github.com/user-attachments/assets/90e30f8c-11c0-4071-92a8-19951944d562" /></p>|
 | --- |
 | **초기 화면** <br> 게임 첫 진입 페이지로, 사용자의 상호작용을 통해 로그인 페이지로 진입할수있습니다. |
 
-| ![image](https://github.com/user-attachments/assets/01befebf-930d-4aad-ab86-4521df93ac54) | ![image](https://github.com/user-attachments/assets/f7c385ae-ae74-48de-ab0d-4a787cbe1899) |
+| <p align="center"><img width="475" height="500" src="https://github.com/user-attachments/assets/01befebf-930d-4aad-ab86-4521df93ac54" /></p> | <p align="center"><img width="475" height="500" src="https://github.com/user-attachments/assets/f7c385ae-ae74-48de-ab0d-4a787cbe1899" /></p> |
 | --- | --- |
 | **랭킹 상세 조회** <br> 유저들간의 랭킹을 상세 조회할수 있습니다. | **플레이 가이드** <br> 플레이 가이드를 사용자에게 제공해줍니다. |
 
-| ![Image](https://github.com/user-attachments/assets/09048d66-d57c-4f0d-b417-85e2328495ef) | ![Image](https://github.com/user-attachments/assets/bcd710e3-fc4d-4a56-bf5c-7d231787b1c6) |
+| <p align="center"><img width="475" height="500" src="https://github.com/user-attachments/assets/09048d66-d57c-4f0d-b417-85e2328495ef" /></p> | <p align="center"><img width="475" height="500" src="https://github.com/user-attachments/assets/bcd710e3-fc4d-4a56-bf5c-7d231787b1c6" /></p> |
 | --- | --- |
 | **친구 초대 기능** <br> 닉네임으로 친구를 초대할수 있습니다. | **친구 수락 조회 기능** <br> 친구요청을 수락할수 있고 조회할수 있습니다. |
 
-| ![Image](https://github.com/user-attachments/assets/f96a6f7a-47f1-45e8-b9b4-19c61333031a)|
+| <p align="center"><img width="475" height="500" src="https://github.com/user-attachments/assets/f96a6f7a-47f1-45e8-b9b4-19c61333031a" /></p>|
 | --- |
 | **캐릭터 구매,선택 화면** <br> 게임 플레이로 얻은 골드로 스킨을 선택하고 구매할수 있습니다. |
 
-| ![Image](https://github.com/user-attachments/assets/cd6f3850-5397-4db4-8c58-10776c47d3e5) | ![Image](https://github.com/user-attachments/assets/90316644-68cb-4a80-ab31-7ad50aeeda5b) |
+| <p align="center"><img width="475" height="500" src="https://github.com/user-attachments/assets/cd6f3850-5397-4db4-8c58-10776c47d3e5" /></p> | <p align="center"><img width="475" height="500" src="https://github.com/user-attachments/assets/90316644-68cb-4a80-ab31-7ad50aeeda5b" /></p> |
 | --- | --- |
 | **칼로리 조회 및 정보수정** <br> 일주일 단위로 소모 칼로리를 조회할 수 있습니다. | **건물 컬렉션 조회** <br> 게임 플레이를 하며 부순 건물을 조회할수 있습니다. |
 
 ### 🏠 **게임 화면**
 
-| ![Image](https://github.com/user-attachments/assets/2f5474a2-c39c-42a0-8775-275605807aa0) | ![Image](https://github.com/user-attachments/assets/20cd1332-46f0-40e6-b4b4-6c91a67cd7a5) |
+| <p align="center"><img width="475" height="500" src="https://github.com/user-attachments/assets/2f5474a2-c39c-42a0-8775-275605807aa0" /></p> | <p align="center"><img width="475" height="500" src="https://github.com/user-attachments/assets/20cd1332-46f0-40e6-b4b4-6c91a67cd7a5" /></p> |
 | --- | --- |
 | **싱글 플레이 화면** <br> 싱글 플레이로 혼자서 게임을 즐길수 있습니다. | **이벤트 플레이 화면** <br> 각 지역 랜드마크 건물을 보유한 이벤트 맵을 즐길수 있습니다. |
 
-| ![Image](https://github.com/user-attachments/assets/42f7df29-d424-42d0-b6e6-da22af399816) |
+| <p align="center"><img width="475" height="500" src="https://github.com/user-attachments/assets/42f7df29-d424-42d0-b6e6-da22af399816" /></p> |
 | --- |
 | **멀티 플레이 화면** <br> 멀티 플레이로 4인이서 게임을 즐길수 있습니다. |
+
 
 ---
 
 ## 📄자료
+
+### 🎨 Figma
+<details>
+  <summary>자세히 (클릭해서 보기)</summary>
+
+  <img width="1319" height="851" alt="Image" 
+    src="https://github.com/user-attachments/assets/af2f61df-2f1d-4c5d-91be-0491ba6e70e0" />
+</details>
 
 ### 🔄 플로우 차트
 <details>
