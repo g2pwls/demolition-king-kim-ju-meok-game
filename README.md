@@ -1,8 +1,12 @@
-## 🥊 주먹이 운다 (E106)
+## 🥊 철거왕 김주먹
 
-> 권투 기반 철거 게임
-한때 챔피언을 꿈꾸던 복서, 이제는 철거 현장에서 주먹으로 세상을 부순다!
+한때 챔피언을 꿈꾸던 복서, 이제는 철거 현장에서 주먹으로 세상을 부순다!  
 싱글·멀티 모드, 모션 인식, 랭킹 시스템까지 갖춘 차세대 액션 게임 🎮
+
+### 📜 게임 소개
+**철거왕 김주먹**은 **카메라 기반 모션 인식 복싱 게임**으로, 운동을 재미있고 지속 가능하게 만드는 것을 목표로 합니다.  
+사용자는 화면에 제시되는 콤보(잽, 어퍼 등)를 실제 자세로 수행해 불을 끄듯 완수하며, 모든 콤보를 성공하면 건물을 철거합니다!
+
 
 ---
 
@@ -19,6 +23,36 @@
 - MediaPipe 기반 모션 인식으로 실제 복싱 동작을 게임 속 액션으로 반영
 - 건물 파괴, 스테이지 클리어, 골드 획득, 랭킹 시스템 탑재
 - 칼로리 소모량까지 측정하는 피트니스 요소 결합
+
+---
+
+## 💡 배경과 문제 정의
+- **문제 인식**: 헬스장 이용의 시간/비용 부담, 혼자 하는 홈트의 지루함, 운동 습관 실패  
+- **핵심 질문**: “운동을 게임처럼 즐겁게 만들 수 없을까?”  
+- **해결 방향**:  
+  - 🎲 Gamification(게임화) → 재미/보상/경쟁  
+  - 📷 카메라만으로 접근 가능 (장비 無)  
+
+---
+
+## 🎮 서비스 개요와 사용자 가치
+### 1. 모드 소개
+| 모드 | 설명 | 사용자 가치 |
+|------|------|-------------|
+| **싱글** | 랜덤 건물 철거, 빠른 피드백 루프 | 성취감·반복 플레이 |
+| **이벤트** | 지도 기반 지역 건물 철거 | 상상 체험·동기 강화 |
+| **멀티** | 친구와 협동 철거 (OpenVidu) | 사회적 동기·유대감 |
+
+### 2. 핵심 게임 룰
+- 콤보 카드(잽→잽→어퍼)를 순서대로 수행  
+- 성공 시 불이 꺼지고, 전부 성공하면 건물 철거  
+- 🎁 보상 요소: 스코어, 칼로리, 랭킹, 스킨  
+
+### 3. 사용자 가치
+- 😆 재미: 건물 파괴 + 성취감  
+- 🌍 접근성: 카메라만 있으면 가능  
+- 🔄 지속성: 랭킹/스킨/이벤트로 동기 부여  
+- 👥 사회성: 친구와 협력·경쟁  
 
 ---
 
@@ -403,28 +437,13 @@
 
 ## 📁 문서
 
-<details>
-  <summary>🛠 시스템 아키텍처 (클릭해서 보기)</summary>
-
-  <!-- 빈 줄 하나 정도 두면 렌더링이 깔끔해요 -->
-
-  <img width="718" height="630" alt="시스템 아키텍처"
+### 🛠 시스템 아키텍처
+<img width="718" height="630" alt="시스템 아키텍처"
        src="https://github.com/user-attachments/assets/08291212-0a36-46f8-a68b-dbe9cdd069d0" />
-</details>
 
-<details>
-  <summary>🧩 ERD (클릭해서 보기)</summary>
-
-  <img width="1372" height="1358" alt="ERD"
+### 🧩 ERD
+<img width="1372" height="1358" alt="ERD"
        src="https://github.com/user-attachments/assets/f8d1006c-ab7e-4af6-91d7-021d4f494a89" />
-</details>
-
-<details>
-  <summary>📊 플로우 차트 (클릭해서 보기)</summary>
-
-  <img width="1026" height="1024" alt="Image" 
-      src="https://github.com/user-attachments/assets/3d510c8d-01ad-47d8-a976-77bb9d49cf3c" />
-</details>
 
 
 ---
@@ -479,3 +498,29 @@
 | ![Image](https://github.com/user-attachments/assets/42f7df29-d424-42d0-b6e6-da22af399816) |
 | --- |
 | **멀티 플레이 화면** <br> 멀티 플레이로 4인이서 게임을 즐길수 있습니다. |
+
+---
+
+## 📄자료
+
+### 🔄 플로우 차트
+<details>
+  <summary>자세히 (클릭해서 보기)</summary>
+
+  <img width="1026" height="1024" alt="Image" 
+      src="https://github.com/user-attachments/assets/3d510c8d-01ad-47d8-a976-77bb9d49cf3c" />
+</details>
+
+### 📝 기능 명세
+<details>
+  <summary>자세히 (클릭해서 보기)</summary>
+
+  <img width="1583" height="2810" alt="Image" src="https://github.com/user-attachments/assets/25120eb3-aef8-4c3c-8610-940e6920bb35" />
+</details>
+
+### 📅 Jira
+<details>
+  <summary>자세히 (클릭해서 보기)</summary>
+
+  <img width="1703" height="5712" alt="Image" src="https://github.com/user-attachments/assets/bded91bb-50a8-4071-be2e-c87e335c8ea8" />
+</details>
