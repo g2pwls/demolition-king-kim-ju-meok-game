@@ -459,7 +459,7 @@
 
 
 ### 💥 효과
-<img width="695" height="516" alt="Image" src="https://github.com/user-attachments/assets/01920697-b0cc-4e95-8b4c-142d63d9295a" />
+<img width="500" height="516" alt="Image" src="https://github.com/user-attachments/assets/01920697-b0cc-4e95-8b4c-142d63d9295a" />
 
 ---
 
