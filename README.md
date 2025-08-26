@@ -457,7 +457,7 @@
 
 ### 🔐 **로그인 기능**
 
-| <p align="center"><img width="475" height="500" src="https://github.com/user-attachments/assets/bef2ba73-ee61-432e-a16b-89a2eb16498e" /></p> | <p align="center"><img width="475" height="500" src="https://github.com/user-attachments/assets/13ea7111-9b73-4b0d-b412-f572355360d2" /></p>|
+| <p align="center"><img width="400" height="500" src="https://github.com/user-attachments/assets/bef2ba73-ee61-432e-a16b-89a2eb16498e" /></p> | <p align="center"><img width="400" height="500" src="https://github.com/user-attachments/assets/13ea7111-9b73-4b0d-b412-f572355360d2" /></p>|
 | --- | --- |
 | **로그인 화면** <br> 로그인을 진행하며 메인 페이지로 이동 가능합니다. | **소셜로그인 화면** <br> 소셜계정을 통해 회원가입을 진행할 수 있습니다. |
 
