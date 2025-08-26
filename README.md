@@ -467,9 +467,9 @@
 
 ### 🏠 **메인 화면**
 
-| <p align="center"><img width="475" height="500" src="https://github.com/user-attachments/assets/90e30f8c-11c0-4071-92a8-19951944d562" /></p>|
-| --- |
-| **초기 화면** <br> 게임 첫 진입 페이지로, 사용자의 상호작용을 통해 로그인 페이지로 진입할수있습니다. |
+| <p align="center"><img width="473" height="500" src="https://github.com/user-attachments/assets/90e30f8c-11c0-4071-92a8-19951944d562" /></p> | <p align="center"><img width="473" height="500" src="https://github.com/user-attachments/assets/f96a6f7a-47f1-45e8-b9b4-19c61333031a" /></p> |
+| --- | --- |
+| **초기 화면** <br> 게임 첫 진입 페이지로, 사용자의 상호작용을 통해 로그인 페이지로 진입할수있습니다. | **캐릭터 구매, 선택 화면** <br> 게임 플레이로 얻은 골드로 스킨을 선택하고 구매할 수 있습니다. |
 
 | <p align="center"><img width="475" height="500" src="https://github.com/user-attachments/assets/01befebf-930d-4aad-ab86-4521df93ac54" /></p> | <p align="center"><img width="475" height="500" src="https://github.com/user-attachments/assets/f7c385ae-ae74-48de-ab0d-4a787cbe1899" /></p> |
 | --- | --- |
@@ -478,10 +478,6 @@
 | <p align="center"><img width="475" height="500" src="https://github.com/user-attachments/assets/09048d66-d57c-4f0d-b417-85e2328495ef" /></p> | <p align="center"><img width="475" height="500" src="https://github.com/user-attachments/assets/bcd710e3-fc4d-4a56-bf5c-7d231787b1c6" /></p> |
 | --- | --- |
 | **친구 초대 기능** <br> 닉네임으로 친구를 초대할수 있습니다. | **친구 수락 조회 기능** <br> 친구요청을 수락할수 있고 조회할수 있습니다. |
-
-| <p align="center"><img width="475" height="500" src="https://github.com/user-attachments/assets/f96a6f7a-47f1-45e8-b9b4-19c61333031a" /></p>|
-| --- |
-| **캐릭터 구매,선택 화면** <br> 게임 플레이로 얻은 골드로 스킨을 선택하고 구매할수 있습니다. |
 
 | <p align="center"><img width="475" height="500" src="https://github.com/user-attachments/assets/cd6f3850-5397-4db4-8c58-10776c47d3e5" /></p> | <p align="center"><img width="475" height="500" src="https://github.com/user-attachments/assets/90316644-68cb-4a80-ab31-7ad50aeeda5b" /></p> |
 | --- | --- |
