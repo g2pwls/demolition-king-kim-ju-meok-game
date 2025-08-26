@@ -22,125 +22,381 @@
 
 ---
 
-## 👥 팀원 소개
+## 👥 Team Members
 
-### 👤 박민준 (팀장)
+<div align="center">
 
-![박민준](/uploads/acc15c913a8e48326fbacba6189c57e5/박민준.png)
+<table style="width:100%; border-collapse:collapse; text-align:center;">
+  <tr>
+    <td style="padding:20px; border:1px solid #e5e7eb; vertical-align:top;">
+      <img src="https://github.com/user-attachments/assets/fc69f733-66e1-40f4-a6fd-829f7d5f3f7c" width="120" /><br>
+      <b>박민준 (팀장)</b><br>
+      <sub>FRONTEND</sub><br><br>
+      <ul style="text-align:left;">
+        <li>회원가입/로그인 페이지 구현 및 백엔드 연동</li>
+        <li>메인 화면 / 게임 화면 UI 개발</li>
+        <li>캐릭터, 건물, 이펙트 등 스프라이트 제작 및 적용</li>
+        <li>게임 홍보 동영상 제작</li>
+      </ul>
+    </td>
+    <td style="padding:20px; border:1px solid #e5e7eb; vertical-align:top;">
+      <img src="https://github.com/user-attachments/assets/b727f7b2-eedb-4ebe-9608-2f5910ce6a7d" width="120" /><br>
+      <b>윤혜진</b><br>
+      <sub>FRONTEND</sub><br><br>
+      <ul style="text-align:left;">
+        <li>Figma 제작, Figma 기반 전반적인 UI/UX 설계 및 실제 화면 구현</li>
+        <li>Axios 기반 API 통신 모듈 작성 및 연동</li>
+        <li>PixiJS 활용 게임 화면 렌더링</li>
+        <li>AudioContext, localStorage로 BGM 연속 재생</li>
+        <li>모달·토스트 알림, 온라인 상태 시각화 구현</li>
+        <li>캐릭터, 건물 등 에셋 제작 및 적용</li>
+      </ul>
+    </td>
+    <td style="padding:20px; border:1px solid #e5e7eb; vertical-align:top;">
+      <img src="https://github.com/user-attachments/assets/2b4d194b-5790-4823-8c7c-8c5431422074" width="120" /><br>
+      <b>조창현</b><br>
+      <sub>FRONTEND · BACKEND</sub><br><br>
+      <ul style="text-align:left;">
+        <li>WebRTC · OpenVidu 기반 실시간 통신 기능</li>
+        <li>멀티 로비 페이지 설계 및 구현</li>
+        <li>프로젝트 발표 자료(PPT) 제작</li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:20px; border:1px solid #e5e7eb; vertical-align:top;">
+      <img src="https://github.com/user-attachments/assets/5bce73a4-d017-4114-b6ed-7cf010e90a18" width="120" /><br>
+      <b>장준혁</b><br>
+      <sub>BACKEND · AI</sub><br><br>
+      <ul style="text-align:left;">
+        <li>멀티로비 입장 및 OpenVidu 통신 구현</li>
+        <li>멀티플레이 기능 구현</li>
+        <li>Mediapipe 기반 모션 인식 개선</li>
+        <li>Redis + SSE 기반 실시간 통신 로직</li>
+        <li>친구 기능 및 리더보드 API 구현</li>
+        <li>펀치모션 인식 AI 모델 (LSTM, GRU, Transformer)</li>
+        <li>데이터 수집 및 정제</li>
+      </ul>
+    </td>
+    <td style="padding:20px; border:1px solid #e5e7eb; vertical-align:top;">
+      <img src="https://github.com/user-attachments/assets/55c1b9ad-4945-411b-9307-bd9b2087f4f1" width="120" /><br>
+      <b>신유빈</b><br>
+      <sub>BACKEND</sub><br><br>
+      <ul style="text-align:left;">
+        <li>소셜 로그인 (구글/카카오) 연동</li>
+        <li>자동 로그인 및 토큰 갱신</li>
+        <li>OAuth2 기반 소셜 로그인 API</li>
+        <li>JWT 인증/인가 로직</li>
+        <li>마이페이지 (칼로리, 플레이시간, 도감, 회원정보 변경)</li>
+        <li>게임 콤보 및 이벤트맵 API</li>
+        <li>MySQL 기반 DB 설계</li>
+      </ul>
+    </td>
+    <td style="padding:20px; border:1px solid #e5e7eb; vertical-align:top;">
+      <img src="https://github.com/user-attachments/assets/d0d39a87-9ada-440c-b39b-ae17d3524337" width="120" /><br>
+      <b>홍지훈</b><br>
+      <sub>BACKEND · Build</sub><br><br>
+      <ul style="text-align:left;">
+        <li>게임 코어 로직 구현</li>
+        <li>WebRTC · OpenVidu · MediaPipe 프론트 배포환경 구성</li>
+        <li>게임 관련 API (통계, 골드, 건물, 스킨)</li>
+        <li>SMTP 기반 이메일 인증 API</li>
+        <li>Spring Security + JWT 인증 구조</li>
+        <li>AWS EC2 · Nginx · OpenVidu · Livekit 인프라</li>
+        <li>Docker, Jenkins CI/CD 파이프라인 구성</li>
+      </ul>
+    </td>
+  </tr>
+</table>
 
-- **이메일**
-    - qkralswns924@naver.com
-- **담당**
-    - FRONTEND
-      - 회원가입/로그인 페이지 구현 및 백엔드 연동
-      - 메인 화면 / 게임 화면 UI 개발
-      - 캐릭터, 건물, 이펙트 등 스프라이트 제작 및 적용
-      - 게임 홍보 동영상 제작
-    - BACKEND
+</div>
 
----
-
-### 👤 윤혜진
-
-![윤혜진](/uploads/260e3afc8e0932700e553826c996b72a/윤혜진.png)
-
-- **이메일**
-    - yhjyhw1004@naver.com
-- **담당**
-    - FRONTEND
-      - Figma로 서비스 전반의 UI/UX를 설계하고 이를 토대로 실제 화면 디자인을 구현
-      - Axios 기반 API 통신 모듈을 작성하고 백엔드와 연동하여 주요 기능을 구현
-      - PixiJS를 활용한 게임 화면 렌더링
-      - 배경음악이 페이지 전환 시에도 이어지도록 AudioContext와 localStorage 적용 
-      - 모달·토스트 알림 및 상태 시각화(초대 버튼 비활성화, 친구 온라인 표시 등)를 통해 UX를 강화
-    - BACKEND
-
-
----
-
-### 👤 조창현
-
-![조창현](/uploads/f8a8df174c2e1b8b900ddafa01914425/조창현.png)
-
-- **이메일**
-    - ch392930@naver.com
-- **담당**
-    - FRONTEND
-      - WebRTC 및 OpenVidu 기반 실시간 통신 기능 구현
-      - 멀티 로비 페이지 설계 및 구현
-      - 프로젝트 발표 자료(PPT) 제작
-    - BACKEND
-
-
----
-
-### 👤 장준혁
-
-![장준혁](/uploads/2f42fb94f136a460139d7db1728ca5dc/장준혁.png)
-
-- **이메일**
-    - wnsgur9578@naver.com
-- **담당**
-    - FRONTEND
-      - 멀티로비 입장 및 openvidu 통신 구현
-      - 멀티플레이 구현
-      - mediapipe를 활용한 함수 기반 모션 인식 개선 및 구현
-    - BACKEND
-      - REDIS + SSE를 활용한 실시간 통신 로직 구현
-      - 친구기능 실시간 통신을 활용하여 구현, 리더보드 API 작
-      - 멀티플레이에 필요한 API 필요에 맞게 수정
-    - AI
-      - MEDIAPIPE 관절 데이터를 활용하여 LSTM, GRU, TRANSFORMER시계열 모델등을 활용하여 펀치모션 인식 모델 학습
-      - 데이터 직접 수집 및 정제
-
----
-
-### 👤 신유빈
-
-![신유빈](/uploads/8707b67f434a586e7c968f5c3ba1eaf4/신유빈.png)
-
-- **이메일**
-    - syb0317timo12@gmail.com
-- **담당**
-   - FRONTEND
-        - 소셜 로그인(구글/카카오) 연동
-        - 자동 로그인 및 토큰 갱신 로직 구현
-    - BACKEND
-        - OAuth2 기반 소셜 로그인 API 구현
-        - JWT 인증/인가 로직 구현
-        - 칼로리 및 플레이 시간, 도감정보, 회원정보 변경 등 마이페이지 관련 API 작업
-        - 게임 콤보, 이벤트맵 API 구현
-        - MySQL 기반 DB 설계
----
-
-### 👤 홍지훈
-
-![홍지훈](/uploads/7bab878575f35ab2c866b74406eaff1b/홍지훈.png)
-
-- **이메일**
-    - wlgns9807@naver.com
-- **담당**
-    - FRONTEND
-      - 게임 코어 로직 구현
-      - WebRtc 기반 프론트엔드 배포 환경 구성 (MediaPipe · OpenVidu)  
-    - BACKEND
-      - 게임과 관련된 통계, 골드, 건물 생성, 스킨 API 작업
-      - SMTP 기반 이메일 인증 API 작업
-      - Spring Security JWT 인증 뼈대구성
-      - AWS EC2, Nginx, Openvidu, Livekit 영속성 인프라 작업
-      - Docker, Jenkins CI/CD PipeLine 구성
 
 ---
 
 ## 🧰 기술 스택
 
-| 분류 | 사용 기술 |
-|------|-----------|
-| **Language** | `Java`, `JavaScript` |
-| **Backend** | `Spring Boot 3.4.5`, `Spring Security`, `JPA`, `JWT`, `Livekit` , `SMTP` |
-| **Frontend** | `React`, `Pixi.js`, `Openvidu3.3.0`, `MediaPipe` |
-| **DB** | `MySQL`, `Redis` |
-| **DevOps** | `Git`, `Docker`, `Docker-Compose` , `AWS EC2`, `Jenkins`, `Nginx` |
+
+## ⚙️ Backend
+<!-- ===================== -->
+<!-- Backend Stack Badges -->
+<!-- ===================== -->
+<p align="center">
+  <img src="https://img.shields.io/badge/Java-17-007396?style=for-the-badge&logo=openjdk&logoColor=white" />
+  <img src="https://img.shields.io/badge/Spring%20Boot-3.5.3-6DB33F?style=for-the-badge&logo=springboot&logoColor=white" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Spring%20Web-6DB33F?style=for-the-badge&logo=spring&logoColor=white" />
+  <img src="https://img.shields.io/badge/WebSocket-010101?style=for-the-badge&logo=socketdotio&logoColor=white" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Spring%20Security-6DB33F?style=for-the-badge&logo=springsecurity&logoColor=white" />
+  <img src="https://img.shields.io/badge/OAuth2-3C8FC6?style=for-the-badge&logo=openid&logoColor=white" />
+  <img src="https://img.shields.io/badge/JWT-0.11.5-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/JPA-59666C?style=for-the-badge&logo=hibernate&logoColor=white" />
+  <img src="https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white" />
+  <img src="https://img.shields.io/badge/Redis-D82C20?style=for-the-badge&logo=redis&logoColor=white" />
+  <img src="https://img.shields.io/badge/Spring%20Session%20(Redis)-6DB33F?style=for-the-badge&logo=spring&logoColor=white" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Mail-SMTP-FFA500?style=for-the-badge&logo=gmail&logoColor=white" />
+  <img src="https://img.shields.io/badge/OpenAPI-2.7.0-6BA539?style=for-the-badge&logo=swagger&logoColor=white" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Gradle-02303A?style=for-the-badge&logo=gradle&logoColor=white" />
+  <img src="https://img.shields.io/badge/Spring%20Dependency%20Management-1.1.7-6DB33F?style=for-the-badge&logo=spring&logoColor=white" />
+</p>
+
+<!-- ===================== -->
+<!-- Backend Stack Table -->
+<!-- ===================== -->
+<div align="center">
+
+<table style="width:85%; border-collapse:collapse; margin-top:14px;">
+  <thead>
+    <tr>
+      <th style="background:#16a34a;color:#fff;padding:10px 12px;text-align:center;border:1px solid #e5e7eb;">Category</th>
+      <th style="background:#16a34a;color:#fff;padding:10px 12px;text-align:center;border:1px solid #e5e7eb;">Stack</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="background:#f8fafc;padding:10px 12px;border:1px solid #e5e7eb;"><strong>Language / JVM</strong></td>
+      <td style="padding:10px 12px;border:1px solid #e5e7eb;">Java 17 (Toolchain)</td>
+    </tr>
+    <tr>
+      <td style="background:#f8fafc;padding:10px 12px;border:1px solid #e5e7eb;"><strong>Framework</strong></td>
+      <td style="padding:10px 12px;border:1px solid #e5e7eb;">Spring Boot 3.5.3</td>
+    </tr>
+    <tr>
+      <td style="background:#f8fafc;padding:10px 12px;border:1px solid #e5e7eb;"><strong>Web</strong></td>
+      <td style="padding:10px 12px;border:1px solid #e5e7eb;">Spring Web, WebSocket</td>
+    </tr>
+    <tr>
+      <td style="background:#f8fafc;padding:10px 12px;border:1px solid #e5e7eb;"><strong>Security</strong></td>
+      <td style="padding:10px 12px;border:1px solid #e5e7eb;">Spring Security, OAuth2 Client, JWT (jjwt 0.11.5)</td>
+    </tr>
+    <tr>
+      <td style="background:#f8fafc;padding:10px 12px;border:1px solid #e5e7eb;"><strong>Data</strong></td>
+      <td style="padding:10px 12px;border:1px solid #e5e7eb;">Spring Data JPA, MySQL Driver, Spring Data Redis, Spring Session (Redis)</td>
+    </tr>
+    <tr>
+      <td style="background:#f8fafc;padding:10px 12px;border:1px solid #e5e7eb;"><strong>Mail / SMTP</strong></td>
+      <td style="padding:10px 12px;border:1px solid #e5e7eb;">Spring Boot Starter Mail</td>
+    </tr>
+    <tr>
+      <td style="background:#f8fafc;padding:10px 12px;border:1px solid #e5e7eb;"><strong>API Docs</strong></td>
+      <td style="padding:10px 12px;border:1px solid #e5e7eb;">springdoc-openapi (Swagger UI) 2.7.0</td>
+    </tr>
+    <tr>
+      <td style="background:#f8fafc;padding:10px 12px;border:1px solid #e5e7eb;"><strong>Build / Dependency Management</strong></td>
+      <td style="padding:10px 12px;border:1px solid #e5e7eb;">Gradle, Spring Dependency Management 1.1.7</td>
+    </tr>
+  </tbody>
+</table>
+
+</div>
+
+---
+
+## 💻 Frontend
+
+<!-- Centered badges -->
+<p align="center">
+  <img src="https://img.shields.io/badge/VISUAL%20STUDIO%20CODE-007ACC?style=for-the-badge&logo=visualstudiocode&logoColor=white" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=000" />
+  <img src="https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white" />
+  <img src="https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=000" />
+  <img src="https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white" />
+  <img src="https://img.shields.io/badge/React%20Router-CA4245?style=for-the-badge&logo=reactrouter&logoColor=white" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Pixi.js-CC3E87?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/OpenVidu%20Browser-2.31.0-1F8ACB?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/MediaPipe_Tasks%20Vision-0.10.22--rc-0A66C2?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/LiveKit%20Client-2.15.4-111827?style=for-the-badge" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Zustand-5.0.7-4B5563?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Axios-1.11.0-5A29E4?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/jwt--decode-4.0.0-2E7D32?style=for-the-badge" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Framer%20Motion-12.23.12-000000?style=for-the-badge&logo=framer&logoColor=white" />
+  <img src="https://img.shields.io/badge/GSAP-3.13.0-88CE02?style=for-the-badge&logo=greensock&logoColor=000" />
+  <img src="https://img.shields.io/badge/Recharts-3.1.0-4F46E5?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Howler-2.2.4-0F766E?style=for-the-badge" />
+</p>
+
+<!-- Colored table (Centered) -->
+<div align="center">
+
+<table style="width:80%; border-collapse:collapse; margin-top:14px;">
+  <thead>
+    <tr>
+      <th style="background:#0ea5e9;color:#fff;padding:10px 12px;text-align:center;border:1px solid #e5e7eb;">Category</th>
+      <th style="background:#0ea5e9;color:#fff;padding:10px 12px;text-align:center;border:1px solid #e5e7eb;">Stack</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="background:#f8fafc;padding:10px 12px;border:1px solid #e5e7eb;"><strong>Language</strong></td>
+      <td style="padding:10px 12px;border:1px solid #e5e7eb;">JavaScript</td>
+    </tr>
+    <tr>
+      <td style="background:#f8fafc;padding:10px 12px;border:1px solid #e5e7eb;"><strong>Runtime Environment</strong></td>
+      <td style="padding:10px 12px;border:1px solid #e5e7eb;">Node.js (LTS), Vite 5.4.19</td>
+    </tr>
+    <tr>
+      <td style="background:#f8fafc;padding:10px 12px;border:1px solid #e5e7eb;"><strong>Framework / UI</strong></td>
+      <td style="padding:10px 12px;border:1px solid #e5e7eb;">React 18.2.0, React Router 7.7.0</td>
+    </tr>
+    <tr>
+      <td style="background:#f8fafc;padding:10px 12px;border:1px solid #e5e7eb;"><strong>Graphics / Game</strong></td>
+      <td style="padding:10px 12px;border:1px solid #e5e7eb;">Pixi.js 7.4.3</td>
+    </tr>
+    <tr>
+      <td style="background:#f8fafc;padding:10px 12px;border:1px solid #e5e7eb;"><strong>Media / Streaming</strong></td>
+      <td style="padding:10px 12px;border:1px solid #e5e7eb;">OpenVidu Browser 2.31.0, LiveKit Client 2.15.4, MediaPipe Tasks Vision 0.10.22-rc</td>
+    </tr>
+    <tr>
+      <td style="background:#f8fafc;padding:10px 12px;border:1px solid #e5e7eb;"><strong>State / Data</strong></td>
+      <td style="padding:10px 12px;border:1px solid #e5e7eb;">Zustand 5.0.7, Axios 1.11.0, jwt-decode 4.0.0</td>
+    </tr>
+    <tr>
+      <td style="background:#f8fafc;padding:10px 12px;border:1px solid #e5e7eb;"><strong>Animation</strong></td>
+      <td style="padding:10px 12px;border:1px solid #e5e7eb;">Framer Motion 12.23.12, GSAP 3.13.0</td>
+    </tr>
+    <tr>
+      <td style="background:#f8fafc;padding:10px 12px;border:1px solid #e5e7eb;"><strong>Charts / Audio</strong></td>
+      <td style="padding:10px 12px;border:1px solid #e5e7eb;">Recharts 3.1.0, Howler 2.2.4</td>
+    </tr>
+    <tr>
+      <td style="background:#f8fafc;padding:10px 12px;border:1px solid #e5e7eb;"><strong>IDE</strong></td>
+      <td style="padding:10px 12px;border:1px solid #e5e7eb;">Visual Studio Code</td>
+    </tr>
+  </tbody>
+</table>
+
+</div>
+
+---
+## 🗄️ DB
+
+<!-- ===================== -->
+<!-- Database Badges -->
+<!-- ===================== -->
+<p align="center">
+  <img src="https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white" />
+  <img src="https://img.shields.io/badge/Redis-D82C20?style=for-the-badge&logo=redis&logoColor=white" />
+</p>
+
+<!-- ===================== -->
+<!-- Database Table -->
+<!-- ===================== -->
+<div align="center">
+
+<table style="width:65%; border-collapse:collapse; margin-top:14px;">
+  <thead>
+    <tr>
+      <th style="background:#2563eb;color:#fff;padding:10px 12px;text-align:center;border:1px solid #e5e7eb;">Category</th>
+      <th style="background:#2563eb;color:#fff;padding:10px 12px;text-align:center;border:1px solid #e5e7eb;">Stack</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="background:#f8fafc;padding:10px 12px;border:1px solid #e5e7eb;"><strong>Database</strong></td>
+      <td style="padding:10px 12px;border:1px solid #e5e7eb;">MySQL, Redis</td>
+    </tr>
+  </tbody>
+</table>
+
+</div>
+
+---
+
+## 🚀 DevOps
+<!-- ===================== -->
+<!-- DevOps Badges -->
+<!-- ===================== -->
+<p align="center">
+  <img src="https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git&logoColor=white" />
+  <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" />
+  <img src="https://img.shields.io/badge/Docker--Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/AWS%20EC2-FF9900?style=for-the-badge&logo=amazonec2&logoColor=white" />
+  <img src="https://img.shields.io/badge/Jenkins-D24939?style=for-the-badge&logo=jenkins&logoColor=white" />
+  <img src="https://img.shields.io/badge/Nginx-009639?style=for-the-badge&logo=nginx&logoColor=white" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Jira-0052CC?style=for-the-badge&logo=jira&logoColor=white" />
+  <img src="https://img.shields.io/badge/Notion-000000?style=for-the-badge&logo=notion&logoColor=white" />
+  <img src="https://img.shields.io/badge/Figma-F24E1E?style=for-the-badge&logo=figma&logoColor=white" />
+</p>
+
+<!-- ===================== -->
+<!-- DevOps Table -->
+<!-- ===================== -->
+<div align="center">
+
+<table style="width:85%; border-collapse:collapse; margin-top:14px;">
+  <thead>
+    <tr>
+      <th style="background:#f97316;color:#fff;padding:10px 12px;text-align:center;border:1px solid #e5e7eb;">Category</th>
+      <th style="background:#f97316;color:#fff;padding:10px 12px;text-align:center;border:1px solid #e5e7eb;">Stack</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="background:#f8fafc;padding:10px 12px;border:1px solid #e5e7eb;"><strong>Version Control</strong></td>
+      <td style="padding:10px 12px;border:1px solid #e5e7eb;">Git</td>
+    </tr>
+    <tr>
+      <td style="background:#f8fafc;padding:10px 12px;border:1px solid #e5e7eb;"><strong>Containerization</strong></td>
+      <td style="padding:10px 12px;border:1px solid #e5e7eb;">Docker, Docker-Compose</td>
+    </tr>
+    <tr>
+      <td style="background:#f8fafc;padding:10px 12px;border:1px solid #e5e7eb;"><strong>Cloud / Infra</strong></td>
+      <td style="padding:10px 12px;border:1px solid #e5e7eb;">AWS EC2</td>
+    </tr>
+    <tr>
+      <td style="background:#f8fafc;padding:10px 12px;border:1px solid #e5e7eb;"><strong>CI / CD</strong></td>
+      <td style="padding:10px 12px;border:1px solid #e5e7eb;">Jenkins</td>
+    </tr>
+    <tr>
+      <td style="background:#f8fafc;padding:10px 12px;border:1px solid #e5e7eb;"><strong>Web Server / Proxy</strong></td>
+      <td style="padding:10px 12px;border:1px solid #e5e7eb;">Nginx</td>
+    </tr>
+    <tr>
+      <td style="background:#f8fafc;padding:10px 12px;border:1px solid #e5e7eb;"><strong>Collaboration / Project Management</strong></td>
+      <td style="padding:10px 12px;border:1px solid #e5e7eb;">Jira, Notion, Figma</td>
+    </tr>
+  </tbody>
+</table>
+
+</div>
+
+
 
 ---
 
