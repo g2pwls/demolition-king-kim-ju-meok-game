@@ -447,6 +447,23 @@
 
 
 ---
+
+## 💼 assets
+
+### 🏠 건물
+<img width="1361" height="534" alt="Image" src="https://github.com/user-attachments/assets/659de56f-adc8-427d-b8a5-f22323ab8378" />
+
+
+### 🦸‍♂️ 캐릭터
+<img width="811" height="630" alt="Image" src="https://github.com/user-attachments/assets/4591c1b0-2c03-4e45-b6ce-845403942ace" />
+
+
+### 💥 효과
+<img width="695" height="516" alt="Image" src="https://github.com/user-attachments/assets/01920697-b0cc-4e95-8b4c-142d63d9295a" />
+
+---
+
+
 ## **🖥️ 주요 기능**
 
 ## 🏠**초기 화면(Web)**
