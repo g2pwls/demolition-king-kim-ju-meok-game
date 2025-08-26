@@ -147,11 +147,29 @@
 
 ## 📁 문서
 
-### 🛠 시스템 아키텍처
-![image](/uploads/bf8a54eb3469d9dac00bcb8acd5461cc/image.png){width=539 height=473}
+<details>
+  <summary>🛠 시스템 아키텍처 (클릭해서 보기)</summary>
 
-### 🧩 ERD
-![image](/uploads/343c2f45c061dec181bfd35e0f554c92/image.png){width=1029 height=1019}
+  <!-- 빈 줄 하나 정도 두면 렌더링이 깔끔해요 -->
+
+  <img width="718" height="630" alt="시스템 아키텍처"
+       src="https://github.com/user-attachments/assets/08291212-0a36-46f8-a68b-dbe9cdd069d0" />
+</details>
+
+<details>
+  <summary>🧩 ERD (클릭해서 보기)</summary>
+
+  <img width="1372" height="1358" alt="ERD"
+       src="https://github.com/user-attachments/assets/f8d1006c-ab7e-4af6-91d7-021d4f494a89" />
+</details>
+
+<details>
+  <summary>📊 플로우 차트 (클릭해서 보기)</summary>
+
+  <img width="1026" height="1024" alt="Image" 
+      src="https://github.com/user-attachments/assets/3d510c8d-01ad-47d8-a976-77bb9d49cf3c" />
+</details>
+
 
 ---
 
@@ -159,13 +177,13 @@
 
 ## 🏠**초기 화면(Web)**
 
-| ![초기-_online-video-cutter.com_](/uploads/800cdfcbac23dc5f194cf768105eae96/초기-_online-video-cutter.com_.gif)|
+| ![Image](https://github.com/user-attachments/assets/76931d0a-564f-4e77-b463-4953ef50fcd7)|
 | --- |
 | **초기 화면** <br> 게임 첫 진입 페이지로, 사용자의 상호작용을 통해 로그인 페이지로 진입할수있습니다. |
 
 ### 🔐 **로그인 기능**
 
-| ![로그인-_online-video-cutter.com_](/uploads/4b10a07ec6db65dde981d3dc683deae0/로그인-_online-video-cutter.com_.gif) |![Image](https://github.com/user-attachments/assets/13ea7111-9b73-4b0d-b412-f572355360d2)|
+| ![Image](https://github.com/user-attachments/assets/bef2ba73-ee61-432e-a16b-89a2eb16498e) |![Image](https://github.com/user-attachments/assets/13ea7111-9b73-4b0d-b412-f572355360d2)|
 | --- | --- |
 | **로그인 화면** <br> 로그인을 진행하며 메인 페이지로 이동 가능합니다. | **소셜로그인 화면** <br> 소셜계정을 통해 회원가입을 진행할 수 있습니다. |
 
